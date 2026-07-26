@@ -251,6 +251,7 @@ class _FloatickShellState extends State<_FloatickShell> {
                   settingsController: widget.settingsController,
                   updateController: widget.updateController,
                   windowBridge: widget.windowBridge,
+                  expansionAnchor: _expansionAnchor,
                   onCollapse: () => unawaited(_setExpanded(false)),
                 )
               : Align(

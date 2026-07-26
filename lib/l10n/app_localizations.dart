@@ -260,11 +260,197 @@ abstract class AppLocalizations {
   /// **'Clear search'**
   String get clearSearchTooltip;
 
-  /// No description provided for @addTodoHint.
+  /// No description provided for @filterByTagTitle.
   ///
   /// In en, this message translates to:
-  /// **'Add something to do…'**
-  String get addTodoHint;
+  /// **'Filter by tag'**
+  String get filterByTagTitle;
+
+  /// No description provided for @filterByTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter todos by tag'**
+  String get filterByTagTooltip;
+
+  /// No description provided for @closeTagFilterTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Close tag filter'**
+  String get closeTagFilterTooltip;
+
+  /// No description provided for @closeTagAssignmentTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Close tag selection'**
+  String get closeTagAssignmentTooltip;
+
+  /// No description provided for @allTagsFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All todos'**
+  String get allTagsFilterLabel;
+
+  /// No description provided for @manageTagsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage tags'**
+  String get manageTagsTooltip;
+
+  /// No description provided for @manageTagsButtonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get manageTagsButtonLabel;
+
+  /// No description provided for @assignTagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get assignTagsTitle;
+
+  /// No description provided for @assignTagsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign tags'**
+  String get assignTagsTooltip;
+
+  /// No description provided for @tagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get tagsTitle;
+
+  /// No description provided for @closeTagManagementTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Close tag management'**
+  String get closeTagManagementTooltip;
+
+  /// No description provided for @searchOrCreateTagHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search or create a tag'**
+  String get searchOrCreateTagHint;
+
+  /// No description provided for @createTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Create tag'**
+  String get createTagTooltip;
+
+  /// No description provided for @saveTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Save tag'**
+  String get saveTagTooltip;
+
+  /// No description provided for @createTagModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search · Return creates a tag'**
+  String get createTagModeLabel;
+
+  /// No description provided for @editTagModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing tag'**
+  String get editTagModeLabel;
+
+  /// No description provided for @tagNameRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a tag name.'**
+  String get tagNameRequiredMessage;
+
+  /// No description provided for @tagNameTooLongMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Use no more than {maxLength} characters.'**
+  String tagNameTooLongMessage(int maxLength);
+
+  /// No description provided for @duplicateTagNameMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag with this name already exists.'**
+  String get duplicateTagNameMessage;
+
+  /// No description provided for @tagNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This tag no longer exists.'**
+  String get tagNotFoundMessage;
+
+  /// No description provided for @invalidTagColorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a valid tag color.'**
+  String get invalidTagColorMessage;
+
+  /// No description provided for @tagStorageFailureMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save tag changes.'**
+  String get tagStorageFailureMessage;
+
+  /// No description provided for @tagColorSemanticsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag color'**
+  String get tagColorSemanticsLabel;
+
+  /// No description provided for @tagUsageCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String tagUsageCount(int count);
+
+  /// No description provided for @editTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit tag'**
+  String get editTagTooltip;
+
+  /// No description provided for @deleteTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag'**
+  String get deleteTagTooltip;
+
+  /// No description provided for @cancelDeleteTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep tag'**
+  String get cancelDeleteTagTooltip;
+
+  /// No description provided for @confirmDeleteTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag and remove it from todos'**
+  String get confirmDeleteTagTooltip;
+
+  /// No description provided for @noMatchingTagsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching tags. Press Return to create this one.'**
+  String get noMatchingTagsMessage;
+
+  /// No description provided for @noTagsYetMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet. Create one from the field above.'**
+  String get noTagsYetMessage;
+
+  /// No description provided for @noTagsToFilterMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet. Open tag settings to create one.'**
+  String get noTagsToFilterMessage;
+
+  /// No description provided for @clearTagFilterTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear tag filter'**
+  String get clearTagFilterTooltip;
 
   /// No description provided for @allClearToday.
   ///
@@ -302,17 +488,137 @@ abstract class AppLocalizations {
   /// **'Archive'**
   String get archiveScopeLabel;
 
-  /// No description provided for @addTodoSemanticsLabel.
+  /// No description provided for @newTodoDrawerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New todo'**
+  String get newTodoDrawerTitle;
+
+  /// No description provided for @todoDetailsDrawerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get todoDetailsDrawerTitle;
+
+  /// No description provided for @editTodoDrawerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit todo'**
+  String get editTodoDrawerTitle;
+
+  /// No description provided for @editTodoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editTodoAction;
+
+  /// No description provided for @closeTodoDrawerTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Close todo drawer'**
+  String get closeTodoDrawerTooltip;
+
+  /// No description provided for @todoTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get todoTitleLabel;
+
+  /// No description provided for @todoTitleFieldHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What needs to be done?'**
+  String get todoTitleFieldHint;
+
+  /// No description provided for @todoContentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get todoContentLabel;
+
+  /// No description provided for @todoContentFieldHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add notes with Markdown…'**
+  String get todoContentFieldHint;
+
+  /// No description provided for @markdownSupportedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown supported · ⌘ Return saves'**
+  String get markdownSupportedHint;
+
+  /// No description provided for @markdownWriteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Write'**
+  String get markdownWriteLabel;
+
+  /// No description provided for @markdownPreviewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get markdownPreviewLabel;
+
+  /// No description provided for @cancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelAction;
+
+  /// No description provided for @createTodoAction.
   ///
   /// In en, this message translates to:
   /// **'Add todo'**
-  String get addTodoSemanticsLabel;
+  String get createTodoAction;
 
-  /// No description provided for @addTodoTooltip.
+  /// No description provided for @saveChangesAction.
   ///
   /// In en, this message translates to:
-  /// **'Add todo (Return)'**
-  String get addTodoTooltip;
+  /// **'Save changes'**
+  String get saveChangesAction;
+
+  /// No description provided for @saveTodoFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save this todo.'**
+  String get saveTodoFailedMessage;
+
+  /// No description provided for @todoNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This todo no longer exists.'**
+  String get todoNotFoundMessage;
+
+  /// No description provided for @noTodoContentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No details yet'**
+  String get noTodoContentTitle;
+
+  /// No description provided for @noTodoContentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this todo to add Markdown notes.'**
+  String get noTodoContentMessage;
+
+  /// No description provided for @markdownPreviewEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to preview yet'**
+  String get markdownPreviewEmptyMessage;
+
+  /// No description provided for @markdownImageBlockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Images are not displayed in todo details.'**
+  String get markdownImageBlockedMessage;
+
+  /// No description provided for @viewTodoDetailsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get viewTodoDetailsTooltip;
 
   /// No description provided for @dismissErrorTooltip.
   ///
@@ -349,12 +655,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Todo title cannot be empty'**
   String get todoTitleRequiredHint;
-
-  /// No description provided for @saveTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Save'**
-  String get saveTooltip;
 
   /// No description provided for @editTooltip.
   ///

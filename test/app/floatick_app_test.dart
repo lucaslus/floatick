@@ -4,7 +4,9 @@ import 'package:floatick/core/ui/floatick_brand_mark.dart';
 import 'package:floatick/features/settings/data/settings_repository.dart';
 import 'package:floatick/features/settings/domain/app_settings.dart';
 import 'package:floatick/features/settings/presentation/settings_view_model.dart';
+import 'package:floatick/features/todos/data/tag_repository.dart';
 import 'package:floatick/features/todos/data/todo_repository.dart';
+import 'package:floatick/features/todos/domain/tag_workspace.dart';
 import 'package:floatick/features/todos/domain/todo_item.dart';
 import 'package:floatick/features/todos/presentation/todo_view_model.dart';
 import 'package:floatick/features/todos/presentation/widgets/floating_todo_icon.dart';
@@ -14,6 +16,7 @@ import 'package:floatick/features/updates/presentation/update_view_model.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -28,6 +31,7 @@ void main() {
     final repository = _WidgetTestRepository();
     final controller = TodoViewModel(
       todoRepository: repository,
+      tagRepository: _WidgetTestTagRepository(),
       clock: () => DateTime.utc(2026, 7, 23, 8),
       idGenerator: () => 'new-todo',
     );
@@ -68,7 +72,15 @@ void main() {
     expect(find.text('今天已经清空'), findsOneWidget);
     expect(find.byKey(const ValueKey('panel-brand-mark')), findsOneWidget);
     expect(find.byKey(const Key('search-field')), findsOneWidget);
-    expect(find.byKey(const Key('todo-input')), findsOneWidget);
+    expect(find.byKey(const Key('tag-filter-button')), findsOneWidget);
+    expect(find.byKey(const Key('add-todo-button')), findsOneWidget);
+    final searchRect = tester.getRect(find.byKey(const Key('search-field')));
+    final tagFilterRect = tester.getRect(
+      find.byKey(const Key('tag-filter-button')),
+    );
+    expect(tagFilterRect.left, greaterThan(searchRect.right));
+    expect((tagFilterRect.center.dy - searchRect.center.dy).abs(), lessThan(1));
+    expect(tagFilterRect.size, const Size.square(42));
     final panelSurface = tester.widget<DecoratedBox>(
       find.byKey(const Key('todo-panel-surface')),
     );
@@ -79,6 +91,12 @@ void main() {
           .widget<AnimatedSlide>(find.byKey(const Key('settings-drawer-slide')))
           .offset,
       const Offset(1, 0),
+    );
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('todo-drawer-slide')))
+          .offset,
+      const Offset(0, 1),
     );
 
     await tester.tap(find.byKey(const Key('settings-button')));
@@ -216,25 +234,93 @@ void main() {
       const Offset(1, 0),
     );
 
+    await tester.tap(find.byKey(const Key('add-todo-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('新建待办'), findsOneWidget);
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('todo-drawer-slide')))
+          .offset,
+      Offset.zero,
+    );
     await tester.enterText(
-      find.byKey(const Key('todo-input')),
+      find.byKey(const Key('todo-title-field')),
       'Design the floating icon',
     );
-    await tester.tap(find.byKey(const Key('add-todo')));
+    await tester.enterText(
+      find.byKey(const Key('todo-content-field')),
+      '## Goal\n\nPolish the **Dock** experience.',
+    );
+    await tester.tap(find.byKey(const Key('markdown-preview-tab')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('todo-content-preview')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('save-todo-details')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Design the floating icon'), findsOneWidget);
+    expect(find.text('Design the floating icon').hitTestable(), findsOneWidget);
     expect(find.text('1 项待完成'), findsOneWidget);
     expect(repository.savedItems.single.title, 'Design the floating icon');
+    expect(
+      repository.savedItems.single.content,
+      '## Goal\n\nPolish the **Dock** experience.',
+    );
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('todo-drawer-slide')))
+          .offset,
+      const Offset(0, 1),
+    );
+
+    await tester.tap(find.byKey(const Key('view-todo-new-todo')));
+    await tester.pumpAndSettle();
+    expect(find.text('详情'), findsOneWidget);
+    expect(find.byKey(const Key('todo-details-title')), findsOneWidget);
+    expect(find.byKey(const Key('todo-details-markdown')), findsOneWidget);
+    expect(
+      tester
+          .widget<Markdown>(
+            find.descendant(
+              of: find.byKey(const Key('todo-details-markdown')),
+              matching: find.byType(Markdown),
+            ),
+          )
+          .data,
+      '## Goal\n\nPolish the **Dock** experience.',
+    );
+    await tester.tap(find.byKey(const Key('todo-details-edit')));
+    await tester.pumpAndSettle();
+    expect(find.text('编辑待办'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('todo-title-field')),
+      'Polish the Floatick icon',
+    );
+    await tester.enterText(
+      find.byKey(const Key('todo-content-field')),
+      '- Match macOS sizing\n- Keep transparent corners',
+    );
+    await tester.tap(find.byKey(const Key('save-todo-details')));
+    await tester.pumpAndSettle();
+    expect(find.text('详情'), findsOneWidget);
+    expect(repository.savedItems.single.title, 'Polish the Floatick icon');
+    expect(
+      repository.savedItems.single.content,
+      '- Match macOS sizing\n- Keep transparent corners',
+    );
+    await tester.tap(find.byKey(const Key('todo-drawer-close')));
+    await tester.pumpAndSettle();
 
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await mouse.addPointer(location: Offset.zero);
     addTearDown(mouse.removePointer);
-    await mouse.moveTo(tester.getCenter(find.text('Design the floating icon')));
+    await mouse.moveTo(
+      tester.getCenter(find.text('Polish the Floatick icon').hitTestable()),
+    );
     await tester.pump(const Duration(milliseconds: 50));
     await mouse.moveTo(Offset.zero);
     await tester.pump(const Duration(milliseconds: 50));
-    await mouse.moveTo(tester.getCenter(find.text('Design the floating icon')));
+    await mouse.moveTo(
+      tester.getCenter(find.text('Polish the Floatick icon').hitTestable()),
+    );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
@@ -242,30 +328,308 @@ void main() {
     expect(editButton, findsOneWidget);
     await tester.tap(editButton);
     await tester.pumpAndSettle();
-
-    final editField = find.byKey(const Key('todo-edit-new-todo'));
-    expect(editField, findsOneWidget);
-    await tester.enterText(editField, 'Cancelled edit');
+    expect(find.text('编辑待办'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('todo-title-field')),
+      'Cancelled edit',
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
-    expect(find.text('Design the floating icon'), findsOneWidget);
+    expect(find.text('Polish the Floatick icon').hitTestable(), findsOneWidget);
     expect(windowBridge.expandedValues, <bool>[true]);
-
-    await tester.tap(editButton);
-    await tester.pumpAndSettle();
-    await tester.enterText(editField, 'Polish the Floatick icon');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Polish the Floatick icon'), findsOneWidget);
-    expect(repository.savedItems.single.title, 'Polish the Floatick icon');
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
     expect(windowBridge.expandedValues, <bool>[true, false]);
     expect(find.byKey(const ValueKey('floating-todo-icon')), findsOneWidget);
+  });
+
+  testWidgets('tags can be created, assigned, and used as a filter', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    var todoSequence = 0;
+    var tagSequence = 0;
+    final tagRepository = _WidgetTestTagRepository();
+    final controller = TodoViewModel(
+      todoRepository: _WidgetTestRepository(),
+      tagRepository: tagRepository,
+      idGenerator: () => 'todo-${++todoSequence}',
+      tagIdGenerator: () => switch (++tagSequence) {
+        1 => 'tag-work',
+        2 => 'tag-personal',
+        _ => 'tag-$tagSequence',
+      },
+    );
+    final settingsController = SettingsViewModel(
+      settingsRepository: _WidgetTestSettingsRepository(),
+    );
+    final updateController = UpdateViewModel(
+      updateRepository: _WidgetTestUpdateRepository(),
+    );
+    final windowBridge = _WidgetTestWindowBridge();
+    await controller.load();
+    await settingsController.load();
+    await updateController.load();
+
+    await tester.pumpWidget(
+      FloatickApp(
+        controller: controller,
+        settingsController: settingsController,
+        updateController: updateController,
+        windowBridge: windowBridge,
+        locale: const Locale('en'),
+      ),
+    );
+    windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('tag-filter-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Filter by tag'), findsOneWidget);
+    expect(find.byKey(const Key('tag-filter-drawer')), findsOneWidget);
+    expect(find.byKey(const Key('manage-tags-button')), findsOneWidget);
+    expect(find.text('Manage'), findsOneWidget);
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('tag-drawer-slide')))
+          .offset,
+      Offset.zero,
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('tag-filter-drawer'))).dx,
+      tester.getTopLeft(find.byKey(const Key('todo-panel-surface'))).dx,
+    );
+
+    await tester.tap(find.byKey(const Key('manage-tags-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-filter-drawer')), findsNothing);
+    expect(find.byKey(const Key('tag-management-drawer')), findsOneWidget);
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('tag-drawer-slide')))
+          .offset,
+      Offset.zero,
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('tag-management-drawer'))).dx,
+      tester.getTopLeft(find.byKey(const Key('todo-panel-surface'))).dx,
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('tag-search-create-field')),
+      'Work',
+    );
+    expect(
+      tester.widget<IconButton>(find.byKey(const Key('submit-tag'))).onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.byKey(const Key('submit-tag')));
+    await tester.pumpAndSettle();
+    expect(controller.tags.single.name, 'Work');
+    expect(tagRepository.savedWorkspace.tags.single.name, 'Work');
+    expect(find.byKey(const Key('managed-tag-tag-work')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('tag-management-close')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('add-todo-button')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('todo-drawer-slide')))
+          .offset,
+      Offset.zero,
+    );
+    await tester.enterText(
+      find.byKey(const Key('todo-title-field')),
+      'Tagged task',
+    );
+    expect(find.byKey(const Key('todo-editor-tag-button')), findsOneWidget);
+    expect(find.byKey(const Key('todo-editor-tag-tag-work')), findsNothing);
+    await tester.tap(find.byKey(const Key('todo-editor-tag-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-assignment-drawer')), findsOneWidget);
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('todo-drawer-slide')))
+          .offset,
+      Offset.zero,
+    );
+    expect(
+      tester
+          .widget<AnimatedOpacity>(find.byKey(const Key('todo-context-scrim')))
+          .opacity,
+      1,
+    );
+    expect(
+      find.byKey(const Key('todo-title-field')).hitTestable(),
+      findsNothing,
+    );
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('tag-drawer-slide')))
+          .offset,
+      Offset.zero,
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('tag-assignment-drawer'))).dx,
+      tester.getTopLeft(find.byKey(const Key('todo-panel-surface'))).dx,
+    );
+    await tester.tap(find.byKey(const Key('tag-assignment-tag-work')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('todo-editor-tag-tag-work')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('manage-tags-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-management-drawer')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('tag-search-create-field')),
+      'Personal',
+    );
+    await tester.tap(find.byKey(const Key('submit-tag')));
+    await tester.pumpAndSettle();
+    expect(controller.tags.map((tag) => tag.name), <String>[
+      'Work',
+      'Personal',
+    ]);
+    expect(tagRepository.savedWorkspace.tags.map((tag) => tag.name), <String>[
+      'Work',
+      'Personal',
+    ]);
+    await tester.tap(find.byKey(const Key('tag-management-close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-assignment-drawer')), findsOneWidget);
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('todo-drawer-slide')))
+          .offset,
+      Offset.zero,
+    );
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('todo-title-field')))
+          .controller
+          ?.text,
+      'Tagged task',
+    );
+
+    await tester.tap(find.byKey(const Key('tag-assignment-tag-personal')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tag-assignment-close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-assignment-drawer')), findsNothing);
+    expect(
+      tester
+          .widget<AnimatedSlide>(find.byKey(const Key('todo-drawer-slide')))
+          .offset,
+      Offset.zero,
+    );
+    expect(
+      tester
+          .widget<AnimatedOpacity>(find.byKey(const Key('todo-context-scrim')))
+          .opacity,
+      0,
+    );
+    expect(
+      find.byKey(const Key('todo-editor-tag-tag-personal')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('save-todo-details')))
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.byKey(const Key('save-todo-details')));
+    await tester.pumpAndSettle();
+    expect(controller.items.single.id, 'todo-1');
+    expect(controller.tagIdsForTodo('todo-1'), <String>[
+      'tag-work',
+      'tag-personal',
+    ]);
+    expect(find.text('Tagged task').hitTestable(), findsOneWidget);
+    expect(
+      (tester
+                  .widget<IconButton>(
+                    find.byKey(const Key('assign-tags-todo-1')),
+                  )
+                  .icon
+              as Icon)
+          .icon,
+      Icons.sell_rounded,
+    );
+    await tester.tap(find.byKey(const Key('assign-tags-todo-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('assign-todo-1-tag-work')));
+    await tester.pumpAndSettle();
+    expect(controller.tagIdsForTodo('todo-1'), <String>['tag-personal']);
+    await tester.tap(find.byKey(const Key('assign-todo-1-tag-work')));
+    await tester.pumpAndSettle();
+    expect(controller.tagIdsForTodo('todo-1'), <String>[
+      'tag-work',
+      'tag-personal',
+    ]);
+    expect(
+      tester.getSize(find.byKey(const Key('todo-tag-todo-1-tag-work'))).height,
+      17,
+    );
+    expect(
+      (tester
+                  .widget<IconButton>(
+                    find.byKey(const Key('assign-tags-todo-1')),
+                  )
+                  .icon
+              as Icon)
+          .icon,
+      Icons.sell_rounded,
+    );
+
+    await tester.tap(find.byKey(const Key('add-todo-button')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('todo-title-field')),
+      'Other task',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('save-todo-details')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('tag-filter-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tag-filter-tag-work')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('active-tag-filter')), findsOneWidget);
+    expect(find.text('Tagged task').hitTestable(), findsOneWidget);
+    expect(find.text('Other task').hitTestable(), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byKey(const Key('collapse-button')));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const ValueKey('floating-todo-icon')), findsOneWidget);
+    windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topLeft);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tag-filter-button')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopRight(find.byKey(const Key('tag-filter-drawer'))).dx,
+      tester.getTopRight(find.byKey(const Key('todo-panel-surface'))).dx,
+    );
+    await tester.tap(find.byKey(const Key('manage-tags-button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getTopRight(find.byKey(const Key('tag-management-drawer'))).dx,
+      tester.getTopRight(find.byKey(const Key('todo-panel-surface'))).dx,
+    );
   });
 
   testWidgets('English locale translates the primary todo experience', (
@@ -276,7 +640,10 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final controller = TodoViewModel(todoRepository: _WidgetTestRepository());
+    final controller = TodoViewModel(
+      todoRepository: _WidgetTestRepository(),
+      tagRepository: _WidgetTestTagRepository(),
+    );
     final settingsController = SettingsViewModel(
       settingsRepository: _WidgetTestSettingsRepository(),
     );
@@ -303,7 +670,13 @@ void main() {
 
     expect(find.text('All clear for today'), findsOneWidget);
     expect(find.text('Search todos'), findsOneWidget);
-    expect(find.text('Add something to do…'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('add-todo-button')),
+        matching: find.text('Add todo'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('今天已经清空'), findsNothing);
 
     await controller.add('Write English release notes');
@@ -332,7 +705,10 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final controller = TodoViewModel(todoRepository: _WidgetTestRepository());
+    final controller = TodoViewModel(
+      todoRepository: _WidgetTestRepository(),
+      tagRepository: _WidgetTestTagRepository(),
+    );
     final settingsRepository = _WidgetTestSettingsRepository();
     final settingsController = SettingsViewModel(
       settingsRepository: settingsRepository,
@@ -424,6 +800,21 @@ class _WidgetTestRepository implements TodoRepository {
   @override
   Future<void> save(List<TodoItem> items) async {
     savedItems = List<TodoItem>.of(items);
+  }
+}
+
+class _WidgetTestTagRepository implements TagRepository {
+  TagWorkspace savedWorkspace = TagWorkspace.empty();
+
+  @override
+  String get storagePath => '/tmp/floatick-widget-test/tags.json';
+
+  @override
+  Future<TagWorkspace> load() async => savedWorkspace;
+
+  @override
+  Future<void> save(TagWorkspace workspace) async {
+    savedWorkspace = workspace;
   }
 }
 
