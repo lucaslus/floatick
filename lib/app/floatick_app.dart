@@ -103,6 +103,7 @@ class _FloatickShellState extends State<_FloatickShell> {
   WindowExpansionAnchor _expansionAnchor = WindowExpansionAnchor.topRight;
   String? _requestedStickyBoardId;
   int _stickyBoardRequestSerial = 0;
+  Future<void>? _rendererWarmUpFuture;
 
   @override
   void initState() {
@@ -114,7 +115,8 @@ class _FloatickShellState extends State<_FloatickShell> {
     );
     unawaited(_syncPreferredLanguage());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
+      _startRendererWarmUp();
+      unawaited(_restorePinnedBoardsAfterWarmUp());
     });
   }
 
@@ -163,6 +165,28 @@ class _FloatickShellState extends State<_FloatickShell> {
     unawaited(_syncPreferredLanguage());
   }
 
+  void _startRendererWarmUp() {
+    _rendererWarmUpFuture ??= _warmUpRenderer();
+  }
+
+  Future<void> _warmUpRenderer() async {
+    try {
+      await const _FloatickShaderWarmUp().execute();
+    } on Object catch (error, stackTrace) {
+      debugPrint('Floatick could not warm up the renderer: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> _restorePinnedBoardsAfterWarmUp() async {
+    _startRendererWarmUp();
+    await _rendererWarmUpFuture;
+    if (!mounted) {
+      return;
+    }
+    await widget.stickyBoardWindowCoordinator.restorePinnedBoards();
+  }
+
   Future<void> _syncPreferredLanguage() async {
     final languageCode = switch (widget.settingsController.languagePreference) {
       AppLanguagePreference.system => null,
@@ -206,6 +230,11 @@ class _FloatickShellState extends State<_FloatickShell> {
 
     try {
       if (expanded) {
+        _startRendererWarmUp();
+        await _rendererWarmUpFuture;
+        if (!mounted) {
+          return;
+        }
         final expansionAnchor =
             requestedAnchor ??
             await widget.windowBridge.preferredExpansionAnchor();
@@ -268,7 +297,7 @@ class _FloatickShellState extends State<_FloatickShell> {
             );
             final isPanel = child.key == const ValueKey('todo-panel');
             final scaleAnimation = Tween<double>(
-              begin: isPanel ? 0.80 : 0.92,
+              begin: isPanel ? 0.95 : 0.92,
               end: 1,
             ).animate(curvedAnimation);
             return FadeTransition(
@@ -281,19 +310,21 @@ class _FloatickShellState extends State<_FloatickShell> {
             );
           },
           child: _isExpanded
-              ? TodoPanel(
+              ? RepaintBoundary(
                   key: const ValueKey('todo-panel'),
-                  controller: widget.controller,
-                  settingsController: widget.settingsController,
-                  updateController: widget.updateController,
-                  stickyBoardController: widget.stickyBoardController,
-                  stickyBoardWindowCoordinator:
-                      widget.stickyBoardWindowCoordinator,
-                  windowBridge: widget.windowBridge,
-                  expansionAnchor: _expansionAnchor,
-                  requestedStickyBoardId: _requestedStickyBoardId,
-                  stickyBoardRequestSerial: _stickyBoardRequestSerial,
-                  onCollapse: () => unawaited(_setExpanded(false)),
+                  child: TodoPanel(
+                    controller: widget.controller,
+                    settingsController: widget.settingsController,
+                    updateController: widget.updateController,
+                    stickyBoardController: widget.stickyBoardController,
+                    stickyBoardWindowCoordinator:
+                        widget.stickyBoardWindowCoordinator,
+                    windowBridge: widget.windowBridge,
+                    expansionAnchor: _expansionAnchor,
+                    requestedStickyBoardId: _requestedStickyBoardId,
+                    stickyBoardRequestSerial: _stickyBoardRequestSerial,
+                    onCollapse: () => unawaited(_setExpanded(false)),
+                  ),
                 )
               : Align(
                   key: const ValueKey('collapsed-icon-alignment'),
@@ -307,5 +338,71 @@ class _FloatickShellState extends State<_FloatickShell> {
         ),
       ),
     );
+  }
+}
+
+class _FloatickShaderWarmUp extends ShaderWarmUp {
+  const _FloatickShaderWarmUp();
+
+  @override
+  Size get size => const Size.square(120);
+
+  @override
+  Future<void> warmUpOnCanvas(Canvas canvas) {
+    final panelBounds = Rect.fromLTWH(8, 8, size.width - 16, size.height - 16);
+    final panelShape = RRect.fromRectAndRadius(
+      panelBounds,
+      const Radius.circular(26),
+    );
+    final gradientPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[Color(0xFF24383C), Color(0xFF172326)],
+      ).createShader(panelBounds);
+
+    canvas.save();
+    canvas.translate(size.width / 2, size.height / 2);
+    canvas.scale(0.95);
+    canvas.translate(-size.width / 2, -size.height / 2);
+    canvas.drawRRect(panelShape, gradientPaint);
+    canvas.restore();
+
+    final shadowPath = Path()..addRRect(panelShape);
+    canvas.drawShadow(shadowPath, Colors.black, 6, false);
+    canvas.drawCircle(
+      const Offset(34, 34),
+      16,
+      Paint()..color = const Color(0xFF20BFB2),
+    );
+
+    final checkPaint = Paint()
+      ..color = const Color(0xFF2CCCBD)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final checkPath = Path()
+      ..moveTo(22, 34)
+      ..lineTo(31, 43)
+      ..lineTo(48, 25);
+    canvas.drawPath(checkPath, checkPaint);
+
+    final textPainter = TextPainter(
+      text: const TextSpan(
+        text: 'Floatick 0123456789 待办归档',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout(maxWidth: 100);
+    textPainter.paint(canvas, const Offset(10, 78));
+    textPainter.dispose();
+
+    return Future<void>.value();
   }
 }

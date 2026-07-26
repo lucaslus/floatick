@@ -48,6 +48,8 @@ enum _TodoPanelDrawerMode {
   editTodo,
 }
 
+enum _TodoPanelDrawerFamily { settings, tags, stickyBoards, todoEditor }
+
 class TodoPanel extends StatefulWidget {
   const TodoPanel({
     required this.controller,
@@ -94,16 +96,20 @@ class _TodoPanelState extends State<TodoPanel> {
   String? _selectedTagId;
   String? _selectedTodoId;
   _TodoPanelDrawerMode _drawerMode = _TodoPanelDrawerMode.none;
+  _TodoPanelDrawerMode? _pendingDrawerMode;
   _TodoPanelDrawerMode _lastTagDrawerMode = _TodoPanelDrawerMode.tagFilter;
   _TodoPanelDrawerMode _lastTodoDrawerMode = _TodoPanelDrawerMode.createTodo;
   _TodoPanelDrawerMode? _tagManagementReturnMode;
   _TodoPanelDrawerMode? _tagAssignmentReturnMode;
   _TodoPanelDrawerMode? _todoDrawerReturnMode;
   Set<String> _todoEditorTagIds = <String>{};
+  final Set<_TodoPanelDrawerFamily> _mountedDrawerFamilies =
+      <_TodoPanelDrawerFamily>{};
   String? _selectedStickyBoardId;
   String? _todoCreationBoardId;
   int _todoEditorSession = 0;
   int _lastHandledStickyBoardRequestSerial = -1;
+  int _drawerRequestSerial = 0;
 
   @override
   void initState() {
@@ -164,11 +170,12 @@ class _TodoPanelState extends State<TodoPanel> {
     if (widget.stickyBoardController.boardById(boardId) == null) {
       return;
     }
-    setState(() {
-      _selectedStickyBoardId = boardId;
-      _drawerMode = _TodoPanelDrawerMode.stickyBoardDetail;
-    });
-    _requestDrawerFocus(_TodoPanelDrawerMode.stickyBoardDetail);
+    if (_drawerMode == _TodoPanelDrawerMode.stickyBoardDetail) {
+      setState(() => _selectedStickyBoardId = boardId);
+      return;
+    }
+    _selectedStickyBoardId = boardId;
+    _showDrawer(_TodoPanelDrawerMode.stickyBoardDetail);
   }
 
   void _openStickyBoardTodoPicker() {
@@ -294,7 +301,30 @@ class _TodoPanelState extends State<TodoPanel> {
     }
 
     _unfocusDrawerControls();
+    final requestSerial = ++_drawerRequestSerial;
+    final family = _drawerFamilyFor(mode);
+    if (family != null && !_mountedDrawerFamilies.contains(family)) {
+      setState(() {
+        _mountedDrawerFamilies.add(family);
+        _pendingDrawerMode = mode;
+        if (family == _TodoPanelDrawerFamily.tags) {
+          _lastTagDrawerMode = mode;
+        }
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || requestSerial != _drawerRequestSerial) {
+          return;
+        }
+        _activateDrawer(mode);
+      });
+      return;
+    }
+    _activateDrawer(mode);
+  }
+
+  void _activateDrawer(_TodoPanelDrawerMode mode) {
     setState(() {
+      _pendingDrawerMode = null;
       _drawerMode = mode;
       if (mode == _TodoPanelDrawerMode.tagFilter ||
           mode == _TodoPanelDrawerMode.tagAssignment ||
@@ -344,11 +374,21 @@ class _TodoPanelState extends State<TodoPanel> {
     }
 
     _unfocusDrawerControls();
+    final requestSerial = ++_drawerRequestSerial;
+    final needsMount = !_mountedDrawerFamilies.contains(
+      _TodoPanelDrawerFamily.todoEditor,
+    );
     setState(() {
       if (startsNewSession) {
         _todoEditorSession += 1;
       }
-      _drawerMode = mode;
+      if (needsMount) {
+        _mountedDrawerFamilies.add(_TodoPanelDrawerFamily.todoEditor);
+        _pendingDrawerMode = mode;
+      } else {
+        _pendingDrawerMode = null;
+        _drawerMode = mode;
+      }
       _lastTodoDrawerMode = mode;
       _selectedTodoId = todoId;
       _todoEditorTagIds = initialTagIds.toSet();
@@ -356,11 +396,25 @@ class _TodoPanelState extends State<TodoPanel> {
         _scope = TodoListScope.active;
       }
     });
+    if (!needsMount) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || requestSerial != _drawerRequestSerial) {
+        return;
+      }
+      setState(() {
+        _pendingDrawerMode = null;
+        _drawerMode = mode;
+      });
+    });
   }
 
   void _selectTagFilter(String? tagId) {
     _unfocusDrawerControls();
+    _drawerRequestSerial += 1;
     setState(() {
+      _pendingDrawerMode = null;
       _selectedTagId = tagId;
       _drawerMode = _TodoPanelDrawerMode.none;
     });
@@ -369,9 +423,16 @@ class _TodoPanelState extends State<TodoPanel> {
 
   void _closeActiveDrawer() {
     if (_drawerMode == _TodoPanelDrawerMode.none) {
+      if (_pendingDrawerMode == null) {
+        return;
+      }
+      _drawerRequestSerial += 1;
+      setState(() => _pendingDrawerMode = null);
+      _restorePanelFocus();
       return;
     }
 
+    _drawerRequestSerial += 1;
     final closedMode = _drawerMode;
     final returnMode = switch (closedMode) {
       _TodoPanelDrawerMode.tagManagement => _tagManagementReturnMode,
@@ -440,12 +501,30 @@ class _TodoPanelState extends State<TodoPanel> {
         mode == _TodoPanelDrawerMode.editTodo;
   }
 
+  _TodoPanelDrawerFamily? _drawerFamilyFor(_TodoPanelDrawerMode mode) {
+    return switch (mode) {
+      _TodoPanelDrawerMode.settings => _TodoPanelDrawerFamily.settings,
+      _TodoPanelDrawerMode.tagFilter ||
+      _TodoPanelDrawerMode.tagAssignment ||
+      _TodoPanelDrawerMode.tagManagement => _TodoPanelDrawerFamily.tags,
+      _TodoPanelDrawerMode.stickyBoardManagement ||
+      _TodoPanelDrawerMode.stickyBoardDetail ||
+      _TodoPanelDrawerMode.stickyBoardTodoPicker =>
+        _TodoPanelDrawerFamily.stickyBoards,
+      _TodoPanelDrawerMode.createTodo ||
+      _TodoPanelDrawerMode.todoDetails ||
+      _TodoPanelDrawerMode.editTodo => _TodoPanelDrawerFamily.todoEditor,
+      _TodoPanelDrawerMode.none => null,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final isDrawerOpen = _drawerMode != _TodoPanelDrawerMode.none;
+    final isDrawerOpen =
+        _drawerMode != _TodoPanelDrawerMode.none || _pendingDrawerMode != null;
     final isSettingsOpen = _drawerMode == _TodoPanelDrawerMode.settings;
     final isTagFilterOpen = _drawerMode == _TodoPanelDrawerMode.tagFilter;
     final isTagAssignmentOpen =
@@ -468,6 +547,18 @@ class _TodoPanelState extends State<TodoPanel> {
         _drawerMode == _TodoPanelDrawerMode.createTodo ||
         _drawerMode == _TodoPanelDrawerMode.todoDetails ||
         _drawerMode == _TodoPanelDrawerMode.editTodo;
+    final hasSettingsDrawer = _mountedDrawerFamilies.contains(
+      _TodoPanelDrawerFamily.settings,
+    );
+    final hasTagDrawer = _mountedDrawerFamilies.contains(
+      _TodoPanelDrawerFamily.tags,
+    );
+    final hasStickyBoardDrawer = _mountedDrawerFamilies.contains(
+      _TodoPanelDrawerFamily.stickyBoards,
+    );
+    final hasTodoDrawer = _mountedDrawerFamilies.contains(
+      _TodoPanelDrawerFamily.todoEditor,
+    );
     final isTodoContextOverlayOpen =
         isTagAssignmentOpen ||
         (isTagManagementOpen &&
@@ -762,337 +853,348 @@ class _TodoPanelState extends State<TodoPanel> {
                             ),
                           ),
                         ),
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          bottom: 0,
-                          width: _settingsDrawerWidth,
-                          child: IgnorePointer(
-                            key: const Key('settings-drawer-pointer'),
-                            ignoring: !isSettingsOpen,
-                            child: ExcludeSemantics(
-                              excluding: !isSettingsOpen,
-                              child: AnimatedSlide(
-                                key: const Key('settings-drawer-slide'),
-                                duration: reduceMotion
-                                    ? Duration.zero
-                                    : _drawerSlideDuration,
-                                curve: Curves.easeOutCubic,
-                                offset: isSettingsOpen
-                                    ? Offset.zero
-                                    : const Offset(1, 0),
-                                child: FocusTraversalGroup(
-                                  child: SettingsDrawer(
-                                    viewModel: widget.settingsController,
-                                    updateViewModel: widget.updateController,
-                                    workingDirectoryPath:
-                                        widget.controller.storageDirectoryPath,
-                                    onClose: _closeActiveDrawer,
-                                    closeFocusNode: _settingsCloseFocusNode,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          left: tagDrawerOnLeft ? 0 : null,
-                          right: tagDrawerOnLeft ? null : 0,
-                          bottom: 0,
-                          width: _stickyBoardDrawerWidth,
-                          child: IgnorePointer(
-                            key: const Key('sticky-board-drawer-pointer'),
-                            ignoring: !isStickyBoardDrawerOpen,
-                            child: ExcludeSemantics(
-                              excluding: !isStickyBoardDrawerOpen,
-                              child: AnimatedSlide(
-                                key: const Key('sticky-board-drawer-slide'),
-                                duration: reduceMotion
-                                    ? Duration.zero
-                                    : _drawerSlideDuration,
-                                curve: Curves.easeOutCubic,
-                                offset: isStickyBoardDrawerVisible
-                                    ? Offset.zero
-                                    : Offset(tagDrawerOnLeft ? -1 : 1, 0),
-                                child: FocusTraversalGroup(
-                                  child: AnimatedBuilder(
-                                    animation: Listenable.merge(<Listenable>[
-                                      widget.stickyBoardController,
-                                      widget.controller,
-                                    ]),
-                                    builder: (context, _) {
-                                      final board =
-                                          _selectedStickyBoardId == null
-                                          ? null
-                                          : widget.stickyBoardController
-                                                .boardById(
-                                                  _selectedStickyBoardId!,
-                                                );
-                                      if (isStickyBoardTodoPickerOpen &&
-                                          board != null) {
-                                        return StickyBoardTodoPickerDrawer(
-                                          board: board,
-                                          todoController: widget.controller,
-                                          boardController:
-                                              widget.stickyBoardController,
-                                          borderOnLeft: !tagDrawerOnLeft,
-                                          onBack: _backToStickyBoardDetail,
-                                          onClose: _closeActiveDrawer,
-                                          closeFocusNode:
-                                              _stickyBoardCloseFocusNode,
-                                        );
-                                      }
-                                      if ((isStickyBoardDetailOpen ||
-                                              isStickyBoardContextVisible) &&
-                                          board != null) {
-                                        return StickyBoardDetailDrawer(
-                                          board: board,
-                                          todoController: widget.controller,
-                                          boardController:
-                                              widget.stickyBoardController,
-                                          borderOnLeft: !tagDrawerOnLeft,
-                                          onBack: _backToStickyBoardManagement,
-                                          onClose: _closeActiveDrawer,
-                                          onTogglePin: () =>
-                                              _toggleStickyBoardPin(board.id),
-                                          onAddExisting:
-                                              _openStickyBoardTodoPicker,
-                                          onCreateTodo: () => _openTodoCreate(
-                                            stickyBoardId: board.id,
-                                          ),
-                                          onOpenDetails: _openTodoDetails,
-                                          onEditTodo: _openTodoEdit,
-                                          onOpenTagManagement:
-                                              _openTagManagementFromStickyBoard,
-                                          closeFocusNode:
-                                              _stickyBoardCloseFocusNode,
-                                        );
-                                      }
-                                      return StickyBoardManagementDrawer(
-                                        controller:
-                                            widget.stickyBoardController,
-                                        isOpen: isStickyBoardManagementOpen,
-                                        borderOnLeft: !tagDrawerOnLeft,
-                                        onClose: _closeActiveDrawer,
-                                        onOpenBoard: _openStickyBoard,
-                                        onTogglePin: _toggleStickyBoardPin,
-                                        onDeleteBoard: _deleteStickyBoard,
-                                        closeFocusNode:
-                                            _stickyBoardCloseFocusNode,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          height: _todoDrawerHeight,
-                          child: IgnorePointer(
-                            key: const Key('todo-drawer-pointer'),
-                            ignoring: !isTodoDrawerOpen,
-                            child: ExcludeFocus(
-                              excluding: !isTodoDrawerOpen,
+                        if (hasSettingsDrawer)
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            bottom: 0,
+                            width: _settingsDrawerWidth,
+                            child: IgnorePointer(
+                              key: const Key('settings-drawer-pointer'),
+                              ignoring: !isSettingsOpen,
                               child: ExcludeSemantics(
-                                excluding: !isTodoDrawerOpen,
+                                excluding: !isSettingsOpen,
                                 child: AnimatedSlide(
-                                  key: const Key('todo-drawer-slide'),
+                                  key: const Key('settings-drawer-slide'),
                                   duration: reduceMotion
                                       ? Duration.zero
                                       : _drawerSlideDuration,
                                   curve: Curves.easeOutCubic,
-                                  offset: isTodoDrawerVisible
+                                  offset: isSettingsOpen
                                       ? Offset.zero
-                                      : const Offset(0, 1),
+                                      : const Offset(1, 0),
                                   child: FocusTraversalGroup(
-                                    child: TodoEditorDrawer(
-                                      key: ValueKey<int>(_todoEditorSession),
-                                      mode: todoEditorMode,
-                                      item: selectedTodo,
-                                      availableTags: widget.controller.tags,
-                                      originalAssignedTagIds:
-                                          originalTodoTagIds,
-                                      assignedTagIds: todoEditorTagIds,
-                                      isOpen: isTodoDrawerOpen,
+                                    child: SettingsDrawer(
+                                      viewModel: widget.settingsController,
+                                      updateViewModel: widget.updateController,
+                                      workingDirectoryPath: widget
+                                          .controller
+                                          .storageDirectoryPath,
                                       onClose: _closeActiveDrawer,
-                                      onEdit: () {
-                                        final todoId = selectedTodo?.id;
-                                        if (todoId != null) {
-                                          _openTodoEdit(todoId);
+                                      closeFocusNode: _settingsCloseFocusNode,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (hasStickyBoardDrawer)
+                          Positioned(
+                            top: 0,
+                            left: tagDrawerOnLeft ? 0 : null,
+                            right: tagDrawerOnLeft ? null : 0,
+                            bottom: 0,
+                            width: _stickyBoardDrawerWidth,
+                            child: IgnorePointer(
+                              key: const Key('sticky-board-drawer-pointer'),
+                              ignoring: !isStickyBoardDrawerOpen,
+                              child: ExcludeSemantics(
+                                excluding: !isStickyBoardDrawerOpen,
+                                child: AnimatedSlide(
+                                  key: const Key('sticky-board-drawer-slide'),
+                                  duration: reduceMotion
+                                      ? Duration.zero
+                                      : _drawerSlideDuration,
+                                  curve: Curves.easeOutCubic,
+                                  offset: isStickyBoardDrawerVisible
+                                      ? Offset.zero
+                                      : Offset(tagDrawerOnLeft ? -1 : 1, 0),
+                                  child: FocusTraversalGroup(
+                                    child: AnimatedBuilder(
+                                      animation: Listenable.merge(<Listenable>[
+                                        widget.stickyBoardController,
+                                        widget.controller,
+                                      ]),
+                                      builder: (context, _) {
+                                        final board =
+                                            _selectedStickyBoardId == null
+                                            ? null
+                                            : widget.stickyBoardController
+                                                  .boardById(
+                                                    _selectedStickyBoardId!,
+                                                  );
+                                        if (isStickyBoardTodoPickerOpen &&
+                                            board != null) {
+                                          return StickyBoardTodoPickerDrawer(
+                                            board: board,
+                                            todoController: widget.controller,
+                                            boardController:
+                                                widget.stickyBoardController,
+                                            borderOnLeft: !tagDrawerOnLeft,
+                                            onBack: _backToStickyBoardDetail,
+                                            onClose: _closeActiveDrawer,
+                                            closeFocusNode:
+                                                _stickyBoardCloseFocusNode,
+                                          );
                                         }
-                                      },
-                                      onOpenTagAssignment:
-                                          _openTagAssignmentFromTodo,
-                                      onSave: (title, content, tagIds) {
-                                        if (todoEditorMode ==
-                                            TodoEditorDrawerMode.create) {
-                                          return () async {
-                                            final item = await widget.controller
-                                                .create(
-                                                  title,
-                                                  content: content,
-                                                  tagIds: tagIds,
-                                                );
-                                            if (item == null) {
-                                              return false;
-                                            }
-                                            final boardId =
-                                                _todoCreationBoardId;
-                                            if (boardId == null) {
-                                              return true;
-                                            }
-                                            return widget.stickyBoardController
-                                                .addTodo(
-                                                  boardId: boardId,
-                                                  todoId: item.id,
-                                                );
-                                          }();
+                                        if ((isStickyBoardDetailOpen ||
+                                                isStickyBoardContextVisible) &&
+                                            board != null) {
+                                          return StickyBoardDetailDrawer(
+                                            board: board,
+                                            todoController: widget.controller,
+                                            boardController:
+                                                widget.stickyBoardController,
+                                            borderOnLeft: !tagDrawerOnLeft,
+                                            onBack:
+                                                _backToStickyBoardManagement,
+                                            onClose: _closeActiveDrawer,
+                                            onTogglePin: () =>
+                                                _toggleStickyBoardPin(board.id),
+                                            onAddExisting:
+                                                _openStickyBoardTodoPicker,
+                                            onCreateTodo: () => _openTodoCreate(
+                                              stickyBoardId: board.id,
+                                            ),
+                                            onOpenDetails: _openTodoDetails,
+                                            onEditTodo: _openTodoEdit,
+                                            onOpenTagManagement:
+                                                _openTagManagementFromStickyBoard,
+                                            closeFocusNode:
+                                                _stickyBoardCloseFocusNode,
+                                          );
                                         }
-                                        final todoId = selectedTodo?.id;
-                                        if (todoId == null) {
-                                          return Future<bool>.value(false);
-                                        }
-                                        return widget.controller.updateDetails(
-                                          id: todoId,
-                                          title: title,
-                                          content: content,
-                                          tagIds: tagIds,
+                                        return StickyBoardManagementDrawer(
+                                          controller:
+                                              widget.stickyBoardController,
+                                          isOpen: isStickyBoardManagementOpen,
+                                          borderOnLeft: !tagDrawerOnLeft,
+                                          onClose: _closeActiveDrawer,
+                                          onOpenBoard: _openStickyBoard,
+                                          onTogglePin: _toggleStickyBoardPin,
+                                          onDeleteBoard: _deleteStickyBoard,
+                                          closeFocusNode:
+                                              _stickyBoardCloseFocusNode,
                                         );
                                       },
-                                      onSaved: () {
-                                        if (_drawerMode ==
-                                            _TodoPanelDrawerMode.createTodo) {
-                                          _closeActiveDrawer();
-                                          return;
-                                        }
-                                        if (_drawerMode ==
-                                            _TodoPanelDrawerMode.editTodo) {
-                                          final todoId = _selectedTodoId;
-                                          if (todoId != null) {
-                                            _openTodoDetails(todoId);
-                                          }
-                                        }
-                                      },
-                                      closeFocusNode: _todoDrawerCloseFocusNode,
                                     ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            key: const Key('todo-context-scrim-pointer'),
-                            ignoring: !isTodoContextOverlayOpen,
-                            child: ExcludeSemantics(
-                              child: AnimatedOpacity(
-                                key: const Key('todo-context-scrim'),
-                                duration: reduceMotion
-                                    ? Duration.zero
-                                    : _drawerScrimDuration,
-                                curve: Curves.easeOut,
-                                opacity: isTodoContextOverlayOpen ? 1 : 0,
-                                child: GestureDetector(
-                                  key: const Key('todo-context-dismiss'),
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: _closeActiveDrawer,
-                                  child: ColoredBox(
-                                    color: Colors.black.withValues(
-                                      alpha: isDark ? 0.18 : 0.10,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          left: tagDrawerOnLeft ? 0 : null,
-                          right: tagDrawerOnLeft ? null : 0,
-                          bottom: 0,
-                          width: _tagDrawerWidth,
-                          child: IgnorePointer(
-                            key: const Key('tag-drawer-pointer'),
-                            ignoring: !isTagDrawerOpen,
-                            child: ExcludeSemantics(
-                              excluding: !isTagDrawerOpen,
-                              child: AnimatedSlide(
-                                key: const Key('tag-drawer-slide'),
-                                duration: reduceMotion
-                                    ? Duration.zero
-                                    : _drawerSlideDuration,
-                                curve: Curves.easeOutCubic,
-                                offset: isTagDrawerOpen
-                                    ? Offset.zero
-                                    : Offset(tagDrawerOnLeft ? -1 : 1, 0),
-                                child: FocusTraversalGroup(
-                                  child: AnimatedSwitcher(
+                        if (hasTodoDrawer)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: _todoDrawerHeight,
+                            child: IgnorePointer(
+                              key: const Key('todo-drawer-pointer'),
+                              ignoring: !isTodoDrawerOpen,
+                              child: ExcludeFocus(
+                                excluding: !isTodoDrawerOpen,
+                                child: ExcludeSemantics(
+                                  excluding: !isTodoDrawerOpen,
+                                  child: AnimatedSlide(
+                                    key: const Key('todo-drawer-slide'),
                                     duration: reduceMotion
                                         ? Duration.zero
-                                        : const Duration(milliseconds: 160),
-                                    switchInCurve: Curves.easeOut,
-                                    switchOutCurve: Curves.easeIn,
-                                    transitionBuilder: (child, animation) {
-                                      return FadeTransition(
-                                        opacity: animation,
-                                        child: child,
-                                      );
-                                    },
-                                    child: switch (visibleTagDrawerMode) {
-                                      _TodoPanelDrawerMode.tagManagement =>
-                                        TagManagementDrawer(
-                                          key: const ValueKey<String>(
-                                            'tag-management-drawer-content',
-                                          ),
-                                          controller: widget.controller,
-                                          isOpen: isTagManagementOpen,
-                                          borderOnLeft: !tagDrawerOnLeft,
-                                          onClose: _closeActiveDrawer,
-                                          closeFocusNode:
-                                              _tagManagementCloseFocusNode,
-                                        ),
-                                      _TodoPanelDrawerMode.tagAssignment =>
-                                        TagFilterDrawer.assignment(
-                                          key: const ValueKey<String>(
-                                            'tag-assignment-drawer-content',
-                                          ),
-                                          controller: widget.controller,
-                                          selectedTagIds: _todoEditorTagIds,
-                                          borderOnLeft: !tagDrawerOnLeft,
-                                          onToggled: _toggleTodoEditorTag,
-                                          onManageTags:
-                                              _openTagManagementFromTagAssignment,
-                                          onClose: _closeActiveDrawer,
-                                          closeFocusNode:
-                                              _tagAssignmentCloseFocusNode,
-                                        ),
-                                      _ => TagFilterDrawer.filter(
-                                        key: const ValueKey<String>(
-                                          'tag-filter-drawer-content',
-                                        ),
-                                        controller: widget.controller,
-                                        selectedTagId: _selectedTagId,
-                                        borderOnLeft: !tagDrawerOnLeft,
-                                        onSelected: _selectTagFilter,
-                                        onManageTags: _openTagManagement,
+                                        : _drawerSlideDuration,
+                                    curve: Curves.easeOutCubic,
+                                    offset: isTodoDrawerVisible
+                                        ? Offset.zero
+                                        : const Offset(0, 1),
+                                    child: FocusTraversalGroup(
+                                      child: TodoEditorDrawer(
+                                        key: ValueKey<int>(_todoEditorSession),
+                                        mode: todoEditorMode,
+                                        item: selectedTodo,
+                                        availableTags: widget.controller.tags,
+                                        originalAssignedTagIds:
+                                            originalTodoTagIds,
+                                        assignedTagIds: todoEditorTagIds,
+                                        isOpen: isTodoDrawerOpen,
                                         onClose: _closeActiveDrawer,
+                                        onEdit: () {
+                                          final todoId = selectedTodo?.id;
+                                          if (todoId != null) {
+                                            _openTodoEdit(todoId);
+                                          }
+                                        },
+                                        onOpenTagAssignment:
+                                            _openTagAssignmentFromTodo,
+                                        onSave: (title, content, tagIds) {
+                                          if (todoEditorMode ==
+                                              TodoEditorDrawerMode.create) {
+                                            return () async {
+                                              final item = await widget
+                                                  .controller
+                                                  .create(
+                                                    title,
+                                                    content: content,
+                                                    tagIds: tagIds,
+                                                  );
+                                              if (item == null) {
+                                                return false;
+                                              }
+                                              final boardId =
+                                                  _todoCreationBoardId;
+                                              if (boardId == null) {
+                                                return true;
+                                              }
+                                              return widget
+                                                  .stickyBoardController
+                                                  .addTodo(
+                                                    boardId: boardId,
+                                                    todoId: item.id,
+                                                  );
+                                            }();
+                                          }
+                                          final todoId = selectedTodo?.id;
+                                          if (todoId == null) {
+                                            return Future<bool>.value(false);
+                                          }
+                                          return widget.controller
+                                              .updateDetails(
+                                                id: todoId,
+                                                title: title,
+                                                content: content,
+                                                tagIds: tagIds,
+                                              );
+                                        },
+                                        onSaved: () {
+                                          if (_drawerMode ==
+                                              _TodoPanelDrawerMode.createTodo) {
+                                            _closeActiveDrawer();
+                                            return;
+                                          }
+                                          if (_drawerMode ==
+                                              _TodoPanelDrawerMode.editTodo) {
+                                            final todoId = _selectedTodoId;
+                                            if (todoId != null) {
+                                              _openTodoDetails(todoId);
+                                            }
+                                          }
+                                        },
                                         closeFocusNode:
-                                            _tagFilterCloseFocusNode,
+                                            _todoDrawerCloseFocusNode,
                                       ),
-                                    },
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
+                        if (hasTodoDrawer && hasTagDrawer)
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              key: const Key('todo-context-scrim-pointer'),
+                              ignoring: !isTodoContextOverlayOpen,
+                              child: ExcludeSemantics(
+                                child: AnimatedOpacity(
+                                  key: const Key('todo-context-scrim'),
+                                  duration: reduceMotion
+                                      ? Duration.zero
+                                      : _drawerScrimDuration,
+                                  curve: Curves.easeOut,
+                                  opacity: isTodoContextOverlayOpen ? 1 : 0,
+                                  child: GestureDetector(
+                                    key: const Key('todo-context-dismiss'),
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: _closeActiveDrawer,
+                                    child: ColoredBox(
+                                      color: Colors.black.withValues(
+                                        alpha: isDark ? 0.18 : 0.10,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (hasTagDrawer)
+                          Positioned(
+                            top: 0,
+                            left: tagDrawerOnLeft ? 0 : null,
+                            right: tagDrawerOnLeft ? null : 0,
+                            bottom: 0,
+                            width: _tagDrawerWidth,
+                            child: IgnorePointer(
+                              key: const Key('tag-drawer-pointer'),
+                              ignoring: !isTagDrawerOpen,
+                              child: ExcludeSemantics(
+                                excluding: !isTagDrawerOpen,
+                                child: AnimatedSlide(
+                                  key: const Key('tag-drawer-slide'),
+                                  duration: reduceMotion
+                                      ? Duration.zero
+                                      : _drawerSlideDuration,
+                                  curve: Curves.easeOutCubic,
+                                  offset: isTagDrawerOpen
+                                      ? Offset.zero
+                                      : Offset(tagDrawerOnLeft ? -1 : 1, 0),
+                                  child: FocusTraversalGroup(
+                                    child: AnimatedSwitcher(
+                                      duration: reduceMotion
+                                          ? Duration.zero
+                                          : const Duration(milliseconds: 160),
+                                      switchInCurve: Curves.easeOut,
+                                      switchOutCurve: Curves.easeIn,
+                                      transitionBuilder: (child, animation) {
+                                        return FadeTransition(
+                                          opacity: animation,
+                                          child: child,
+                                        );
+                                      },
+                                      child: switch (visibleTagDrawerMode) {
+                                        _TodoPanelDrawerMode.tagManagement =>
+                                          TagManagementDrawer(
+                                            key: const ValueKey<String>(
+                                              'tag-management-drawer-content',
+                                            ),
+                                            controller: widget.controller,
+                                            isOpen: isTagManagementOpen,
+                                            borderOnLeft: !tagDrawerOnLeft,
+                                            onClose: _closeActiveDrawer,
+                                            closeFocusNode:
+                                                _tagManagementCloseFocusNode,
+                                          ),
+                                        _TodoPanelDrawerMode.tagAssignment =>
+                                          TagFilterDrawer.assignment(
+                                            key: const ValueKey<String>(
+                                              'tag-assignment-drawer-content',
+                                            ),
+                                            controller: widget.controller,
+                                            selectedTagIds: _todoEditorTagIds,
+                                            borderOnLeft: !tagDrawerOnLeft,
+                                            onToggled: _toggleTodoEditorTag,
+                                            onManageTags:
+                                                _openTagManagementFromTagAssignment,
+                                            onClose: _closeActiveDrawer,
+                                            closeFocusNode:
+                                                _tagAssignmentCloseFocusNode,
+                                          ),
+                                        _ => TagFilterDrawer.filter(
+                                          key: const ValueKey<String>(
+                                            'tag-filter-drawer-content',
+                                          ),
+                                          controller: widget.controller,
+                                          selectedTagId: _selectedTagId,
+                                          borderOnLeft: !tagDrawerOnLeft,
+                                          onSelected: _selectTagFilter,
+                                          onManageTags: _openTagManagement,
+                                          onClose: _closeActiveDrawer,
+                                          closeFocusNode:
+                                              _tagFilterCloseFocusNode,
+                                        ),
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),

@@ -77,6 +77,14 @@ void main() {
       tester.getSize(find.byKey(const ValueKey('floating-todo-icon'))),
       const Size.square(FloatingTodoIcon.canvasDimension),
     );
+    final floatingMark = tester.widget<FloatickBrandMark>(
+      find.descendant(
+        of: find.byKey(const ValueKey('floating-todo-icon')),
+        matching: find.byType(FloatickBrandMark),
+      ),
+    );
+    expect(floatingMark.shape, FloatickBrandMarkShape.circle);
+    expect(floatingMark.shadows, isEmpty);
 
     windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
     await tester.pumpAndSettle();
@@ -100,18 +108,11 @@ void main() {
     );
     final panelDecoration = panelSurface.decoration as BoxDecoration;
     expect(panelDecoration.boxShadow, isNull);
-    expect(
-      tester
-          .widget<AnimatedSlide>(find.byKey(const Key('settings-drawer-slide')))
-          .offset,
-      const Offset(1, 0),
-    );
-    expect(
-      tester
-          .widget<AnimatedSlide>(find.byKey(const Key('todo-drawer-slide')))
-          .offset,
-      const Offset(0, 1),
-    );
+    expect(find.byKey(const Key('settings-drawer-slide')), findsNothing);
+    expect(find.byKey(const Key('tag-drawer-slide')), findsNothing);
+    expect(find.byKey(const Key('sticky-board-drawer-slide')), findsNothing);
+    expect(find.byKey(const Key('todo-drawer-slide')), findsNothing);
+    expect(find.byKey(const Key('todo-context-scrim')), findsNothing);
 
     await tester.tap(find.byKey(const Key('settings-button')));
     await tester.pumpAndSettle();

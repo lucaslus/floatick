@@ -28,6 +28,7 @@ final class MainFlutterWindow: NSWindow {
   private var collapsedOrigin = NSPoint.zero
   private var pendingExpansionAnchor: ExpansionAnchor?
   private var collapsedDragOverlay: CollapsedDragOverlayView?
+  private weak var flutterContentView: NSView?
   private var windowChannel: FlutterMethodChannel?
   private var updateService: UpdateService?
 
@@ -50,6 +51,7 @@ final class MainFlutterWindow: NSWindow {
 
     configureWindow()
     contentViewController = flutterViewController
+    flutterContentView = flutterViewController.view
     RegisterGeneratedPlugins(registry: flutterViewController)
     configureWindowChannel(for: flutterViewController)
     configureUpdateService(for: flutterViewController)
@@ -225,8 +227,7 @@ final class MainFlutterWindow: NSWindow {
       let anchor = pendingExpansionAnchor ?? preferredExpansionAnchor()
       pendingExpansionAnchor = nil
       setFrame(expandedFrame(for: anchor), display: true)
-      NSApp.activate(ignoringOtherApps: true)
-      makeKeyAndOrderFront(nil)
+      activateAndFocusFlutterContent()
     } else {
       let targetScreen = screen(containing: collapsedOrigin)
       collapsedOrigin = clampedOrigin(
@@ -242,6 +243,33 @@ final class MainFlutterWindow: NSWindow {
       resignKey()
     }
     completion()
+  }
+
+  private func activateAndFocusFlutterContent() {
+    NSApp.activate(ignoringOtherApps: true)
+    makeKeyAndOrderFront(nil)
+    _ = focusFlutterContent()
+
+    // Expansion begins from acceptsFirstMouse on the collapsed overlay, so
+    // activation can finish on the next AppKit run-loop turn. Reassert the
+    // Flutter view afterwards to keep keyboard input off the overlay/window.
+    DispatchQueue.main.async { [weak self] in
+      guard let self, self.isExpanded else {
+        return
+      }
+      self.makeKeyAndOrderFront(nil)
+      if !self.focusFlutterContent() {
+        NSLog("Floatick could not focus the Flutter content view.")
+      }
+    }
+  }
+
+  @discardableResult
+  private func focusFlutterContent() -> Bool {
+    guard let flutterContentView else {
+      return false
+    }
+    return makeFirstResponder(flutterContentView)
   }
 
   private func preferredExpansionAnchor() -> ExpansionAnchor {

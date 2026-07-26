@@ -43,13 +43,6 @@ class FloatingTodoIcon extends StatelessWidget {
                         child: FloatickBrandMark(
                           size: visualDimension,
                           shape: FloatickBrandMarkShape.circle,
-                          shadows: <BoxShadow>[
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.20),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
                       ),
                       if (activeCount > 0)
