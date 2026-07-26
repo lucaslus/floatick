@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import multiview_desktop
 
 final class MainFlutterWindow: NSWindow {
   private enum Layout {
@@ -34,7 +35,17 @@ final class MainFlutterWindow: NSWindow {
   override var canBecomeMain: Bool { true }
 
   override func awakeFromNib() {
-    let flutterViewController = FlutterViewController()
+    let engine = FlutterEngine(
+      name: "floatick_main_engine",
+      project: nil,
+      allowHeadlessExecution: true
+    )
+    MultiviewDesktopPlugin.prepareEngine(engine, window: self)
+    let flutterViewController = FlutterViewController(
+      engine: engine,
+      nibName: nil,
+      bundle: nil
+    )
     flutterViewController.backgroundColor = .clear
 
     configureWindow()

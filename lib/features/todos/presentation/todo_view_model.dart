@@ -162,40 +162,47 @@ class TodoViewModel extends ChangeNotifier {
     String title, {
     String content = '',
     Iterable<String> tagIds = const <String>[],
+  }) async {
+    return await create(title, content: content, tagIds: tagIds) != null;
+  }
+
+  Future<TodoItem?> create(
+    String title, {
+    String content = '',
+    Iterable<String> tagIds = const <String>[],
   }) {
     final normalizedTitle = title.trim();
     if (normalizedTitle.isEmpty) {
-      return Future<bool>.value(false);
+      return Future<TodoItem?>.value(null);
     }
 
     final todoId = _idGenerator();
     return _enqueueTodoAndTagMutation(() async {
       if (_items.any((item) => item.id == todoId)) {
-        return false;
+        return null;
       }
       final normalizedTagIds = _normalizeKnownTagIds(tagIds);
       if (normalizedTagIds == null) {
-        return false;
+        return null;
       }
-      final updatedItems = <TodoItem>[
-        ..._items,
-        TodoItem(
-          id: todoId,
-          title: normalizedTitle,
-          content: content,
-          createdAt: _clock().toUtc(),
-        ),
-      ];
+      final createdItem = TodoItem(
+        id: todoId,
+        title: normalizedTitle,
+        content: content,
+        createdAt: _clock().toUtc(),
+      );
+      final updatedItems = <TodoItem>[..._items, createdItem];
       final updatedWorkspace = _workspaceWithTodoTags(
         todoId: todoId,
         tagIds: normalizedTagIds,
       );
-      return _commitTodoAndTags(
+      final saved = await _commitTodoAndTags(
         updatedItems: updatedItems,
         updatedWorkspace: updatedWorkspace,
         todoChanged: true,
         tagsChanged: normalizedTagIds.isNotEmpty,
       );
+      return saved ? createdItem : null;
     });
   }
 

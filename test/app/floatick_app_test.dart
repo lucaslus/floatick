@@ -4,6 +4,10 @@ import 'package:floatick/core/ui/floatick_brand_mark.dart';
 import 'package:floatick/features/settings/data/settings_repository.dart';
 import 'package:floatick/features/settings/domain/app_settings.dart';
 import 'package:floatick/features/settings/presentation/settings_view_model.dart';
+import 'package:floatick/features/sticky_boards/data/sticky_board_repository.dart';
+import 'package:floatick/features/sticky_boards/domain/sticky_board_workspace.dart';
+import 'package:floatick/features/sticky_boards/presentation/sticky_board_view_model.dart';
+import 'package:floatick/features/sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import 'package:floatick/features/todos/data/tag_repository.dart';
 import 'package:floatick/features/todos/data/todo_repository.dart';
 import 'package:floatick/features/todos/domain/tag_workspace.dart';
@@ -44,15 +48,25 @@ void main() {
     final updateController = UpdateViewModel(
       updateRepository: updateRepository,
     );
+    final stickyBoardController = StickyBoardViewModel(
+      repository: _WidgetTestStickyBoardRepository(),
+    );
+    final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
+      boardController: stickyBoardController,
+      todoController: controller,
+    );
     await controller.load();
     await settingsController.load();
     await updateController.load();
+    await stickyBoardController.load();
 
     await tester.pumpWidget(
       FloatickApp(
         controller: controller,
         settingsController: settingsController,
         updateController: updateController,
+        stickyBoardController: stickyBoardController,
+        stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
         windowBridge: windowBridge,
         locale: const Locale('zh'),
       ),
@@ -373,16 +387,26 @@ void main() {
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
     );
+    final stickyBoardController = StickyBoardViewModel(
+      repository: _WidgetTestStickyBoardRepository(),
+    );
+    final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
+      boardController: stickyBoardController,
+      todoController: controller,
+    );
     final windowBridge = _WidgetTestWindowBridge();
     await controller.load();
     await settingsController.load();
     await updateController.load();
+    await stickyBoardController.load();
 
     await tester.pumpWidget(
       FloatickApp(
         controller: controller,
         settingsController: settingsController,
         updateController: updateController,
+        stickyBoardController: stickyBoardController,
+        stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
         windowBridge: windowBridge,
         locale: const Locale('en'),
       ),
@@ -632,6 +656,140 @@ void main() {
     );
   });
 
+  testWidgets('sticky boards create virtual groups and reuse the todo editor', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final todoRepository = _WidgetTestRepository()
+      ..savedItems = <TodoItem>[
+        TodoItem(
+          id: 'existing-todo',
+          title: 'Review the launch checklist',
+          createdAt: DateTime.utc(2026, 7, 26, 9),
+        ),
+      ];
+    var todoSequence = 0;
+    final todoController = TodoViewModel(
+      todoRepository: todoRepository,
+      tagRepository: _WidgetTestTagRepository(),
+      idGenerator: () => 'created-todo-${++todoSequence}',
+    );
+    final stickyBoardController = StickyBoardViewModel(
+      repository: _WidgetTestStickyBoardRepository(),
+      idGenerator: () => 'board-launch',
+    );
+    final settingsController = SettingsViewModel(
+      settingsRepository: _WidgetTestSettingsRepository(),
+    );
+    final updateController = UpdateViewModel(
+      updateRepository: _WidgetTestUpdateRepository(),
+    );
+    final windowBridge = _WidgetTestWindowBridge();
+    final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
+      boardController: stickyBoardController,
+      todoController: todoController,
+    );
+    await Future.wait<void>(<Future<void>>[
+      todoController.load(),
+      stickyBoardController.load(),
+      settingsController.load(),
+      updateController.load(),
+    ]);
+
+    await tester.pumpWidget(
+      FloatickApp(
+        controller: todoController,
+        settingsController: settingsController,
+        updateController: updateController,
+        stickyBoardController: stickyBoardController,
+        stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
+        windowBridge: windowBridge,
+        locale: const Locale('en'),
+      ),
+    );
+    windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('sticky-boards-button')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('sticky-boards-button')),
+        matching: find.byIcon(Icons.sticky_note_2_outlined),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('sticky-boards-button')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('sticky-board-management-drawer')),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('sticky-board-search-create-field')),
+      'Launch',
+    );
+    await tester.tap(find.byKey(const Key('submit-sticky-board')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sticky-board-board-launch')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('sticky-board-board-launch')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sticky-board-detail-drawer')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('sticky-board-add-existing')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('sticky-board-todo-picker-drawer')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('sticky-board-picker-existing-todo')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Back to Sticky Boards'));
+    await tester.pumpAndSettle();
+    expect(stickyBoardController.todoIdsForBoard('board-launch'), <String>[
+      'existing-todo',
+    ]);
+    expect(
+      find.byKey(const Key('sticky-board-todo-existing-todo')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('sticky-board-new-todo')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('todo-title-field')),
+      'Share the release notes',
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('save-todo-details')))
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.byKey(const Key('save-todo-details')));
+    await tester.pumpAndSettle();
+
+    expect(
+      todoController.items.map((item) => item.id),
+      contains('created-todo-1'),
+    );
+    expect(stickyBoardController.todoCountForBoard('board-launch'), 2);
+    expect(stickyBoardController.todoIdsForBoard('board-launch'), <String>[
+      'existing-todo',
+      'created-todo-1',
+    ]);
+    expect(find.text('Share the release notes'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('English locale translates the primary todo experience', (
     WidgetTester tester,
   ) async {
@@ -650,16 +808,26 @@ void main() {
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
     );
+    final stickyBoardController = StickyBoardViewModel(
+      repository: _WidgetTestStickyBoardRepository(),
+    );
+    final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
+      boardController: stickyBoardController,
+      todoController: controller,
+    );
     final windowBridge = _WidgetTestWindowBridge();
     await controller.load();
     await settingsController.load();
     await updateController.load();
+    await stickyBoardController.load();
 
     await tester.pumpWidget(
       FloatickApp(
         controller: controller,
         settingsController: settingsController,
         updateController: updateController,
+        stickyBoardController: stickyBoardController,
+        stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
         windowBridge: windowBridge,
         locale: const Locale('en'),
       ),
@@ -716,16 +884,26 @@ void main() {
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
     );
+    final stickyBoardController = StickyBoardViewModel(
+      repository: _WidgetTestStickyBoardRepository(),
+    );
+    final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
+      boardController: stickyBoardController,
+      todoController: controller,
+    );
     final windowBridge = _WidgetTestWindowBridge();
     await controller.load();
     await settingsController.load();
     await updateController.load();
+    await stickyBoardController.load();
 
     await tester.pumpWidget(
       FloatickApp(
         controller: controller,
         settingsController: settingsController,
         updateController: updateController,
+        stickyBoardController: stickyBoardController,
+        stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
         windowBridge: windowBridge,
       ),
     );
@@ -814,6 +992,21 @@ class _WidgetTestTagRepository implements TagRepository {
 
   @override
   Future<void> save(TagWorkspace workspace) async {
+    savedWorkspace = workspace;
+  }
+}
+
+class _WidgetTestStickyBoardRepository implements StickyBoardRepository {
+  StickyBoardWorkspace savedWorkspace = StickyBoardWorkspace.empty();
+
+  @override
+  String get storagePath => '/tmp/floatick-widget-test/sticky_boards.json';
+
+  @override
+  Future<StickyBoardWorkspace> load() async => savedWorkspace;
+
+  @override
+  Future<void> save(StickyBoardWorkspace workspace) async {
     savedWorkspace = workspace;
   }
 }

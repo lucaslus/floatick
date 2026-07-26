@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../core/platform/window_bridge.dart';
 import '../features/settings/domain/app_settings.dart';
 import '../features/settings/presentation/settings_view_model.dart';
+import '../features/sticky_boards/presentation/sticky_board_view_model.dart';
+import '../features/sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import '../features/todos/presentation/todo_panel.dart';
 import '../features/todos/presentation/todo_view_model.dart';
 import '../features/todos/presentation/widgets/floating_todo_icon.dart';
@@ -17,6 +19,8 @@ class FloatickApp extends StatelessWidget {
     required this.controller,
     required this.settingsController,
     required this.updateController,
+    required this.stickyBoardController,
+    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
     this.locale,
     super.key,
@@ -25,6 +29,8 @@ class FloatickApp extends StatelessWidget {
   final TodoViewModel controller;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
+  final StickyBoardViewModel stickyBoardController;
+  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
   final Locale? locale;
 
@@ -56,6 +62,8 @@ class FloatickApp extends StatelessWidget {
             controller: controller,
             settingsController: settingsController,
             updateController: updateController,
+            stickyBoardController: stickyBoardController,
+            stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
             windowBridge: windowBridge,
           ),
         );
@@ -69,12 +77,16 @@ class _FloatickShell extends StatefulWidget {
     required this.controller,
     required this.settingsController,
     required this.updateController,
+    required this.stickyBoardController,
+    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
   });
 
   final TodoViewModel controller;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
+  final StickyBoardViewModel stickyBoardController;
+  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
 
   @override
@@ -89,13 +101,21 @@ class _FloatickShellState extends State<_FloatickShell> {
   bool _hasSyncedPreferredLanguage = false;
   String? _lastSyncedLanguageCode;
   WindowExpansionAnchor _expansionAnchor = WindowExpansionAnchor.topRight;
+  String? _requestedStickyBoardId;
+  int _stickyBoardRequestSerial = 0;
 
   @override
   void initState() {
     super.initState();
     widget.windowBridge.setExpandRequestHandler(_handleNativeExpandRequest);
     widget.settingsController.addListener(_handleSettingsChanged);
+    widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
+      _handleStickyBoardWindowRequest,
+    );
     unawaited(_syncPreferredLanguage());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
+    });
   }
 
   @override
@@ -111,6 +131,13 @@ class _FloatickShellState extends State<_FloatickShell> {
       widget.settingsController.addListener(_handleSettingsChanged);
       _hasSyncedPreferredLanguage = false;
     }
+    if (oldWidget.stickyBoardWindowCoordinator !=
+        widget.stickyBoardWindowCoordinator) {
+      oldWidget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
+      widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
+        _handleStickyBoardWindowRequest,
+      );
+    }
     if (!_hasSyncedPreferredLanguage) {
       unawaited(_syncPreferredLanguage());
     }
@@ -120,7 +147,16 @@ class _FloatickShellState extends State<_FloatickShell> {
   void dispose() {
     widget.windowBridge.setExpandRequestHandler(null);
     widget.settingsController.removeListener(_handleSettingsChanged);
+    widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
     super.dispose();
+  }
+
+  void _handleStickyBoardWindowRequest(String boardId) {
+    setState(() {
+      _requestedStickyBoardId = boardId;
+      _stickyBoardRequestSerial += 1;
+    });
+    unawaited(_setExpanded(true));
   }
 
   void _handleSettingsChanged() {
@@ -250,8 +286,13 @@ class _FloatickShellState extends State<_FloatickShell> {
                   controller: widget.controller,
                   settingsController: widget.settingsController,
                   updateController: widget.updateController,
+                  stickyBoardController: widget.stickyBoardController,
+                  stickyBoardWindowCoordinator:
+                      widget.stickyBoardWindowCoordinator,
                   windowBridge: widget.windowBridge,
                   expansionAnchor: _expansionAnchor,
+                  requestedStickyBoardId: _requestedStickyBoardId,
+                  stickyBoardRequestSerial: _stickyBoardRequestSerial,
                   onCollapse: () => unawaited(_setExpanded(false)),
                 )
               : Align(

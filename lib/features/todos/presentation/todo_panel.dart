@@ -9,21 +9,25 @@ import '../../../l10n/l10n.dart';
 import '../../../l10n/storage_failure_localizations.dart';
 import '../../settings/presentation/settings_drawer.dart';
 import '../../settings/presentation/settings_view_model.dart';
+import '../../sticky_boards/presentation/sticky_board_drawers.dart';
+import '../../sticky_boards/presentation/sticky_board_view_model.dart';
+import '../../sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import '../../updates/presentation/update_view_model.dart';
 import '../domain/todo_item.dart';
-import '../domain/todo_tag.dart';
 import 'tag_filter_drawer.dart';
 import 'tag_management_drawer.dart';
 import 'todo_editor_drawer.dart';
 import 'todo_view_model.dart';
 import 'widgets/floatick_tag_chip.dart';
 import 'widgets/tag_menus.dart';
+import 'widgets/todo_list_row.dart';
 
 const double _panelWindowInset = 8;
 const double _panelOuterRadius = 26;
 const double _panelContentRadius = 25;
 const double _settingsDrawerWidth = 268;
 const double _tagDrawerWidth = 292;
+const double _stickyBoardDrawerWidth = 336;
 const double _todoDrawerHeight = 520;
 const Duration _drawerSlideDuration = Duration(milliseconds: 220);
 const Duration _drawerScrimDuration = Duration(milliseconds: 160);
@@ -36,6 +40,9 @@ enum _TodoPanelDrawerMode {
   tagFilter,
   tagAssignment,
   tagManagement,
+  stickyBoardManagement,
+  stickyBoardDetail,
+  stickyBoardTodoPicker,
   createTodo,
   todoDetails,
   editTodo,
@@ -46,8 +53,12 @@ class TodoPanel extends StatefulWidget {
     required this.controller,
     required this.settingsController,
     required this.updateController,
+    required this.stickyBoardController,
+    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
     required this.expansionAnchor,
+    required this.requestedStickyBoardId,
+    required this.stickyBoardRequestSerial,
     required this.onCollapse,
     super.key,
   });
@@ -55,8 +66,12 @@ class TodoPanel extends StatefulWidget {
   final TodoViewModel controller;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
+  final StickyBoardViewModel stickyBoardController;
+  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
   final WindowExpansionAnchor expansionAnchor;
+  final String? requestedStickyBoardId;
+  final int stickyBoardRequestSerial;
   final VoidCallback onCollapse;
 
   @override
@@ -71,6 +86,7 @@ class _TodoPanelState extends State<TodoPanel> {
   final _tagFilterCloseFocusNode = FocusNode();
   final _tagAssignmentCloseFocusNode = FocusNode();
   final _tagManagementCloseFocusNode = FocusNode();
+  final _stickyBoardCloseFocusNode = FocusNode();
   final _todoDrawerCloseFocusNode = FocusNode();
 
   TodoListScope _scope = TodoListScope.active;
@@ -82,8 +98,26 @@ class _TodoPanelState extends State<TodoPanel> {
   _TodoPanelDrawerMode _lastTodoDrawerMode = _TodoPanelDrawerMode.createTodo;
   _TodoPanelDrawerMode? _tagManagementReturnMode;
   _TodoPanelDrawerMode? _tagAssignmentReturnMode;
+  _TodoPanelDrawerMode? _todoDrawerReturnMode;
   Set<String> _todoEditorTagIds = <String>{};
+  String? _selectedStickyBoardId;
+  String? _todoCreationBoardId;
   int _todoEditorSession = 0;
+  int _lastHandledStickyBoardRequestSerial = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    _handleRequestedStickyBoard();
+  }
+
+  @override
+  void didUpdateWidget(covariant TodoPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stickyBoardRequestSerial != widget.stickyBoardRequestSerial) {
+      _handleRequestedStickyBoard();
+    }
+  }
 
   @override
   void dispose() {
@@ -94,12 +128,77 @@ class _TodoPanelState extends State<TodoPanel> {
     _tagFilterCloseFocusNode.dispose();
     _tagAssignmentCloseFocusNode.dispose();
     _tagManagementCloseFocusNode.dispose();
+    _stickyBoardCloseFocusNode.dispose();
     _todoDrawerCloseFocusNode.dispose();
     super.dispose();
   }
 
   void _openSettings() {
     _showDrawer(_TodoPanelDrawerMode.settings);
+  }
+
+  void _handleRequestedStickyBoard() {
+    if (_lastHandledStickyBoardRequestSerial ==
+        widget.stickyBoardRequestSerial) {
+      return;
+    }
+    _lastHandledStickyBoardRequestSerial = widget.stickyBoardRequestSerial;
+    final boardId = widget.requestedStickyBoardId;
+    if (boardId == null ||
+        widget.stickyBoardController.boardById(boardId) == null) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _openStickyBoard(boardId);
+      }
+    });
+  }
+
+  void _openStickyBoards() {
+    _selectedStickyBoardId = null;
+    _showDrawer(_TodoPanelDrawerMode.stickyBoardManagement);
+  }
+
+  void _openStickyBoard(String boardId) {
+    if (widget.stickyBoardController.boardById(boardId) == null) {
+      return;
+    }
+    setState(() {
+      _selectedStickyBoardId = boardId;
+      _drawerMode = _TodoPanelDrawerMode.stickyBoardDetail;
+    });
+    _requestDrawerFocus(_TodoPanelDrawerMode.stickyBoardDetail);
+  }
+
+  void _openStickyBoardTodoPicker() {
+    if (_selectedStickyBoardId == null) {
+      return;
+    }
+    _showDrawer(_TodoPanelDrawerMode.stickyBoardTodoPicker);
+  }
+
+  void _backToStickyBoardManagement() {
+    _showDrawer(_TodoPanelDrawerMode.stickyBoardManagement);
+  }
+
+  void _backToStickyBoardDetail() {
+    if (_selectedStickyBoardId == null) {
+      _backToStickyBoardManagement();
+      return;
+    }
+    _showDrawer(_TodoPanelDrawerMode.stickyBoardDetail);
+  }
+
+  void _toggleStickyBoardPin(String boardId) {
+    unawaited(widget.stickyBoardWindowCoordinator.togglePin(boardId));
+  }
+
+  void _deleteStickyBoard(String boardId) {
+    if (_selectedStickyBoardId == boardId) {
+      _selectedStickyBoardId = null;
+    }
+    unawaited(widget.stickyBoardWindowCoordinator.deleteBoard(boardId));
   }
 
   void _openTagFilter() {
@@ -112,7 +211,11 @@ class _TodoPanelState extends State<TodoPanel> {
     _showDrawer(_TodoPanelDrawerMode.tagManagement);
   }
 
-  void _openTodoCreate() {
+  void _openTodoCreate({String? stickyBoardId}) {
+    _todoCreationBoardId = stickyBoardId;
+    _todoDrawerReturnMode = stickyBoardId == null
+        ? null
+        : _TodoPanelDrawerMode.stickyBoardDetail;
     _showTodoDrawer(
       _TodoPanelDrawerMode.createTodo,
       initialTagIds: const <String>[],
@@ -121,6 +224,9 @@ class _TodoPanelState extends State<TodoPanel> {
   }
 
   void _openTodoDetails(String todoId) {
+    if (_drawerMode == _TodoPanelDrawerMode.stickyBoardDetail) {
+      _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
+    }
     _showTodoDrawer(
       _TodoPanelDrawerMode.todoDetails,
       todoId: todoId,
@@ -129,6 +235,10 @@ class _TodoPanelState extends State<TodoPanel> {
   }
 
   void _openTodoEdit(String todoId) {
+    if (_drawerMode == _TodoPanelDrawerMode.stickyBoardDetail ||
+        _todoDrawerReturnMode == _TodoPanelDrawerMode.stickyBoardDetail) {
+      _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
+    }
     _showTodoDrawer(
       _TodoPanelDrawerMode.editTodo,
       todoId: todoId,
@@ -153,6 +263,11 @@ class _TodoPanelState extends State<TodoPanel> {
     _showDrawer(_TodoPanelDrawerMode.tagManagement);
   }
 
+  void _openTagManagementFromStickyBoard() {
+    _tagManagementReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
+    _showDrawer(_TodoPanelDrawerMode.tagManagement);
+  }
+
   void _toggleTodoEditorTag(String tagId) {
     if (widget.controller.tagById(tagId) == null) {
       return;
@@ -169,6 +284,7 @@ class _TodoPanelState extends State<TodoPanel> {
     _tagFilterCloseFocusNode.unfocus();
     _tagAssignmentCloseFocusNode.unfocus();
     _tagManagementCloseFocusNode.unfocus();
+    _stickyBoardCloseFocusNode.unfocus();
     _todoDrawerCloseFocusNode.unfocus();
   }
 
@@ -198,6 +314,10 @@ class _TodoPanelState extends State<TodoPanel> {
         _TodoPanelDrawerMode.settings => _settingsCloseFocusNode,
         _TodoPanelDrawerMode.tagFilter => _tagFilterCloseFocusNode,
         _TodoPanelDrawerMode.tagAssignment => _tagAssignmentCloseFocusNode,
+        _TodoPanelDrawerMode.stickyBoardManagement ||
+        _TodoPanelDrawerMode.stickyBoardDetail ||
+        _TodoPanelDrawerMode.stickyBoardTodoPicker =>
+          _stickyBoardCloseFocusNode,
         _TodoPanelDrawerMode.none ||
         _TodoPanelDrawerMode.tagManagement ||
         _TodoPanelDrawerMode.createTodo ||
@@ -256,6 +376,9 @@ class _TodoPanelState extends State<TodoPanel> {
     final returnMode = switch (closedMode) {
       _TodoPanelDrawerMode.tagManagement => _tagManagementReturnMode,
       _TodoPanelDrawerMode.tagAssignment => _tagAssignmentReturnMode,
+      _TodoPanelDrawerMode.createTodo ||
+      _TodoPanelDrawerMode.todoDetails ||
+      _TodoPanelDrawerMode.editTodo => _todoDrawerReturnMode,
       _ => null,
     };
     _unfocusDrawerControls();
@@ -267,9 +390,16 @@ class _TodoPanelState extends State<TodoPanel> {
       if (closedMode == _TodoPanelDrawerMode.tagAssignment) {
         _tagAssignmentReturnMode = null;
       }
+      if (_isTodoDrawerMode(closedMode)) {
+        _todoDrawerReturnMode = null;
+        _todoCreationBoardId = null;
+      }
     });
     if (returnMode != null) {
       _requestDrawerFocus(returnMode);
+      if (_isTodoDrawerMode(closedMode)) {
+        _releaseClosedTodoDrawer(closedMode, expectedMode: returnMode);
+      }
       return;
     }
     _restorePanelFocus();
@@ -286,10 +416,13 @@ class _TodoPanelState extends State<TodoPanel> {
     });
   }
 
-  void _releaseClosedTodoDrawer(_TodoPanelDrawerMode closedMode) {
+  void _releaseClosedTodoDrawer(
+    _TodoPanelDrawerMode closedMode, {
+    _TodoPanelDrawerMode expectedMode = _TodoPanelDrawerMode.none,
+  }) {
     Future<void>.delayed(_drawerSlideDuration, () {
       if (!mounted ||
-          _drawerMode != _TodoPanelDrawerMode.none ||
+          _drawerMode != expectedMode ||
           _lastTodoDrawerMode != closedMode) {
         return;
       }
@@ -321,6 +454,16 @@ class _TodoPanelState extends State<TodoPanel> {
         _drawerMode == _TodoPanelDrawerMode.tagManagement;
     final isTagDrawerOpen =
         isTagFilterOpen || isTagAssignmentOpen || isTagManagementOpen;
+    final isStickyBoardManagementOpen =
+        _drawerMode == _TodoPanelDrawerMode.stickyBoardManagement;
+    final isStickyBoardDetailOpen =
+        _drawerMode == _TodoPanelDrawerMode.stickyBoardDetail;
+    final isStickyBoardTodoPickerOpen =
+        _drawerMode == _TodoPanelDrawerMode.stickyBoardTodoPicker;
+    final isStickyBoardDrawerOpen =
+        isStickyBoardManagementOpen ||
+        isStickyBoardDetailOpen ||
+        isStickyBoardTodoPickerOpen;
     final isTodoDrawerOpen =
         _drawerMode == _TodoPanelDrawerMode.createTodo ||
         _drawerMode == _TodoPanelDrawerMode.todoDetails ||
@@ -330,6 +473,13 @@ class _TodoPanelState extends State<TodoPanel> {
         (isTagManagementOpen &&
             _tagManagementReturnMode == _TodoPanelDrawerMode.tagAssignment);
     final isTodoDrawerVisible = isTodoDrawerOpen || isTodoContextOverlayOpen;
+    final isStickyBoardContextVisible =
+        (_todoDrawerReturnMode == _TodoPanelDrawerMode.stickyBoardDetail &&
+            (isTodoDrawerOpen || isTodoContextOverlayOpen)) ||
+        (isTagManagementOpen &&
+            _tagManagementReturnMode == _TodoPanelDrawerMode.stickyBoardDetail);
+    final isStickyBoardDrawerVisible =
+        isStickyBoardDrawerOpen || isStickyBoardContextVisible;
     final visibleTagDrawerMode = isTagDrawerOpen
         ? _drawerMode
         : _lastTagDrawerMode;
@@ -429,6 +579,7 @@ class _TodoPanelState extends State<TodoPanel> {
                                 children: <Widget>[
                                   _PanelHeader(
                                     activeCount: widget.controller.activeCount,
+                                    onOpenStickyBoards: _openStickyBoards,
                                     onOpenSettings: _openSettings,
                                     onCollapse: widget.onCollapse,
                                   ),
@@ -645,6 +796,99 @@ class _TodoPanelState extends State<TodoPanel> {
                           ),
                         ),
                         Positioned(
+                          top: 0,
+                          left: tagDrawerOnLeft ? 0 : null,
+                          right: tagDrawerOnLeft ? null : 0,
+                          bottom: 0,
+                          width: _stickyBoardDrawerWidth,
+                          child: IgnorePointer(
+                            key: const Key('sticky-board-drawer-pointer'),
+                            ignoring: !isStickyBoardDrawerOpen,
+                            child: ExcludeSemantics(
+                              excluding: !isStickyBoardDrawerOpen,
+                              child: AnimatedSlide(
+                                key: const Key('sticky-board-drawer-slide'),
+                                duration: reduceMotion
+                                    ? Duration.zero
+                                    : _drawerSlideDuration,
+                                curve: Curves.easeOutCubic,
+                                offset: isStickyBoardDrawerVisible
+                                    ? Offset.zero
+                                    : Offset(tagDrawerOnLeft ? -1 : 1, 0),
+                                child: FocusTraversalGroup(
+                                  child: AnimatedBuilder(
+                                    animation: Listenable.merge(<Listenable>[
+                                      widget.stickyBoardController,
+                                      widget.controller,
+                                    ]),
+                                    builder: (context, _) {
+                                      final board =
+                                          _selectedStickyBoardId == null
+                                          ? null
+                                          : widget.stickyBoardController
+                                                .boardById(
+                                                  _selectedStickyBoardId!,
+                                                );
+                                      if (isStickyBoardTodoPickerOpen &&
+                                          board != null) {
+                                        return StickyBoardTodoPickerDrawer(
+                                          board: board,
+                                          todoController: widget.controller,
+                                          boardController:
+                                              widget.stickyBoardController,
+                                          borderOnLeft: !tagDrawerOnLeft,
+                                          onBack: _backToStickyBoardDetail,
+                                          onClose: _closeActiveDrawer,
+                                          closeFocusNode:
+                                              _stickyBoardCloseFocusNode,
+                                        );
+                                      }
+                                      if ((isStickyBoardDetailOpen ||
+                                              isStickyBoardContextVisible) &&
+                                          board != null) {
+                                        return StickyBoardDetailDrawer(
+                                          board: board,
+                                          todoController: widget.controller,
+                                          boardController:
+                                              widget.stickyBoardController,
+                                          borderOnLeft: !tagDrawerOnLeft,
+                                          onBack: _backToStickyBoardManagement,
+                                          onClose: _closeActiveDrawer,
+                                          onTogglePin: () =>
+                                              _toggleStickyBoardPin(board.id),
+                                          onAddExisting:
+                                              _openStickyBoardTodoPicker,
+                                          onCreateTodo: () => _openTodoCreate(
+                                            stickyBoardId: board.id,
+                                          ),
+                                          onOpenDetails: _openTodoDetails,
+                                          onEditTodo: _openTodoEdit,
+                                          onOpenTagManagement:
+                                              _openTagManagementFromStickyBoard,
+                                          closeFocusNode:
+                                              _stickyBoardCloseFocusNode,
+                                        );
+                                      }
+                                      return StickyBoardManagementDrawer(
+                                        controller:
+                                            widget.stickyBoardController,
+                                        isOpen: isStickyBoardManagementOpen,
+                                        borderOnLeft: !tagDrawerOnLeft,
+                                        onClose: _closeActiveDrawer,
+                                        onOpenBoard: _openStickyBoard,
+                                        onTogglePin: _toggleStickyBoardPin,
+                                        onDeleteBoard: _deleteStickyBoard,
+                                        closeFocusNode:
+                                            _stickyBoardCloseFocusNode,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
                           left: 0,
                           right: 0,
                           bottom: 0,
@@ -687,11 +931,27 @@ class _TodoPanelState extends State<TodoPanel> {
                                       onSave: (title, content, tagIds) {
                                         if (todoEditorMode ==
                                             TodoEditorDrawerMode.create) {
-                                          return widget.controller.add(
-                                            title,
-                                            content: content,
-                                            tagIds: tagIds,
-                                          );
+                                          return () async {
+                                            final item = await widget.controller
+                                                .create(
+                                                  title,
+                                                  content: content,
+                                                  tagIds: tagIds,
+                                                );
+                                            if (item == null) {
+                                              return false;
+                                            }
+                                            final boardId =
+                                                _todoCreationBoardId;
+                                            if (boardId == null) {
+                                              return true;
+                                            }
+                                            return widget.stickyBoardController
+                                                .addTodo(
+                                                  boardId: boardId,
+                                                  todoId: item.id,
+                                                );
+                                          }();
                                         }
                                         final todoId = selectedTodo?.id;
                                         if (todoId == null) {
@@ -849,11 +1109,13 @@ class _TodoPanelState extends State<TodoPanel> {
 class _PanelHeader extends StatelessWidget {
   const _PanelHeader({
     required this.activeCount,
+    required this.onOpenStickyBoards,
     required this.onOpenSettings,
     required this.onCollapse,
   });
 
   final int activeCount;
+  final VoidCallback onOpenStickyBoards;
   final VoidCallback onOpenSettings;
   final VoidCallback onCollapse;
 
@@ -877,6 +1139,12 @@ class _PanelHeader extends StatelessWidget {
                 fontSize: 12,
               ),
             ),
+          ),
+          IconButton(
+            key: const Key('sticky-boards-button'),
+            tooltip: localizations.stickyBoardsTooltip,
+            onPressed: onOpenStickyBoards,
+            icon: const Icon(Icons.sticky_note_2_outlined, size: 19),
           ),
           IconButton(
             key: const Key('settings-button'),
@@ -1110,7 +1378,7 @@ class _TodoList extends StatelessWidget {
         final entry = entries[index];
         return switch (entry) {
           _DateEntry() => _DateDivider(label: entry.label),
-          _ItemEntry() => _TodoRow(
+          _ItemEntry() => TodoListRow(
             key: ValueKey<String>(entry.item.id),
             item: entry.item,
             archivedScope: scope == TodoListScope.archived,
@@ -1211,274 +1479,6 @@ class _DateDivider extends StatelessWidget {
   }
 }
 
-class _TodoRow extends StatefulWidget {
-  const _TodoRow({
-    required this.item,
-    required this.archivedScope,
-    required this.onToggle,
-    required this.onOpenDetails,
-    required this.onEdit,
-    required this.onArchive,
-    required this.onRestore,
-    required this.tags,
-    required this.assignedTagIds,
-    required this.onToggleTag,
-    required this.onOpenTagManagement,
-    super.key,
-  });
-
-  final TodoItem item;
-  final bool archivedScope;
-  final VoidCallback onToggle;
-  final VoidCallback onOpenDetails;
-  final VoidCallback onEdit;
-  final VoidCallback onArchive;
-  final VoidCallback onRestore;
-  final List<TodoTag> tags;
-  final List<String> assignedTagIds;
-  final Future<void> Function(String tagId) onToggleTag;
-  final VoidCallback onOpenTagManagement;
-
-  @override
-  State<_TodoRow> createState() => _TodoRowState();
-}
-
-class _TodoRowState extends State<_TodoRow> {
-  final _rowFocusNode = FocusNode();
-
-  bool _isHovered = false;
-  bool _hasFocus = false;
-
-  @override
-  void dispose() {
-    _rowFocusNode.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final item = widget.item;
-    final localizations = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final onSurface = Theme.of(context).colorScheme.onSurface;
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final showEditAction = _isHovered || _hasFocus;
-
-    return Focus(
-      focusNode: _rowFocusNode,
-      onFocusChange: (hasFocus) {
-        if (_hasFocus != hasFocus) {
-          setState(() => _hasFocus = hasFocus);
-        }
-      },
-      child: Semantics(
-        container: true,
-        label: item.title,
-        value: item.isCompleted
-            ? localizations.completedStatus
-            : localizations.incompleteStatus,
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _isHovered = true),
-          onExit: (_) => setState(() => _isHovered = false),
-          child: AnimatedContainer(
-            duration: reduceMotion
-                ? Duration.zero
-                : const Duration(milliseconds: 150),
-            margin: const EdgeInsets.symmetric(vertical: 2),
-            padding: const EdgeInsets.fromLTRB(7, 8, 5, 8),
-            decoration: BoxDecoration(
-              color: _isHovered
-                  ? (isDark
-                        ? Colors.white.withValues(alpha: 0.055)
-                        : Colors.black.withValues(alpha: 0.035))
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Row(
-              children: <Widget>[
-                if (!widget.archivedScope)
-                  Tooltip(
-                    message: item.isCompleted
-                        ? localizations.markIncompleteTooltip
-                        : localizations.markCompleteTooltip,
-                    child: Semantics(
-                      button: true,
-                      checked: item.isCompleted,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: widget.onToggle,
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: AnimatedContainer(
-                              duration: reduceMotion
-                                  ? Duration.zero
-                                  : const Duration(milliseconds: 160),
-                              width: 21,
-                              height: 21,
-                              decoration: BoxDecoration(
-                                color: item.isCompleted
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(7),
-                                border: Border.all(
-                                  color: item.isCompleted
-                                      ? Theme.of(context).colorScheme.primary
-                                      : onSurface.withValues(alpha: 0.28),
-                                  width: 1.4,
-                                ),
-                              ),
-                              child: item.isCompleted
-                                  ? const Icon(
-                                      Icons.check_rounded,
-                                      size: 15,
-                                      color: Colors.white,
-                                    )
-                                  : null,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.inventory_2_outlined,
-                      size: 21,
-                      color: onSurface.withValues(alpha: 0.28),
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        item.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: onSurface.withValues(
-                            alpha: item.isCompleted ? 0.45 : 0.91,
-                          ),
-                          fontSize: 13.5,
-                          height: 1.3,
-                          decoration: item.isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                          decorationColor: onSurface.withValues(alpha: 0.42),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: <Widget>[
-                          Expanded(
-                            child: TagAssignmentMenu(
-                              todoId: item.id,
-                              tags: widget.tags,
-                              assignedTagIds: widget.assignedTagIds,
-                              onToggle: widget.onToggleTag,
-                              onManageTags: widget.onOpenTagManagement,
-                            ),
-                          ),
-                          const SizedBox(width: 7),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text(
-                              _formatTime(
-                                context,
-                                widget.archivedScope
-                                    ? (item.archivedAt ?? item.createdAt)
-                                    : item.createdAt,
-                              ),
-                              style: TextStyle(
-                                color: onSurface.withValues(alpha: 0.35),
-                                fontSize: 10.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 4),
-                SizedBox(
-                  width: 96,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      SizedBox.square(
-                        dimension: 32,
-                        child: AnimatedOpacity(
-                          duration: reduceMotion
-                              ? Duration.zero
-                              : const Duration(milliseconds: 140),
-                          opacity: showEditAction ? 1 : 0,
-                          child: IgnorePointer(
-                            ignoring: !showEditAction,
-                            child: IconButton(
-                              key: ValueKey<String>(
-                                'edit-todo-${widget.item.id}',
-                              ),
-                              tooltip: localizations.editTooltip,
-                              onPressed: widget.onEdit,
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.edit_outlined, size: 16),
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox.square(
-                        dimension: 32,
-                        child: IconButton(
-                          key: ValueKey<String>('view-todo-${widget.item.id}'),
-                          tooltip: localizations.viewTodoDetailsTooltip,
-                          onPressed: widget.onOpenDetails,
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            Icons.subject_rounded,
-                            size: 17,
-                            color: item.content.trim().isEmpty
-                                ? onSurface.withValues(alpha: 0.42)
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                      SizedBox.square(
-                        dimension: 32,
-                        child: IconButton(
-                          tooltip: widget.archivedScope
-                              ? localizations.restoreTooltip
-                              : localizations.archiveTooltip,
-                          onPressed: widget.archivedScope
-                              ? widget.onRestore
-                              : widget.onArchive,
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            widget.archivedScope
-                                ? Icons.unarchive_outlined
-                                : Icons.archive_outlined,
-                            size: 17,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyList extends StatelessWidget {
   const _EmptyList({required this.scope, required this.hasQuery});
 
@@ -1561,14 +1561,6 @@ String _formatDay(BuildContext context, DateTime day) {
   }
 
   return MaterialLocalizations.of(context).formatFullDate(day);
-}
-
-String _formatTime(BuildContext context, DateTime date) {
-  final local = date.toLocal();
-  return MaterialLocalizations.of(context).formatTimeOfDay(
-    TimeOfDay.fromDateTime(local),
-    alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-  );
 }
 
 class _CollapseIntent extends Intent {
