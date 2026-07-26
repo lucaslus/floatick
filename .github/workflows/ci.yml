@@ -47,6 +47,11 @@ jobs:
       - name: Build macOS release app
         run: flutter build macos --release
 
+      - name: Prepare unsigned test app
+        run: |
+          tool/release/prepare_unsigned_app.sh \
+            build/macos/Build/Products/Release/Floatick.app
+
       - name: Verify app architectures
         shell: bash
         run: |
@@ -60,3 +65,8 @@ jobs:
             echo "Expected a universal app, found: $architectures" >&2
             exit 1
           fi
+
+      - name: Smoke-test release app
+        run: |
+          tool/release/smoke_test_app.sh \
+            build/macos/Build/Products/Release/Floatick.app

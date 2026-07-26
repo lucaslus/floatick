@@ -61,8 +61,10 @@ Every push to `release/0.1.0` runs the Release Candidate workflow. It:
 1. validates that the branch name matches `pubspec.yaml`;
 2. runs formatting, analysis, and tests;
 3. builds the universal release-mode macOS app;
-4. creates the DMG, SHA-256 checksum, and build manifest;
-5. creates or updates a Draft Release associated with
+4. normalizes embedded code to one ad-hoc identity for the unsigned candidate;
+5. verifies both architectures and launches the app on the Apple silicon runner;
+6. creates the DMG, SHA-256 checksum, and build manifest;
+7. creates or updates a Draft Release associated with
    `candidate/v0.1.0`.
 
 Only users with push access can list Draft Releases through the GitHub API.
@@ -182,6 +184,10 @@ For local layout testing only:
 
 ```bash
 flutter build macos --release
+tool/release/prepare_unsigned_app.sh \
+  build/macos/Build/Products/Release/Floatick.app
+tool/release/smoke_test_app.sh \
+  build/macos/Build/Products/Release/Floatick.app
 tool/release/create_dmg.sh \
   build/macos/Build/Products/Release/Floatick.app \
   build/release/Floatick-local.dmg \
