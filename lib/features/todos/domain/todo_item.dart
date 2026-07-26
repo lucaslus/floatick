@@ -3,12 +3,14 @@ class TodoItem {
     required this.id,
     required this.title,
     required this.createdAt,
+    this.content = '',
     this.completedAt,
     this.archivedAt,
   });
 
   final String id;
   final String title;
+  final String content;
   final DateTime createdAt;
   final DateTime? completedAt;
   final DateTime? archivedAt;
@@ -20,6 +22,18 @@ class TodoItem {
     return TodoItem(
       id: id,
       title: value,
+      content: content,
+      createdAt: createdAt,
+      completedAt: completedAt,
+      archivedAt: archivedAt,
+    );
+  }
+
+  TodoItem withDetails({required String title, required String content}) {
+    return TodoItem(
+      id: id,
+      title: title,
+      content: content,
       createdAt: createdAt,
       completedAt: completedAt,
       archivedAt: archivedAt,
@@ -30,6 +44,7 @@ class TodoItem {
     return TodoItem(
       id: id,
       title: title,
+      content: content,
       createdAt: createdAt,
       completedAt: value,
       archivedAt: archivedAt,
@@ -40,6 +55,7 @@ class TodoItem {
     return TodoItem(
       id: id,
       title: title,
+      content: content,
       createdAt: createdAt,
       completedAt: completedAt,
       archivedAt: value,
@@ -50,6 +66,7 @@ class TodoItem {
     return TodoItem(
       id: _requiredString(json, 'id'),
       title: _requiredString(json, 'title'),
+      content: _optionalString(json, 'content'),
       createdAt: _requiredDate(json, 'createdAt'),
       completedAt: _optionalDate(json, 'completedAt'),
       archivedAt: _optionalDate(json, 'archivedAt'),
@@ -60,6 +77,7 @@ class TodoItem {
     return <String, dynamic>{
       'id': id,
       'title': title,
+      if (content.isNotEmpty) 'content': content,
       'createdAt': createdAt.toUtc().toIso8601String(),
       if (completedAt != null)
         'completedAt': completedAt!.toUtc().toIso8601String(),
@@ -84,6 +102,17 @@ class TodoItem {
     return DateTime.parse(value);
   }
 
+  static String _optionalString(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value == null) {
+      return '';
+    }
+    if (value is! String) {
+      throw FormatException('Todo field "$key" must be a string.');
+    }
+    return value;
+  }
+
   static DateTime? _optionalDate(Map<String, dynamic> json, String key) {
     final value = json[key];
     if (value == null) {
@@ -100,6 +129,7 @@ class TodoItem {
     return other is TodoItem &&
         other.id == id &&
         other.title == title &&
+        other.content == content &&
         other.createdAt == createdAt &&
         other.completedAt == completedAt &&
         other.archivedAt == archivedAt;
@@ -107,6 +137,6 @@ class TodoItem {
 
   @override
   int get hashCode {
-    return Object.hash(id, title, createdAt, completedAt, archivedAt);
+    return Object.hash(id, title, content, createdAt, completedAt, archivedAt);
   }
 }

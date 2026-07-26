@@ -9,25 +9,56 @@ import '../../../l10n/l10n.dart';
 import '../../../l10n/storage_failure_localizations.dart';
 import '../../settings/presentation/settings_drawer.dart';
 import '../../settings/presentation/settings_view_model.dart';
+import '../../sticky_boards/presentation/sticky_board_drawers.dart';
+import '../../sticky_boards/presentation/sticky_board_view_model.dart';
+import '../../sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import '../../updates/presentation/update_view_model.dart';
 import '../domain/todo_item.dart';
+import 'tag_filter_drawer.dart';
+import 'tag_management_drawer.dart';
+import 'todo_editor_drawer.dart';
 import 'todo_view_model.dart';
+import 'widgets/floatick_tag_chip.dart';
+import 'widgets/tag_menus.dart';
+import 'widgets/todo_list_row.dart';
 
 const double _panelWindowInset = 8;
 const double _panelOuterRadius = 26;
 const double _panelContentRadius = 25;
 const double _settingsDrawerWidth = 268;
-const Duration _settingsDrawerDuration = Duration(milliseconds: 220);
-const Duration _settingsScrimDuration = Duration(milliseconds: 160);
+const double _tagDrawerWidth = 292;
+const double _stickyBoardDrawerWidth = 336;
+const double _todoDrawerHeight = 520;
+const Duration _drawerSlideDuration = Duration(milliseconds: 220);
+const Duration _drawerScrimDuration = Duration(milliseconds: 160);
 
 enum TodoListScope { active, archived }
+
+enum _TodoPanelDrawerMode {
+  none,
+  settings,
+  tagFilter,
+  tagAssignment,
+  tagManagement,
+  stickyBoardManagement,
+  stickyBoardDetail,
+  stickyBoardTodoPicker,
+  createTodo,
+  todoDetails,
+  editTodo,
+}
 
 class TodoPanel extends StatefulWidget {
   const TodoPanel({
     required this.controller,
     required this.settingsController,
     required this.updateController,
+    required this.stickyBoardController,
+    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
+    required this.expansionAnchor,
+    required this.requestedStickyBoardId,
+    required this.stickyBoardRequestSerial,
     required this.onCollapse,
     super.key,
   });
@@ -35,7 +66,12 @@ class TodoPanel extends StatefulWidget {
   final TodoViewModel controller;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
+  final StickyBoardViewModel stickyBoardController;
+  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
+  final WindowExpansionAnchor expansionAnchor;
+  final String? requestedStickyBoardId;
+  final int stickyBoardRequestSerial;
   final VoidCallback onCollapse;
 
   @override
@@ -43,66 +79,365 @@ class TodoPanel extends StatefulWidget {
 }
 
 class _TodoPanelState extends State<TodoPanel> {
-  final _composerController = TextEditingController();
   final _searchController = TextEditingController();
-  final _composerFocusNode = FocusNode();
+  final _panelFocusNode = FocusNode();
   final _searchFocusNode = FocusNode();
   final _settingsCloseFocusNode = FocusNode();
+  final _tagFilterCloseFocusNode = FocusNode();
+  final _tagAssignmentCloseFocusNode = FocusNode();
+  final _tagManagementCloseFocusNode = FocusNode();
+  final _stickyBoardCloseFocusNode = FocusNode();
+  final _todoDrawerCloseFocusNode = FocusNode();
 
   TodoListScope _scope = TodoListScope.active;
   String _query = '';
-  bool _isAdding = false;
-  bool _isSettingsOpen = false;
+  String? _selectedTagId;
+  String? _selectedTodoId;
+  _TodoPanelDrawerMode _drawerMode = _TodoPanelDrawerMode.none;
+  _TodoPanelDrawerMode _lastTagDrawerMode = _TodoPanelDrawerMode.tagFilter;
+  _TodoPanelDrawerMode _lastTodoDrawerMode = _TodoPanelDrawerMode.createTodo;
+  _TodoPanelDrawerMode? _tagManagementReturnMode;
+  _TodoPanelDrawerMode? _tagAssignmentReturnMode;
+  _TodoPanelDrawerMode? _todoDrawerReturnMode;
+  Set<String> _todoEditorTagIds = <String>{};
+  String? _selectedStickyBoardId;
+  String? _todoCreationBoardId;
+  int _todoEditorSession = 0;
+  int _lastHandledStickyBoardRequestSerial = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    _handleRequestedStickyBoard();
+  }
+
+  @override
+  void didUpdateWidget(covariant TodoPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stickyBoardRequestSerial != widget.stickyBoardRequestSerial) {
+      _handleRequestedStickyBoard();
+    }
+  }
 
   @override
   void dispose() {
-    _composerController.dispose();
     _searchController.dispose();
-    _composerFocusNode.dispose();
+    _panelFocusNode.dispose();
     _searchFocusNode.dispose();
     _settingsCloseFocusNode.dispose();
+    _tagFilterCloseFocusNode.dispose();
+    _tagAssignmentCloseFocusNode.dispose();
+    _tagManagementCloseFocusNode.dispose();
+    _stickyBoardCloseFocusNode.dispose();
+    _todoDrawerCloseFocusNode.dispose();
     super.dispose();
   }
 
-  Future<void> _addTodo() async {
-    if (_isAdding || _composerController.text.trim().isEmpty) {
-      return;
-    }
-
-    final previousLength = widget.controller.items.length;
-    setState(() => _isAdding = true);
-    await widget.controller.add(_composerController.text);
-    if (!mounted) {
-      return;
-    }
-
-    if (widget.controller.items.length > previousLength) {
-      _composerController.clear();
-      _composerFocusNode.requestFocus();
-    }
-    setState(() => _isAdding = false);
+  void _openSettings() {
+    _showDrawer(_TodoPanelDrawerMode.settings);
   }
 
-  void _openSettings() {
-    if (_isSettingsOpen) {
+  void _handleRequestedStickyBoard() {
+    if (_lastHandledStickyBoardRequestSerial ==
+        widget.stickyBoardRequestSerial) {
       return;
     }
-
-    setState(() => _isSettingsOpen = true);
+    _lastHandledStickyBoardRequestSerial = widget.stickyBoardRequestSerial;
+    final boardId = widget.requestedStickyBoardId;
+    if (boardId == null ||
+        widget.stickyBoardController.boardById(boardId) == null) {
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _isSettingsOpen) {
-        _settingsCloseFocusNode.requestFocus();
+      if (mounted) {
+        _openStickyBoard(boardId);
       }
     });
   }
 
-  void _closeSettings() {
-    if (!_isSettingsOpen) {
+  void _openStickyBoards() {
+    _selectedStickyBoardId = null;
+    _showDrawer(_TodoPanelDrawerMode.stickyBoardManagement);
+  }
+
+  void _openStickyBoard(String boardId) {
+    if (widget.stickyBoardController.boardById(boardId) == null) {
+      return;
+    }
+    setState(() {
+      _selectedStickyBoardId = boardId;
+      _drawerMode = _TodoPanelDrawerMode.stickyBoardDetail;
+    });
+    _requestDrawerFocus(_TodoPanelDrawerMode.stickyBoardDetail);
+  }
+
+  void _openStickyBoardTodoPicker() {
+    if (_selectedStickyBoardId == null) {
+      return;
+    }
+    _showDrawer(_TodoPanelDrawerMode.stickyBoardTodoPicker);
+  }
+
+  void _backToStickyBoardManagement() {
+    _showDrawer(_TodoPanelDrawerMode.stickyBoardManagement);
+  }
+
+  void _backToStickyBoardDetail() {
+    if (_selectedStickyBoardId == null) {
+      _backToStickyBoardManagement();
+      return;
+    }
+    _showDrawer(_TodoPanelDrawerMode.stickyBoardDetail);
+  }
+
+  void _toggleStickyBoardPin(String boardId) {
+    unawaited(widget.stickyBoardWindowCoordinator.togglePin(boardId));
+  }
+
+  void _deleteStickyBoard(String boardId) {
+    if (_selectedStickyBoardId == boardId) {
+      _selectedStickyBoardId = null;
+    }
+    unawaited(widget.stickyBoardWindowCoordinator.deleteBoard(boardId));
+  }
+
+  void _openTagFilter() {
+    _showDrawer(_TodoPanelDrawerMode.tagFilter);
+  }
+
+  void _openTagManagement() {
+    _tagManagementReturnMode = null;
+    _tagAssignmentReturnMode = null;
+    _showDrawer(_TodoPanelDrawerMode.tagManagement);
+  }
+
+  void _openTodoCreate({String? stickyBoardId}) {
+    _todoCreationBoardId = stickyBoardId;
+    _todoDrawerReturnMode = stickyBoardId == null
+        ? null
+        : _TodoPanelDrawerMode.stickyBoardDetail;
+    _showTodoDrawer(
+      _TodoPanelDrawerMode.createTodo,
+      initialTagIds: const <String>[],
+      startsNewSession: true,
+    );
+  }
+
+  void _openTodoDetails(String todoId) {
+    if (_drawerMode == _TodoPanelDrawerMode.stickyBoardDetail) {
+      _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
+    }
+    _showTodoDrawer(
+      _TodoPanelDrawerMode.todoDetails,
+      todoId: todoId,
+      initialTagIds: widget.controller.tagIdsForTodo(todoId),
+    );
+  }
+
+  void _openTodoEdit(String todoId) {
+    if (_drawerMode == _TodoPanelDrawerMode.stickyBoardDetail ||
+        _todoDrawerReturnMode == _TodoPanelDrawerMode.stickyBoardDetail) {
+      _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
+    }
+    _showTodoDrawer(
+      _TodoPanelDrawerMode.editTodo,
+      todoId: todoId,
+      initialTagIds: widget.controller.tagIdsForTodo(todoId),
+    );
+  }
+
+  void _openTagAssignmentFromTodo() {
+    if (_drawerMode != _TodoPanelDrawerMode.createTodo &&
+        _drawerMode != _TodoPanelDrawerMode.editTodo) {
+      return;
+    }
+    _tagAssignmentReturnMode = _drawerMode;
+    _showDrawer(_TodoPanelDrawerMode.tagAssignment);
+  }
+
+  void _openTagManagementFromTagAssignment() {
+    if (_drawerMode != _TodoPanelDrawerMode.tagAssignment) {
+      return;
+    }
+    _tagManagementReturnMode = _TodoPanelDrawerMode.tagAssignment;
+    _showDrawer(_TodoPanelDrawerMode.tagManagement);
+  }
+
+  void _openTagManagementFromStickyBoard() {
+    _tagManagementReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
+    _showDrawer(_TodoPanelDrawerMode.tagManagement);
+  }
+
+  void _toggleTodoEditorTag(String tagId) {
+    if (widget.controller.tagById(tagId) == null) {
+      return;
+    }
+    setState(() {
+      if (!_todoEditorTagIds.add(tagId)) {
+        _todoEditorTagIds.remove(tagId);
+      }
+    });
+  }
+
+  void _unfocusDrawerControls() {
+    _settingsCloseFocusNode.unfocus();
+    _tagFilterCloseFocusNode.unfocus();
+    _tagAssignmentCloseFocusNode.unfocus();
+    _tagManagementCloseFocusNode.unfocus();
+    _stickyBoardCloseFocusNode.unfocus();
+    _todoDrawerCloseFocusNode.unfocus();
+  }
+
+  void _showDrawer(_TodoPanelDrawerMode mode) {
+    if (_drawerMode == mode) {
       return;
     }
 
-    _settingsCloseFocusNode.unfocus();
-    setState(() => _isSettingsOpen = false);
+    _unfocusDrawerControls();
+    setState(() {
+      _drawerMode = mode;
+      if (mode == _TodoPanelDrawerMode.tagFilter ||
+          mode == _TodoPanelDrawerMode.tagAssignment ||
+          mode == _TodoPanelDrawerMode.tagManagement) {
+        _lastTagDrawerMode = mode;
+      }
+    });
+    _requestDrawerFocus(mode);
+  }
+
+  void _requestDrawerFocus(_TodoPanelDrawerMode mode) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _drawerMode != mode) {
+        return;
+      }
+      final focusNode = switch (mode) {
+        _TodoPanelDrawerMode.settings => _settingsCloseFocusNode,
+        _TodoPanelDrawerMode.tagFilter => _tagFilterCloseFocusNode,
+        _TodoPanelDrawerMode.tagAssignment => _tagAssignmentCloseFocusNode,
+        _TodoPanelDrawerMode.stickyBoardManagement ||
+        _TodoPanelDrawerMode.stickyBoardDetail ||
+        _TodoPanelDrawerMode.stickyBoardTodoPicker =>
+          _stickyBoardCloseFocusNode,
+        _TodoPanelDrawerMode.none ||
+        _TodoPanelDrawerMode.tagManagement ||
+        _TodoPanelDrawerMode.createTodo ||
+        _TodoPanelDrawerMode.todoDetails ||
+        _TodoPanelDrawerMode.editTodo => null,
+      };
+      focusNode?.requestFocus();
+    });
+  }
+
+  void _showTodoDrawer(
+    _TodoPanelDrawerMode mode, {
+    required Iterable<String> initialTagIds,
+    String? todoId,
+    bool startsNewSession = false,
+  }) {
+    assert(
+      mode == _TodoPanelDrawerMode.createTodo ||
+          mode == _TodoPanelDrawerMode.todoDetails ||
+          mode == _TodoPanelDrawerMode.editTodo,
+    );
+    if (_drawerMode == mode && _selectedTodoId == todoId) {
+      return;
+    }
+
+    _unfocusDrawerControls();
+    setState(() {
+      if (startsNewSession) {
+        _todoEditorSession += 1;
+      }
+      _drawerMode = mode;
+      _lastTodoDrawerMode = mode;
+      _selectedTodoId = todoId;
+      _todoEditorTagIds = initialTagIds.toSet();
+      if (mode == _TodoPanelDrawerMode.createTodo) {
+        _scope = TodoListScope.active;
+      }
+    });
+  }
+
+  void _selectTagFilter(String? tagId) {
+    _unfocusDrawerControls();
+    setState(() {
+      _selectedTagId = tagId;
+      _drawerMode = _TodoPanelDrawerMode.none;
+    });
+    _restorePanelFocus();
+  }
+
+  void _closeActiveDrawer() {
+    if (_drawerMode == _TodoPanelDrawerMode.none) {
+      return;
+    }
+
+    final closedMode = _drawerMode;
+    final returnMode = switch (closedMode) {
+      _TodoPanelDrawerMode.tagManagement => _tagManagementReturnMode,
+      _TodoPanelDrawerMode.tagAssignment => _tagAssignmentReturnMode,
+      _TodoPanelDrawerMode.createTodo ||
+      _TodoPanelDrawerMode.todoDetails ||
+      _TodoPanelDrawerMode.editTodo => _todoDrawerReturnMode,
+      _ => null,
+    };
+    _unfocusDrawerControls();
+    setState(() {
+      _drawerMode = returnMode ?? _TodoPanelDrawerMode.none;
+      if (closedMode == _TodoPanelDrawerMode.tagManagement) {
+        _tagManagementReturnMode = null;
+      }
+      if (closedMode == _TodoPanelDrawerMode.tagAssignment) {
+        _tagAssignmentReturnMode = null;
+      }
+      if (_isTodoDrawerMode(closedMode)) {
+        _todoDrawerReturnMode = null;
+        _todoCreationBoardId = null;
+      }
+    });
+    if (returnMode != null) {
+      _requestDrawerFocus(returnMode);
+      if (_isTodoDrawerMode(closedMode)) {
+        _releaseClosedTodoDrawer(closedMode, expectedMode: returnMode);
+      }
+      return;
+    }
+    _restorePanelFocus();
+    if (_isTodoDrawerMode(closedMode)) {
+      _releaseClosedTodoDrawer(closedMode);
+    }
+  }
+
+  void _restorePanelFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _drawerMode == _TodoPanelDrawerMode.none) {
+        _panelFocusNode.requestFocus();
+      }
+    });
+  }
+
+  void _releaseClosedTodoDrawer(
+    _TodoPanelDrawerMode closedMode, {
+    _TodoPanelDrawerMode expectedMode = _TodoPanelDrawerMode.none,
+  }) {
+    Future<void>.delayed(_drawerSlideDuration, () {
+      if (!mounted ||
+          _drawerMode != expectedMode ||
+          _lastTodoDrawerMode != closedMode) {
+        return;
+      }
+      setState(() {
+        _lastTodoDrawerMode = _TodoPanelDrawerMode.createTodo;
+        _selectedTodoId = null;
+        _todoEditorTagIds = <String>{};
+      });
+    });
+  }
+
+  bool _isTodoDrawerMode(_TodoPanelDrawerMode mode) {
+    return mode == _TodoPanelDrawerMode.createTodo ||
+        mode == _TodoPanelDrawerMode.todoDetails ||
+        mode == _TodoPanelDrawerMode.editTodo;
   }
 
   @override
@@ -110,7 +445,68 @@ class _TodoPanelState extends State<TodoPanel> {
     final brightness = Theme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-
+    final isDrawerOpen = _drawerMode != _TodoPanelDrawerMode.none;
+    final isSettingsOpen = _drawerMode == _TodoPanelDrawerMode.settings;
+    final isTagFilterOpen = _drawerMode == _TodoPanelDrawerMode.tagFilter;
+    final isTagAssignmentOpen =
+        _drawerMode == _TodoPanelDrawerMode.tagAssignment;
+    final isTagManagementOpen =
+        _drawerMode == _TodoPanelDrawerMode.tagManagement;
+    final isTagDrawerOpen =
+        isTagFilterOpen || isTagAssignmentOpen || isTagManagementOpen;
+    final isStickyBoardManagementOpen =
+        _drawerMode == _TodoPanelDrawerMode.stickyBoardManagement;
+    final isStickyBoardDetailOpen =
+        _drawerMode == _TodoPanelDrawerMode.stickyBoardDetail;
+    final isStickyBoardTodoPickerOpen =
+        _drawerMode == _TodoPanelDrawerMode.stickyBoardTodoPicker;
+    final isStickyBoardDrawerOpen =
+        isStickyBoardManagementOpen ||
+        isStickyBoardDetailOpen ||
+        isStickyBoardTodoPickerOpen;
+    final isTodoDrawerOpen =
+        _drawerMode == _TodoPanelDrawerMode.createTodo ||
+        _drawerMode == _TodoPanelDrawerMode.todoDetails ||
+        _drawerMode == _TodoPanelDrawerMode.editTodo;
+    final isTodoContextOverlayOpen =
+        isTagAssignmentOpen ||
+        (isTagManagementOpen &&
+            _tagManagementReturnMode == _TodoPanelDrawerMode.tagAssignment);
+    final isTodoDrawerVisible = isTodoDrawerOpen || isTodoContextOverlayOpen;
+    final isStickyBoardContextVisible =
+        (_todoDrawerReturnMode == _TodoPanelDrawerMode.stickyBoardDetail &&
+            (isTodoDrawerOpen || isTodoContextOverlayOpen)) ||
+        (isTagManagementOpen &&
+            _tagManagementReturnMode == _TodoPanelDrawerMode.stickyBoardDetail);
+    final isStickyBoardDrawerVisible =
+        isStickyBoardDrawerOpen || isStickyBoardContextVisible;
+    final visibleTagDrawerMode = isTagDrawerOpen
+        ? _drawerMode
+        : _lastTagDrawerMode;
+    final visibleTodoDrawerMode = isTodoDrawerOpen
+        ? _drawerMode
+        : _lastTodoDrawerMode;
+    final todoEditorMode = switch (visibleTodoDrawerMode) {
+      _TodoPanelDrawerMode.todoDetails => TodoEditorDrawerMode.details,
+      _TodoPanelDrawerMode.editTodo => TodoEditorDrawerMode.edit,
+      _ => TodoEditorDrawerMode.create,
+    };
+    final selectedTodo = _selectedTodoId == null
+        ? null
+        : widget.controller.itemById(_selectedTodoId!);
+    final todoEditorTagIds = widget.controller.tags
+        .where((tag) => _todoEditorTagIds.contains(tag.id))
+        .map((tag) => tag.id)
+        .toList(growable: false);
+    final originalTodoTagIds = selectedTodo == null
+        ? const <String>[]
+        : widget.controller.tagIdsForTodo(selectedTodo.id);
+    final tagDrawerOnLeft = switch (widget.expansionAnchor) {
+      WindowExpansionAnchor.topRight ||
+      WindowExpansionAnchor.bottomRight => true,
+      WindowExpansionAnchor.topLeft ||
+      WindowExpansionAnchor.bottomLeft => false,
+    };
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
         SingleActivator(LogicalKeyboardKey.escape): _CollapseIntent(),
@@ -121,8 +517,8 @@ class _TodoPanelState extends State<TodoPanel> {
         actions: <Type, Action<Intent>>{
           _CollapseIntent: CallbackAction<_CollapseIntent>(
             onInvoke: (_) {
-              if (_isSettingsOpen) {
-                _closeSettings();
+              if (isDrawerOpen) {
+                _closeActiveDrawer();
               } else {
                 widget.onCollapse();
               }
@@ -137,15 +533,13 @@ class _TodoPanelState extends State<TodoPanel> {
           ),
           _NewTodoIntent: CallbackAction<_NewTodoIntent>(
             onInvoke: (_) {
-              if (_scope != TodoListScope.active) {
-                setState(() => _scope = TodoListScope.active);
-              }
-              _composerFocusNode.requestFocus();
+              _openTodoCreate();
               return null;
             },
           ),
         },
         child: Focus(
+          focusNode: _panelFocusNode,
           autofocus: true,
           child: FocusTraversalGroup(
             child: Material(
@@ -173,14 +567,19 @@ class _TodoPanelState extends State<TodoPanel> {
                       fit: StackFit.expand,
                       children: <Widget>[
                         ExcludeFocus(
-                          excluding: _isSettingsOpen,
+                          excluding: isDrawerOpen,
                           child: AnimatedBuilder(
                             animation: widget.controller,
                             builder: (context, _) {
+                              final selectedTag = _selectedTagId == null
+                                  ? null
+                                  : widget.controller.tagById(_selectedTagId!);
+                              final effectiveSelectedTagId = selectedTag?.id;
                               return Column(
                                 children: <Widget>[
                                   _PanelHeader(
                                     activeCount: widget.controller.activeCount,
+                                    onOpenStickyBoards: _openStickyBoards,
                                     onOpenSettings: _openSettings,
                                     onCollapse: widget.onCollapse,
                                   ),
@@ -205,79 +604,102 @@ class _TodoPanelState extends State<TodoPanel> {
                                           },
                                         ),
                                         const SizedBox(height: 12),
-                                        TextField(
-                                          key: const Key('search-field'),
-                                          controller: _searchController,
-                                          focusNode: _searchFocusNode,
-                                          onChanged: (value) {
-                                            setState(
-                                              () => _query = value.trim(),
-                                            );
-                                          },
-                                          decoration: InputDecoration(
-                                            hintText:
-                                                _scope == TodoListScope.active
-                                                ? context.l10n.searchTodosHint
-                                                : context
-                                                      .l10n
-                                                      .searchArchiveHint,
-                                            prefixIcon: const Icon(
-                                              Icons.search_rounded,
-                                              size: 19,
-                                            ),
-                                            suffixIcon: _query.isEmpty
-                                                ? null
-                                                : IconButton(
-                                                    tooltip: context
-                                                        .l10n
-                                                        .clearSearchTooltip,
-                                                    onPressed: () {
-                                                      _searchController.clear();
-                                                      setState(
-                                                        () => _query = '',
-                                                      );
-                                                      _searchFocusNode
-                                                          .requestFocus();
-                                                    },
-                                                    icon: const Icon(
-                                                      Icons.close_rounded,
-                                                      size: 18,
-                                                    ),
+                                        Row(
+                                          children: <Widget>[
+                                            Expanded(
+                                              child: TextField(
+                                                key: const Key('search-field'),
+                                                controller: _searchController,
+                                                focusNode: _searchFocusNode,
+                                                onChanged: (value) {
+                                                  setState(
+                                                    () => _query = value.trim(),
+                                                  );
+                                                },
+                                                decoration: InputDecoration(
+                                                  hintText:
+                                                      _scope ==
+                                                          TodoListScope.active
+                                                      ? context
+                                                            .l10n
+                                                            .searchTodosHint
+                                                      : context
+                                                            .l10n
+                                                            .searchArchiveHint,
+                                                  prefixIcon: const Icon(
+                                                    Icons.search_rounded,
+                                                    size: 19,
                                                   ),
-                                          ),
+                                                  suffixIcon: _query.isEmpty
+                                                      ? null
+                                                      : IconButton(
+                                                          tooltip: context
+                                                              .l10n
+                                                              .clearSearchTooltip,
+                                                          onPressed: () {
+                                                            _searchController
+                                                                .clear();
+                                                            setState(
+                                                              () => _query = '',
+                                                            );
+                                                            _searchFocusNode
+                                                                .requestFocus();
+                                                          },
+                                                          icon: const Icon(
+                                                            Icons.close_rounded,
+                                                            size: 18,
+                                                          ),
+                                                        ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 9),
+                                            TagFilterButton(
+                                              selectedTag: selectedTag,
+                                              onPressed: _openTagFilter,
+                                            ),
+                                          ],
                                         ),
                                         if (_scope == TodoListScope.active) ...[
                                           const SizedBox(height: 10),
-                                          Row(
-                                            children: <Widget>[
-                                              Expanded(
-                                                child: TextField(
-                                                  key: const Key('todo-input'),
-                                                  controller:
-                                                      _composerController,
-                                                  focusNode: _composerFocusNode,
-                                                  textInputAction:
-                                                      TextInputAction.done,
-                                                  onSubmitted: (_) =>
-                                                      unawaited(_addTodo()),
-                                                  decoration: InputDecoration(
-                                                    hintText: context
-                                                        .l10n
-                                                        .addTodoHint,
-                                                    prefixIcon: const Icon(
-                                                      Icons.add_rounded,
-                                                      size: 20,
+                                          SizedBox(
+                                            width: double.infinity,
+                                            height: 42,
+                                            child: FilledButton.tonalIcon(
+                                              key: const Key('add-todo-button'),
+                                              onPressed: _openTodoCreate,
+                                              style: FilledButton.styleFrom(
+                                                alignment: Alignment.centerLeft,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 14,
                                                     ),
-                                                  ),
-                                                ),
                                               ),
-                                              const SizedBox(width: 9),
-                                              _AddButton(
-                                                isAdding: _isAdding,
-                                                onPressed: () =>
-                                                    unawaited(_addTodo()),
+                                              icon: const Icon(
+                                                Icons.add_rounded,
+                                                size: 18,
                                               ),
-                                            ],
+                                              label: Text(
+                                                context.l10n.createTodoAction,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        if (selectedTag != null) ...[
+                                          const SizedBox(height: 9),
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: FloatickTagChip(
+                                              key: const Key(
+                                                'active-tag-filter',
+                                              ),
+                                              tag: selectedTag,
+                                              onDeleted: () {
+                                                setState(
+                                                  () => _selectedTagId = null,
+                                                );
+                                              },
+                                            ),
                                           ),
                                         ],
                                       ],
@@ -303,6 +725,10 @@ class _TodoPanelState extends State<TodoPanel> {
                                       controller: widget.controller,
                                       scope: _scope,
                                       query: _query,
+                                      selectedTagId: effectiveSelectedTagId,
+                                      onOpenTagManagement: _openTagManagement,
+                                      onOpenDetails: _openTodoDetails,
+                                      onEditTodo: _openTodoEdit,
                                     ),
                                   ),
                                 ],
@@ -312,20 +738,20 @@ class _TodoPanelState extends State<TodoPanel> {
                         ),
                         Positioned.fill(
                           child: IgnorePointer(
-                            ignoring: !_isSettingsOpen,
+                            ignoring: !isDrawerOpen,
                             child: ExcludeSemantics(
-                              excluding: !_isSettingsOpen,
+                              excluding: !isDrawerOpen,
                               child: AnimatedOpacity(
-                                key: const Key('settings-drawer-scrim'),
+                                key: const Key('panel-drawer-scrim'),
                                 duration: reduceMotion
                                     ? Duration.zero
-                                    : _settingsScrimDuration,
+                                    : _drawerScrimDuration,
                                 curve: Curves.easeOut,
-                                opacity: _isSettingsOpen ? 1 : 0,
+                                opacity: isDrawerOpen ? 1 : 0,
                                 child: GestureDetector(
-                                  key: const Key('settings-drawer-dismiss'),
+                                  key: const Key('panel-drawer-dismiss'),
                                   behavior: HitTestBehavior.opaque,
-                                  onTap: _closeSettings,
+                                  onTap: _closeActiveDrawer,
                                   child: ColoredBox(
                                     color: Colors.black.withValues(
                                       alpha: isDark ? 0.22 : 0.12,
@@ -343,16 +769,16 @@ class _TodoPanelState extends State<TodoPanel> {
                           width: _settingsDrawerWidth,
                           child: IgnorePointer(
                             key: const Key('settings-drawer-pointer'),
-                            ignoring: !_isSettingsOpen,
+                            ignoring: !isSettingsOpen,
                             child: ExcludeSemantics(
-                              excluding: !_isSettingsOpen,
+                              excluding: !isSettingsOpen,
                               child: AnimatedSlide(
                                 key: const Key('settings-drawer-slide'),
                                 duration: reduceMotion
                                     ? Duration.zero
-                                    : _settingsDrawerDuration,
+                                    : _drawerSlideDuration,
                                 curve: Curves.easeOutCubic,
-                                offset: _isSettingsOpen
+                                offset: isSettingsOpen
                                     ? Offset.zero
                                     : const Offset(1, 0),
                                 child: FocusTraversalGroup(
@@ -361,8 +787,306 @@ class _TodoPanelState extends State<TodoPanel> {
                                     updateViewModel: widget.updateController,
                                     workingDirectoryPath:
                                         widget.controller.storageDirectoryPath,
-                                    onClose: _closeSettings,
+                                    onClose: _closeActiveDrawer,
                                     closeFocusNode: _settingsCloseFocusNode,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 0,
+                          left: tagDrawerOnLeft ? 0 : null,
+                          right: tagDrawerOnLeft ? null : 0,
+                          bottom: 0,
+                          width: _stickyBoardDrawerWidth,
+                          child: IgnorePointer(
+                            key: const Key('sticky-board-drawer-pointer'),
+                            ignoring: !isStickyBoardDrawerOpen,
+                            child: ExcludeSemantics(
+                              excluding: !isStickyBoardDrawerOpen,
+                              child: AnimatedSlide(
+                                key: const Key('sticky-board-drawer-slide'),
+                                duration: reduceMotion
+                                    ? Duration.zero
+                                    : _drawerSlideDuration,
+                                curve: Curves.easeOutCubic,
+                                offset: isStickyBoardDrawerVisible
+                                    ? Offset.zero
+                                    : Offset(tagDrawerOnLeft ? -1 : 1, 0),
+                                child: FocusTraversalGroup(
+                                  child: AnimatedBuilder(
+                                    animation: Listenable.merge(<Listenable>[
+                                      widget.stickyBoardController,
+                                      widget.controller,
+                                    ]),
+                                    builder: (context, _) {
+                                      final board =
+                                          _selectedStickyBoardId == null
+                                          ? null
+                                          : widget.stickyBoardController
+                                                .boardById(
+                                                  _selectedStickyBoardId!,
+                                                );
+                                      if (isStickyBoardTodoPickerOpen &&
+                                          board != null) {
+                                        return StickyBoardTodoPickerDrawer(
+                                          board: board,
+                                          todoController: widget.controller,
+                                          boardController:
+                                              widget.stickyBoardController,
+                                          borderOnLeft: !tagDrawerOnLeft,
+                                          onBack: _backToStickyBoardDetail,
+                                          onClose: _closeActiveDrawer,
+                                          closeFocusNode:
+                                              _stickyBoardCloseFocusNode,
+                                        );
+                                      }
+                                      if ((isStickyBoardDetailOpen ||
+                                              isStickyBoardContextVisible) &&
+                                          board != null) {
+                                        return StickyBoardDetailDrawer(
+                                          board: board,
+                                          todoController: widget.controller,
+                                          boardController:
+                                              widget.stickyBoardController,
+                                          borderOnLeft: !tagDrawerOnLeft,
+                                          onBack: _backToStickyBoardManagement,
+                                          onClose: _closeActiveDrawer,
+                                          onTogglePin: () =>
+                                              _toggleStickyBoardPin(board.id),
+                                          onAddExisting:
+                                              _openStickyBoardTodoPicker,
+                                          onCreateTodo: () => _openTodoCreate(
+                                            stickyBoardId: board.id,
+                                          ),
+                                          onOpenDetails: _openTodoDetails,
+                                          onEditTodo: _openTodoEdit,
+                                          onOpenTagManagement:
+                                              _openTagManagementFromStickyBoard,
+                                          closeFocusNode:
+                                              _stickyBoardCloseFocusNode,
+                                        );
+                                      }
+                                      return StickyBoardManagementDrawer(
+                                        controller:
+                                            widget.stickyBoardController,
+                                        isOpen: isStickyBoardManagementOpen,
+                                        borderOnLeft: !tagDrawerOnLeft,
+                                        onClose: _closeActiveDrawer,
+                                        onOpenBoard: _openStickyBoard,
+                                        onTogglePin: _toggleStickyBoardPin,
+                                        onDeleteBoard: _deleteStickyBoard,
+                                        closeFocusNode:
+                                            _stickyBoardCloseFocusNode,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: _todoDrawerHeight,
+                          child: IgnorePointer(
+                            key: const Key('todo-drawer-pointer'),
+                            ignoring: !isTodoDrawerOpen,
+                            child: ExcludeFocus(
+                              excluding: !isTodoDrawerOpen,
+                              child: ExcludeSemantics(
+                                excluding: !isTodoDrawerOpen,
+                                child: AnimatedSlide(
+                                  key: const Key('todo-drawer-slide'),
+                                  duration: reduceMotion
+                                      ? Duration.zero
+                                      : _drawerSlideDuration,
+                                  curve: Curves.easeOutCubic,
+                                  offset: isTodoDrawerVisible
+                                      ? Offset.zero
+                                      : const Offset(0, 1),
+                                  child: FocusTraversalGroup(
+                                    child: TodoEditorDrawer(
+                                      key: ValueKey<int>(_todoEditorSession),
+                                      mode: todoEditorMode,
+                                      item: selectedTodo,
+                                      availableTags: widget.controller.tags,
+                                      originalAssignedTagIds:
+                                          originalTodoTagIds,
+                                      assignedTagIds: todoEditorTagIds,
+                                      isOpen: isTodoDrawerOpen,
+                                      onClose: _closeActiveDrawer,
+                                      onEdit: () {
+                                        final todoId = selectedTodo?.id;
+                                        if (todoId != null) {
+                                          _openTodoEdit(todoId);
+                                        }
+                                      },
+                                      onOpenTagAssignment:
+                                          _openTagAssignmentFromTodo,
+                                      onSave: (title, content, tagIds) {
+                                        if (todoEditorMode ==
+                                            TodoEditorDrawerMode.create) {
+                                          return () async {
+                                            final item = await widget.controller
+                                                .create(
+                                                  title,
+                                                  content: content,
+                                                  tagIds: tagIds,
+                                                );
+                                            if (item == null) {
+                                              return false;
+                                            }
+                                            final boardId =
+                                                _todoCreationBoardId;
+                                            if (boardId == null) {
+                                              return true;
+                                            }
+                                            return widget.stickyBoardController
+                                                .addTodo(
+                                                  boardId: boardId,
+                                                  todoId: item.id,
+                                                );
+                                          }();
+                                        }
+                                        final todoId = selectedTodo?.id;
+                                        if (todoId == null) {
+                                          return Future<bool>.value(false);
+                                        }
+                                        return widget.controller.updateDetails(
+                                          id: todoId,
+                                          title: title,
+                                          content: content,
+                                          tagIds: tagIds,
+                                        );
+                                      },
+                                      onSaved: () {
+                                        if (_drawerMode ==
+                                            _TodoPanelDrawerMode.createTodo) {
+                                          _closeActiveDrawer();
+                                          return;
+                                        }
+                                        if (_drawerMode ==
+                                            _TodoPanelDrawerMode.editTodo) {
+                                          final todoId = _selectedTodoId;
+                                          if (todoId != null) {
+                                            _openTodoDetails(todoId);
+                                          }
+                                        }
+                                      },
+                                      closeFocusNode: _todoDrawerCloseFocusNode,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            key: const Key('todo-context-scrim-pointer'),
+                            ignoring: !isTodoContextOverlayOpen,
+                            child: ExcludeSemantics(
+                              child: AnimatedOpacity(
+                                key: const Key('todo-context-scrim'),
+                                duration: reduceMotion
+                                    ? Duration.zero
+                                    : _drawerScrimDuration,
+                                curve: Curves.easeOut,
+                                opacity: isTodoContextOverlayOpen ? 1 : 0,
+                                child: GestureDetector(
+                                  key: const Key('todo-context-dismiss'),
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: _closeActiveDrawer,
+                                  child: ColoredBox(
+                                    color: Colors.black.withValues(
+                                      alpha: isDark ? 0.18 : 0.10,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 0,
+                          left: tagDrawerOnLeft ? 0 : null,
+                          right: tagDrawerOnLeft ? null : 0,
+                          bottom: 0,
+                          width: _tagDrawerWidth,
+                          child: IgnorePointer(
+                            key: const Key('tag-drawer-pointer'),
+                            ignoring: !isTagDrawerOpen,
+                            child: ExcludeSemantics(
+                              excluding: !isTagDrawerOpen,
+                              child: AnimatedSlide(
+                                key: const Key('tag-drawer-slide'),
+                                duration: reduceMotion
+                                    ? Duration.zero
+                                    : _drawerSlideDuration,
+                                curve: Curves.easeOutCubic,
+                                offset: isTagDrawerOpen
+                                    ? Offset.zero
+                                    : Offset(tagDrawerOnLeft ? -1 : 1, 0),
+                                child: FocusTraversalGroup(
+                                  child: AnimatedSwitcher(
+                                    duration: reduceMotion
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 160),
+                                    switchInCurve: Curves.easeOut,
+                                    switchOutCurve: Curves.easeIn,
+                                    transitionBuilder: (child, animation) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                    child: switch (visibleTagDrawerMode) {
+                                      _TodoPanelDrawerMode.tagManagement =>
+                                        TagManagementDrawer(
+                                          key: const ValueKey<String>(
+                                            'tag-management-drawer-content',
+                                          ),
+                                          controller: widget.controller,
+                                          isOpen: isTagManagementOpen,
+                                          borderOnLeft: !tagDrawerOnLeft,
+                                          onClose: _closeActiveDrawer,
+                                          closeFocusNode:
+                                              _tagManagementCloseFocusNode,
+                                        ),
+                                      _TodoPanelDrawerMode.tagAssignment =>
+                                        TagFilterDrawer.assignment(
+                                          key: const ValueKey<String>(
+                                            'tag-assignment-drawer-content',
+                                          ),
+                                          controller: widget.controller,
+                                          selectedTagIds: _todoEditorTagIds,
+                                          borderOnLeft: !tagDrawerOnLeft,
+                                          onToggled: _toggleTodoEditorTag,
+                                          onManageTags:
+                                              _openTagManagementFromTagAssignment,
+                                          onClose: _closeActiveDrawer,
+                                          closeFocusNode:
+                                              _tagAssignmentCloseFocusNode,
+                                        ),
+                                      _ => TagFilterDrawer.filter(
+                                        key: const ValueKey<String>(
+                                          'tag-filter-drawer-content',
+                                        ),
+                                        controller: widget.controller,
+                                        selectedTagId: _selectedTagId,
+                                        borderOnLeft: !tagDrawerOnLeft,
+                                        onSelected: _selectTagFilter,
+                                        onManageTags: _openTagManagement,
+                                        onClose: _closeActiveDrawer,
+                                        closeFocusNode:
+                                            _tagFilterCloseFocusNode,
+                                      ),
+                                    },
                                   ),
                                 ),
                               ),
@@ -385,11 +1109,13 @@ class _TodoPanelState extends State<TodoPanel> {
 class _PanelHeader extends StatelessWidget {
   const _PanelHeader({
     required this.activeCount,
+    required this.onOpenStickyBoards,
     required this.onOpenSettings,
     required this.onCollapse,
   });
 
   final int activeCount;
+  final VoidCallback onOpenStickyBoards;
   final VoidCallback onOpenSettings;
   final VoidCallback onCollapse;
 
@@ -415,12 +1141,19 @@ class _PanelHeader extends StatelessWidget {
             ),
           ),
           IconButton(
+            key: const Key('sticky-boards-button'),
+            tooltip: localizations.stickyBoardsTooltip,
+            onPressed: onOpenStickyBoards,
+            icon: const Icon(Icons.sticky_note_2_outlined, size: 19),
+          ),
+          IconButton(
             key: const Key('settings-button'),
             tooltip: localizations.settingsTooltip,
             onPressed: onOpenSettings,
             icon: const Icon(Icons.settings_outlined, size: 19),
           ),
           IconButton(
+            key: const Key('collapse-button'),
             tooltip: localizations.collapseTooltip,
             onPressed: onCollapse,
             icon: const Icon(Icons.unfold_less_rounded, size: 20),
@@ -557,44 +1290,6 @@ class _ScopeButton extends StatelessWidget {
   }
 }
 
-class _AddButton extends StatelessWidget {
-  const _AddButton({required this.isAdding, required this.onPressed});
-
-  final bool isAdding;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: context.l10n.addTodoSemanticsLabel,
-      child: IconButton.filled(
-        key: const Key('add-todo'),
-        tooltip: context.l10n.addTodoTooltip,
-        onPressed: isAdding ? null : onPressed,
-        style: IconButton.styleFrom(
-          minimumSize: const Size.square(42),
-          maximumSize: const Size.square(42),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: Theme.of(
-            context,
-          ).colorScheme.primary.withValues(alpha: 0.45),
-        ),
-        icon: isAdding
-            ? const SizedBox.square(
-                dimension: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Icon(Icons.arrow_upward_rounded, size: 19),
-      ),
-    );
-  }
-}
-
 class _ErrorBanner extends StatelessWidget {
   const _ErrorBanner({required this.message, required this.onDismiss});
 
@@ -643,11 +1338,19 @@ class _TodoList extends StatelessWidget {
     required this.controller,
     required this.scope,
     required this.query,
+    required this.selectedTagId,
+    required this.onOpenTagManagement,
+    required this.onOpenDetails,
+    required this.onEditTodo,
   });
 
   final TodoViewModel controller;
   final TodoListScope scope;
   final String query;
+  final String? selectedTagId;
+  final VoidCallback onOpenTagManagement;
+  final ValueChanged<String> onOpenDetails;
+  final ValueChanged<String> onEditTodo;
 
   @override
   Widget build(BuildContext context) {
@@ -662,7 +1365,10 @@ class _TodoList extends StatelessWidget {
 
     final entries = _buildEntries(context);
     if (entries.isEmpty) {
-      return _EmptyList(scope: scope, hasQuery: query.isNotEmpty);
+      return _EmptyList(
+        scope: scope,
+        hasQuery: query.isNotEmpty || selectedTagId != null,
+      );
     }
 
     return ListView.builder(
@@ -672,15 +1378,23 @@ class _TodoList extends StatelessWidget {
         final entry = entries[index];
         return switch (entry) {
           _DateEntry() => _DateDivider(label: entry.label),
-          _ItemEntry() => _TodoRow(
+          _ItemEntry() => TodoListRow(
             key: ValueKey<String>(entry.item.id),
             item: entry.item,
             archivedScope: scope == TodoListScope.archived,
             onToggle: () =>
                 unawaited(controller.toggleCompletion(entry.item.id)),
-            onRename: (title) => controller.rename(entry.item.id, title),
+            onOpenDetails: () => onOpenDetails(entry.item.id),
+            onEdit: () => onEditTodo(entry.item.id),
             onArchive: () => unawaited(controller.archive(entry.item.id)),
             onRestore: () => unawaited(controller.restore(entry.item.id)),
+            tags: controller.tags,
+            assignedTagIds: controller.tagIdsForTodo(entry.item.id),
+            onToggleTag: (tagId) => controller.toggleTagForTodo(
+              todoId: entry.item.id,
+              tagId: tagId,
+            ),
+            onOpenTagManagement: onOpenTagManagement,
           ),
         };
       },
@@ -689,7 +1403,11 @@ class _TodoList extends StatelessWidget {
 
   List<_ListEntry> _buildEntries(BuildContext context) {
     final archived = scope == TodoListScope.archived;
-    final items = controller.itemsForView(archived: archived, query: query);
+    final items = controller.itemsForView(
+      archived: archived,
+      query: query,
+      selectedTagId: selectedTagId,
+    );
 
     DateTime relevantDate(TodoItem item) {
       if (archived) {
@@ -756,384 +1474,6 @@ class _DateDivider extends StatelessWidget {
             child: Divider(height: 1, color: color.withValues(alpha: 0.2)),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TodoRow extends StatefulWidget {
-  const _TodoRow({
-    required this.item,
-    required this.archivedScope,
-    required this.onToggle,
-    required this.onRename,
-    required this.onArchive,
-    required this.onRestore,
-    super.key,
-  });
-
-  final TodoItem item;
-  final bool archivedScope;
-  final VoidCallback onToggle;
-  final Future<bool> Function(String title) onRename;
-  final VoidCallback onArchive;
-  final VoidCallback onRestore;
-
-  @override
-  State<_TodoRow> createState() => _TodoRowState();
-}
-
-class _TodoRowState extends State<_TodoRow> {
-  late final TextEditingController _editController;
-  late final FocusNode _editFocusNode;
-  late final FocusNode _rowFocusNode;
-
-  bool _isHovered = false;
-  bool _hasFocus = false;
-  bool _isEditing = false;
-  bool _isSaving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _editController = TextEditingController(text: widget.item.title);
-    _editFocusNode = FocusNode();
-    _rowFocusNode = FocusNode();
-  }
-
-  @override
-  void didUpdateWidget(covariant _TodoRow oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!_isEditing && oldWidget.item.title != widget.item.title) {
-      _editController.text = widget.item.title;
-    }
-  }
-
-  @override
-  void dispose() {
-    _editController.dispose();
-    _editFocusNode.dispose();
-    _rowFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _startEditing() {
-    _editController.text = widget.item.title;
-    setState(() => _isEditing = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_isEditing) {
-        return;
-      }
-      _editFocusNode.requestFocus();
-      _editController.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: _editController.text.length,
-      );
-    });
-  }
-
-  void _cancelEditing() {
-    if (_isSaving) {
-      return;
-    }
-    _editController.text = widget.item.title;
-    setState(() => _isEditing = false);
-    _rowFocusNode.requestFocus();
-  }
-
-  Future<void> _saveEditing() async {
-    final normalizedTitle = _editController.text.trim();
-    if (_isSaving || normalizedTitle.isEmpty) {
-      return;
-    }
-    if (normalizedTitle == widget.item.title) {
-      setState(() => _isEditing = false);
-      _rowFocusNode.requestFocus();
-      return;
-    }
-
-    setState(() => _isSaving = true);
-    final didSave = await widget.onRename(normalizedTitle);
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _isSaving = false;
-      if (didSave) {
-        _isEditing = false;
-      }
-    });
-    if (didSave) {
-      _rowFocusNode.requestFocus();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final item = widget.item;
-    final localizations = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final onSurface = Theme.of(context).colorScheme.onSurface;
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final showEditAction = _isHovered || _hasFocus || _isEditing;
-    final canSave =
-        !_isSaving &&
-        _editController.text.trim().isNotEmpty &&
-        _editController.text.trim() != item.title;
-
-    return Focus(
-      focusNode: _rowFocusNode,
-      onFocusChange: (hasFocus) {
-        if (_hasFocus != hasFocus) {
-          setState(() => _hasFocus = hasFocus);
-        }
-      },
-      child: Semantics(
-        container: true,
-        label: item.title,
-        value: item.isCompleted
-            ? localizations.completedStatus
-            : localizations.incompleteStatus,
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _isHovered = true),
-          onExit: (_) => setState(() => _isHovered = false),
-          child: AnimatedContainer(
-            duration: reduceMotion
-                ? Duration.zero
-                : const Duration(milliseconds: 150),
-            margin: const EdgeInsets.symmetric(vertical: 2),
-            padding: const EdgeInsets.fromLTRB(7, 8, 5, 8),
-            decoration: BoxDecoration(
-              color: _isHovered || _isEditing
-                  ? (isDark
-                        ? Colors.white.withValues(alpha: 0.055)
-                        : Colors.black.withValues(alpha: 0.035))
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Row(
-              children: <Widget>[
-                if (!widget.archivedScope)
-                  Tooltip(
-                    message: item.isCompleted
-                        ? localizations.markIncompleteTooltip
-                        : localizations.markCompleteTooltip,
-                    child: Semantics(
-                      button: true,
-                      checked: item.isCompleted,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: _isEditing ? null : widget.onToggle,
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: AnimatedContainer(
-                              duration: reduceMotion
-                                  ? Duration.zero
-                                  : const Duration(milliseconds: 160),
-                              width: 21,
-                              height: 21,
-                              decoration: BoxDecoration(
-                                color: item.isCompleted
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(7),
-                                border: Border.all(
-                                  color: item.isCompleted
-                                      ? Theme.of(context).colorScheme.primary
-                                      : onSurface.withValues(alpha: 0.28),
-                                  width: 1.4,
-                                ),
-                              ),
-                              child: item.isCompleted
-                                  ? const Icon(
-                                      Icons.check_rounded,
-                                      size: 15,
-                                      color: Colors.white,
-                                    )
-                                  : null,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.inventory_2_outlined,
-                      size: 21,
-                      color: onSurface.withValues(alpha: 0.28),
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      if (_isEditing)
-                        Shortcuts(
-                          shortcuts: const <ShortcutActivator, Intent>{
-                            SingleActivator(LogicalKeyboardKey.escape):
-                                _CancelTodoEditIntent(),
-                          },
-                          child: Actions(
-                            actions: <Type, Action<Intent>>{
-                              _CancelTodoEditIntent:
-                                  CallbackAction<_CancelTodoEditIntent>(
-                                    onInvoke: (_) {
-                                      _cancelEditing();
-                                      return null;
-                                    },
-                                  ),
-                            },
-                            child: TextField(
-                              key: ValueKey<String>(
-                                'todo-edit-${widget.item.id}',
-                              ),
-                              controller: _editController,
-                              focusNode: _editFocusNode,
-                              enabled: !_isSaving,
-                              maxLines: 1,
-                              textInputAction: TextInputAction.done,
-                              onChanged: (_) => setState(() {}),
-                              onSubmitted: (_) => unawaited(_saveEditing()),
-                              style: TextStyle(
-                                color: onSurface.withValues(alpha: 0.94),
-                                fontSize: 13.5,
-                                height: 1.3,
-                              ),
-                              decoration: InputDecoration(
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 9,
-                                  vertical: 7,
-                                ),
-                                hintText: localizations.todoTitleRequiredHint,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        Text(
-                          item.title,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: onSurface.withValues(
-                              alpha: item.isCompleted ? 0.45 : 0.91,
-                            ),
-                            fontSize: 13.5,
-                            height: 1.3,
-                            decoration: item.isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                            decorationColor: onSurface.withValues(alpha: 0.42),
-                          ),
-                        ),
-                      const SizedBox(height: 3),
-                      Text(
-                        _formatTime(
-                          context,
-                          widget.archivedScope
-                              ? (item.archivedAt ?? item.createdAt)
-                              : item.createdAt,
-                        ),
-                        style: TextStyle(
-                          color: onSurface.withValues(alpha: 0.35),
-                          fontSize: 10.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 4),
-                SizedBox(
-                  width: 68,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      SizedBox.square(
-                        dimension: 34,
-                        child: _isEditing
-                            ? IconButton(
-                                key: ValueKey<String>(
-                                  'save-todo-${widget.item.id}',
-                                ),
-                                tooltip: localizations.saveTooltip,
-                                onPressed: canSave
-                                    ? () => unawaited(_saveEditing())
-                                    : null,
-                                padding: EdgeInsets.zero,
-                                icon: _isSaving
-                                    ? const SizedBox.square(
-                                        dimension: 14,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 1.8,
-                                        ),
-                                      )
-                                    : const Icon(Icons.check_rounded, size: 18),
-                              )
-                            : AnimatedOpacity(
-                                duration: reduceMotion
-                                    ? Duration.zero
-                                    : const Duration(milliseconds: 140),
-                                opacity: showEditAction ? 1 : 0,
-                                child: IgnorePointer(
-                                  ignoring: !showEditAction,
-                                  child: IconButton(
-                                    key: ValueKey<String>(
-                                      'edit-todo-${widget.item.id}',
-                                    ),
-                                    tooltip: localizations.editTooltip,
-                                    onPressed: _startEditing,
-                                    padding: EdgeInsets.zero,
-                                    icon: const Icon(
-                                      Icons.edit_outlined,
-                                      size: 17,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                      ),
-                      SizedBox.square(
-                        dimension: 34,
-                        child: IconButton(
-                          tooltip: _isEditing
-                              ? localizations.cancelEditTooltip
-                              : (widget.archivedScope
-                                    ? localizations.restoreTooltip
-                                    : localizations.archiveTooltip),
-                          onPressed: _isSaving
-                              ? null
-                              : (_isEditing
-                                    ? _cancelEditing
-                                    : (widget.archivedScope
-                                          ? widget.onRestore
-                                          : widget.onArchive)),
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            _isEditing
-                                ? Icons.close_rounded
-                                : (widget.archivedScope
-                                      ? Icons.unarchive_outlined
-                                      : Icons.archive_outlined),
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -1223,14 +1563,6 @@ String _formatDay(BuildContext context, DateTime day) {
   return MaterialLocalizations.of(context).formatFullDate(day);
 }
 
-String _formatTime(BuildContext context, DateTime date) {
-  final local = date.toLocal();
-  return MaterialLocalizations.of(context).formatTimeOfDay(
-    TimeOfDay.fromDateTime(local),
-    alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-  );
-}
-
 class _CollapseIntent extends Intent {
   const _CollapseIntent();
 }
@@ -1241,8 +1573,4 @@ class _SearchIntent extends Intent {
 
 class _NewTodoIntent extends Intent {
   const _NewTodoIntent();
-}
-
-class _CancelTodoEditIntent extends Intent {
-  const _CancelTodoEditIntent();
 }

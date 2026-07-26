@@ -1,8 +1,8 @@
 <div align="center">
   <img
-    src="./docs/assets/floatick-product-hero.png"
+    src="./docs/assets/floatick-product-hero-v4.png"
     width="100%"
-    alt="Floatick macOS 悬浮待办清单与设置界面"
+    alt="Floatick macOS 悬浮待办、Markdown 编辑器、标签与设置"
   />
   <h1>Floatick — macOS 悬浮待办清单</h1>
   <p><strong>一款开源、仅存本地的 macOS 待办应用与轻量任务管理工具。</strong></p>

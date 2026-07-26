@@ -1,17 +1,20 @@
 name: floatick
 description: A focused, local-first floating todo list for macOS.
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ^3.12.2
 
 dependencies:
+  characters: ^1.4.1
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  flutter_markdown_plus: ^1.0.12
   intl: any
+  multiview_desktop: ^1.2.0
 
 dev_dependencies:
   flutter_test:

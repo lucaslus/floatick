@@ -1,20 +1,26 @@
 import 'package:floatick/core/storage/storage_failure.dart';
+import 'package:floatick/features/todos/data/tag_repository.dart';
 import 'package:floatick/features/todos/data/todo_repository.dart';
+import 'package:floatick/features/todos/domain/tag_workspace.dart';
 import 'package:floatick/features/todos/domain/todo_item.dart';
+import 'package:floatick/features/todos/domain/todo_tag.dart';
 import 'package:floatick/features/todos/presentation/todo_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const firstDate = '2026-07-23T02:00:00.000Z';
   late _MemoryTodoRepository repository;
+  late _MemoryTagRepository tagRepository;
   late TodoViewModel controller;
   late int idSequence;
 
   setUp(() {
     repository = _MemoryTodoRepository();
+    tagRepository = _MemoryTagRepository();
     idSequence = 0;
     controller = TodoViewModel(
       todoRepository: repository,
+      tagRepository: tagRepository,
       clock: () => DateTime.parse(firstDate),
       idGenerator: () => 'todo-${++idSequence}',
     );
@@ -22,9 +28,14 @@ void main() {
 
   test('add trims the title and persists before exposing state', () async {
     await controller.load();
-    await controller.add('  Write focused tests  ');
+    final didAdd = await controller.add(
+      '  Write focused tests  ',
+      content: '# Coverage\n\n- Storage\n- UI',
+    );
 
+    expect(didAdd, isTrue);
     expect(controller.items.single.title, 'Write focused tests');
+    expect(controller.items.single.content, '# Coverage\n\n- Storage\n- UI');
     expect(controller.items.single.createdAt, DateTime.parse(firstDate));
     expect(repository.savedItems, controller.items);
     expect(controller.activeCount, 1);
@@ -32,9 +43,27 @@ void main() {
 
   test('blank titles are ignored', () async {
     await controller.load();
-    await controller.add('   ');
+    final didAdd = await controller.add('   ', content: 'Not enough');
 
+    expect(didAdd, isFalse);
     expect(controller.items, isEmpty);
+    expect(repository.saveCount, 0);
+  });
+
+  test('duplicate generated ids are rejected without persisting', () async {
+    repository.savedItems = <TodoItem>[
+      TodoItem(
+        id: 'todo-1',
+        title: 'Existing todo',
+        createdAt: DateTime.parse(firstDate),
+      ),
+    ];
+    await controller.load();
+
+    final didAdd = await controller.add('Conflicting todo');
+
+    expect(didAdd, isFalse);
+    expect(controller.items.single.title, 'Existing todo');
     expect(repository.saveCount, 0);
   });
 
@@ -45,6 +74,7 @@ void main() {
         TodoItem(
           id: 'older-active',
           title: 'Write architecture notes',
+          content: 'Document the local storage format.',
           createdAt: DateTime.parse('2026-07-21T12:00:00.000Z'),
         ),
         TodoItem(
@@ -70,6 +100,12 @@ void main() {
       expect(
         controller
             .itemsForView(archived: false, query: 'ARCHITECTURE')
+            .map((item) => item.id),
+        <String>['older-active'],
+      );
+      expect(
+        controller
+            .itemsForView(archived: false, query: 'storage format')
             .map((item) => item.id),
         <String>['older-active'],
       );
@@ -111,6 +147,52 @@ void main() {
     expect(await controller.rename('existing', '   '), isFalse);
     expect(await controller.rename('missing', 'Updated title'), isFalse);
     expect(controller.items.single.title, 'Original title');
+    expect(repository.saveCount, 0);
+  });
+
+  test('updateDetails persists title and markdown content together', () async {
+    repository.savedItems = <TodoItem>[
+      TodoItem(
+        id: 'existing',
+        title: 'Original title',
+        content: 'Original content',
+        createdAt: DateTime.parse(firstDate),
+      ),
+    ];
+    await controller.load();
+
+    final didUpdate = await controller.updateDetails(
+      id: 'existing',
+      title: '  Updated title  ',
+      content: '## Notes\n\n`done`',
+    );
+
+    expect(didUpdate, isTrue);
+    expect(controller.items.single.title, 'Updated title');
+    expect(controller.items.single.content, '## Notes\n\n`done`');
+    expect(repository.savedItems.single, controller.items.single);
+  });
+
+  test('updateDetails rejects blank titles and keeps existing data', () async {
+    repository.savedItems = <TodoItem>[
+      TodoItem(
+        id: 'existing',
+        title: 'Original title',
+        content: 'Original content',
+        createdAt: DateTime.parse(firstDate),
+      ),
+    ];
+    await controller.load();
+
+    final didUpdate = await controller.updateDetails(
+      id: 'existing',
+      title: ' ',
+      content: 'Changed content',
+    );
+
+    expect(didUpdate, isFalse);
+    expect(controller.items.single.title, 'Original title');
+    expect(controller.items.single.content, 'Original content');
     expect(repository.saveCount, 0);
   });
 
@@ -176,6 +258,200 @@ void main() {
       expect(controller.error, isNull);
     },
   );
+
+  test(
+    'tag CRUD enforces names, colors, and case-insensitive uniqueness',
+    () async {
+      await controller.load();
+
+      expect(
+        await controller.createTag(name: '  Work  ', colorValue: 0xFF20B8A8),
+        TagMutationResult.success,
+      );
+      expect(controller.tags.single.name, 'Work');
+      expect(
+        await controller.createTag(name: 'work', colorValue: 0xFF4C8FF5),
+        TagMutationResult.duplicateName,
+      );
+      expect(
+        await controller.createTag(name: '12345678901', colorValue: 0xFF4C8FF5),
+        TagMutationResult.nameTooLong,
+      );
+
+      final tagId = controller.tags.single.id;
+      expect(
+        await controller.updateTag(
+          id: tagId,
+          name: 'Focus',
+          colorValue: 0xFF4C8FF5,
+        ),
+        TagMutationResult.success,
+      );
+      expect(controller.tags.single.name, 'Focus');
+      expect(controller.tags.single.colorValue, 0xFF4C8FF5);
+
+      expect(await controller.deleteTag(tagId), TagMutationResult.success);
+      expect(controller.tags, isEmpty);
+    },
+  );
+
+  test(
+    'tag assignments persist, filter todos, and are removed on delete',
+    () async {
+      repository.savedItems = <TodoItem>[
+        TodoItem(
+          id: 'work-item',
+          title: 'Prepare release notes',
+          createdAt: DateTime.parse(firstDate),
+        ),
+        TodoItem(
+          id: 'personal-item',
+          title: 'Buy coffee',
+          createdAt: DateTime.parse(firstDate),
+        ),
+      ];
+      tagRepository.savedWorkspace = TagWorkspace(
+        tags: <TodoTag>[
+          TodoTag(
+            id: 'tag-work',
+            name: 'Work',
+            colorValue: 0xFF20B8A8,
+            createdAt: DateTime.parse(firstDate),
+          ),
+        ],
+        assignments: const <String, List<String>>{
+          'work-item': <String>['tag-work'],
+        },
+      );
+      await controller.load();
+
+      expect(
+        controller
+            .itemsForView(archived: false, query: '', selectedTagId: 'tag-work')
+            .map((item) => item.id),
+        <String>['work-item'],
+      );
+      expect(
+        controller
+            .itemsForView(archived: false, query: 'work')
+            .map((item) => item.id),
+        <String>['work-item'],
+      );
+
+      await controller.toggleTagForTodo(
+        todoId: 'personal-item',
+        tagId: 'tag-work',
+      );
+      expect(controller.tagIdsForTodo('personal-item'), <String>['tag-work']);
+      expect(controller.tagUsageCount('tag-work'), 2);
+
+      await controller.deleteTag('tag-work');
+      expect(controller.tags, isEmpty);
+      expect(controller.tagIdsForTodo('work-item'), isEmpty);
+      expect(controller.tagIdsForTodo('personal-item'), isEmpty);
+    },
+  );
+
+  test('failed tag save leaves visible tag state unchanged', () async {
+    await controller.load();
+    tagRepository.failNextSave = true;
+
+    final result = await controller.createTag(
+      name: 'Focus',
+      colorValue: 0xFF20B8A8,
+    );
+
+    expect(result, TagMutationResult.storageFailure);
+    expect(controller.tags, isEmpty);
+    expect(controller.error?.kind, StorageFailureKind.write);
+  });
+
+  test('add persists selected tags with the new todo', () async {
+    tagRepository.savedWorkspace = TagWorkspace(
+      tags: <TodoTag>[
+        TodoTag(
+          id: 'tag-work',
+          name: 'Work',
+          colorValue: 0xFF20B8A8,
+          createdAt: DateTime.parse(firstDate),
+        ),
+      ],
+      assignments: const <String, List<String>>{},
+    );
+    await controller.load();
+
+    final didAdd = await controller.add(
+      'Prepare release',
+      tagIds: const <String>['tag-work'],
+    );
+
+    expect(didAdd, isTrue);
+    expect(controller.items.single.id, 'todo-1');
+    expect(controller.tagIdsForTodo('todo-1'), <String>['tag-work']);
+    expect(tagRepository.savedWorkspace.tagIdsForTodo('todo-1'), <String>[
+      'tag-work',
+    ]);
+  });
+
+  test('a failed tag save rolls back a newly created todo', () async {
+    tagRepository.savedWorkspace = TagWorkspace(
+      tags: <TodoTag>[
+        TodoTag(
+          id: 'tag-work',
+          name: 'Work',
+          colorValue: 0xFF20B8A8,
+          createdAt: DateTime.parse(firstDate),
+        ),
+      ],
+      assignments: const <String, List<String>>{},
+    );
+    await controller.load();
+    tagRepository.failNextSave = true;
+
+    final didAdd = await controller.add(
+      'Prepare release',
+      tagIds: const <String>['tag-work'],
+    );
+
+    expect(didAdd, isFalse);
+    expect(controller.items, isEmpty);
+    expect(repository.savedItems, isEmpty);
+    expect(controller.error?.kind, StorageFailureKind.write);
+  });
+
+  test('updateDetails persists tag-only changes', () async {
+    repository.savedItems = <TodoItem>[
+      TodoItem(
+        id: 'existing',
+        title: 'Prepare release',
+        createdAt: DateTime.parse(firstDate),
+      ),
+    ];
+    tagRepository.savedWorkspace = TagWorkspace(
+      tags: <TodoTag>[
+        TodoTag(
+          id: 'tag-focus',
+          name: 'Focus',
+          colorValue: 0xFF4C8FF5,
+          createdAt: DateTime.parse(firstDate),
+        ),
+      ],
+      assignments: const <String, List<String>>{},
+    );
+    await controller.load();
+
+    final didUpdate = await controller.updateDetails(
+      id: 'existing',
+      title: 'Prepare release',
+      content: '',
+      tagIds: const <String>['tag-focus'],
+    );
+
+    expect(didUpdate, isTrue);
+    expect(controller.tagIdsForTodo('existing'), <String>['tag-focus']);
+    expect(repository.saveCount, 0);
+    expect(tagRepository.saveCount, 1);
+  });
 }
 
 class _MemoryTodoRepository implements TodoRepository {
@@ -199,5 +475,27 @@ class _MemoryTodoRepository implements TodoRepository {
       throw const StorageFailure(kind: StorageFailureKind.write);
     }
     savedItems = List<TodoItem>.of(items);
+  }
+}
+
+class _MemoryTagRepository implements TagRepository {
+  TagWorkspace savedWorkspace = TagWorkspace.empty();
+  int saveCount = 0;
+  bool failNextSave = false;
+
+  @override
+  String get storagePath => '/tmp/floatick-test/tags.json';
+
+  @override
+  Future<TagWorkspace> load() async => savedWorkspace;
+
+  @override
+  Future<void> save(TagWorkspace workspace) async {
+    saveCount += 1;
+    if (failNextSave) {
+      failNextSave = false;
+      throw const StorageFailure(kind: StorageFailureKind.write);
+    }
+    savedWorkspace = workspace;
   }
 }

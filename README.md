@@ -1,8 +1,8 @@
 <div align="center">
   <img
-    src="./docs/assets/floatick-product-hero.png"
+    src="./docs/assets/floatick-product-hero-v4.png"
     width="100%"
-    alt="Floatick floating todo list and settings for macOS"
+    alt="Floatick floating todo list, Markdown editor, tags, and settings for macOS"
   />
   <h1>Floatick — Floating Todo List for macOS</h1>
   <p><strong>An open-source, local-first macOS todo app and lightweight task manager.</strong></p>

@@ -39,6 +39,7 @@ void main() {
     final item = TodoItem(
       id: 'todo-1',
       title: 'Finish the Flutter shell',
+      content: '## Notes\n\n- Keep it **fast**.',
       createdAt: DateTime.utc(2026, 7, 23, 6, 30),
       completedAt: DateTime.utc(2026, 7, 23, 7),
     );
@@ -52,10 +53,29 @@ void main() {
       <String, Object?>{
         'id': 'todo-1',
         'title': 'Finish the Flutter shell',
+        'content': '## Notes\n\n- Keep it **fast**.',
         'createdAt': '2026-07-23T06:30:00.000Z',
         'completedAt': '2026-07-23T07:00:00.000Z',
       },
     ]);
+  });
+
+  test('legacy items without content load with empty content', () async {
+    await repository.rootDirectory.create(recursive: true);
+    await File(repository.storagePath).writeAsString(
+      jsonEncode(<Object?>[
+        <String, Object?>{
+          'id': 'legacy',
+          'title': 'Existing todo',
+          'createdAt': '2026-07-23T06:30:00.000Z',
+        },
+      ]),
+    );
+
+    final item = (await repository.load()).single;
+
+    expect(item.title, 'Existing todo');
+    expect(item.content, isEmpty);
   });
 
   test('damaged storage is reported and left unchanged', () async {
