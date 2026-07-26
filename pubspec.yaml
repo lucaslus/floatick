@@ -7,10 +7,12 @@ environment:
   sdk: ^3.12.2
 
 dependencies:
+  characters: ^1.4.1
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  flutter_markdown_plus: ^1.0.12
   intl: any
 
 dev_dependencies:

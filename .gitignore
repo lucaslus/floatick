@@ -27,6 +27,7 @@ macos/Flutter/ephemeral/
 macos/Pods/
 macos/.symlinks/
 macos/Runner.xcworkspace/xcuserdata/
+macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved
 macos/Runner.xcodeproj/xcuserdata/
 
 DerivedData/
