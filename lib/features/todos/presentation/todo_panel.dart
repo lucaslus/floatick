@@ -18,7 +18,6 @@ import 'tag_filter_drawer.dart';
 import 'tag_management_drawer.dart';
 import 'todo_editor_drawer.dart';
 import 'todo_view_model.dart';
-import 'widgets/floatick_tag_chip.dart';
 import 'widgets/tag_menus.dart';
 import 'widgets/todo_list_row.dart';
 
@@ -93,7 +92,7 @@ class _TodoPanelState extends State<TodoPanel> {
 
   TodoListScope _scope = TodoListScope.active;
   String _query = '';
-  String? _selectedTagId;
+  final Set<String> _selectedTagIds = <String>{};
   String? _selectedTodoId;
   _TodoPanelDrawerMode _drawerMode = _TodoPanelDrawerMode.none;
   _TodoPanelDrawerMode? _pendingDrawerMode;
@@ -307,6 +306,17 @@ class _TodoPanelState extends State<TodoPanel> {
     );
   }
 
+  Future<void> _deleteArchivedTodoPermanently(String todoId) async {
+    final deleted = await widget.controller.deletePermanently(todoId);
+    if (!deleted) {
+      return;
+    }
+    await widget.stickyBoardController.removeTodoFromAllBoards(todoId);
+    if (mounted && _selectedTodoId == todoId) {
+      _closeActiveDrawer();
+    }
+  }
+
   void _openTagAssignmentFromTodo() {
     if (_drawerMode != _TodoPanelDrawerMode.createTodo &&
         _drawerMode != _TodoPanelDrawerMode.editTodo) {
@@ -464,15 +474,19 @@ class _TodoPanelState extends State<TodoPanel> {
     });
   }
 
-  void _selectTagFilter(String? tagId) {
-    _unfocusDrawerControls();
-    _drawerRequestSerial += 1;
+  void _toggleTagFilter(String tagId) {
     setState(() {
-      _pendingDrawerMode = null;
-      _selectedTagId = tagId;
-      _drawerMode = _TodoPanelDrawerMode.none;
+      if (!_selectedTagIds.add(tagId)) {
+        _selectedTagIds.remove(tagId);
+      }
     });
-    _restorePanelFocus();
+  }
+
+  void _clearTagFilters() {
+    if (_selectedTagIds.isEmpty) {
+      return;
+    }
+    setState(_selectedTagIds.clear);
   }
 
   void _closeActiveDrawer() {
@@ -716,10 +730,14 @@ class _TodoPanelState extends State<TodoPanel> {
                           child: AnimatedBuilder(
                             animation: widget.controller,
                             builder: (context, _) {
-                              final selectedTag = _selectedTagId == null
-                                  ? null
-                                  : widget.controller.tagById(_selectedTagId!);
-                              final effectiveSelectedTagId = selectedTag?.id;
+                              final selectedTags = widget.controller.tags
+                                  .where(
+                                    (tag) => _selectedTagIds.contains(tag.id),
+                                  )
+                                  .toList(growable: false);
+                              final effectiveSelectedTagIds = selectedTags
+                                  .map((tag) => tag.id)
+                                  .toSet();
                               return Column(
                                 children: <Widget>[
                                   _PanelHeader(
@@ -800,7 +818,9 @@ class _TodoPanelState extends State<TodoPanel> {
                                             ),
                                             const SizedBox(width: 9),
                                             TagFilterButton(
-                                              selectedTag: selectedTag,
+                                              selectedCount:
+                                                  effectiveSelectedTagIds
+                                                      .length,
                                               onPressed: _openTagFilter,
                                             ),
                                           ],
@@ -830,23 +850,6 @@ class _TodoPanelState extends State<TodoPanel> {
                                             ),
                                           ),
                                         ],
-                                        if (selectedTag != null) ...[
-                                          const SizedBox(height: 9),
-                                          Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: FloatickTagChip(
-                                              key: const Key(
-                                                'active-tag-filter',
-                                              ),
-                                              tag: selectedTag,
-                                              onDeleted: () {
-                                                setState(
-                                                  () => _selectedTagId = null,
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                        ],
                                       ],
                                     ),
                                   ),
@@ -870,10 +873,13 @@ class _TodoPanelState extends State<TodoPanel> {
                                       controller: widget.controller,
                                       scope: _scope,
                                       query: _query,
-                                      selectedTagId: effectiveSelectedTagId,
+                                      selectedTagIds: effectiveSelectedTagIds,
+                                      onClearTagFilters: _clearTagFilters,
                                       onOpenTagManagement: _openTagManagement,
                                       onOpenDetails: _openTodoDetails,
                                       onEditTodo: _openTodoEdit,
+                                      onDeleteTodo:
+                                          _deleteArchivedTodoPermanently,
                                     ),
                                   ),
                                 ],
@@ -1069,6 +1075,8 @@ class _TodoPanelState extends State<TodoPanel> {
                                             originalTodoTagIds,
                                         assignedTagIds: todoEditorTagIds,
                                         isOpen: isTodoDrawerOpen,
+                                        canEdit:
+                                            selectedTodo?.isArchived != true,
                                         onClose: _closeActiveDrawer,
                                         onEdit: () {
                                           final todoId = selectedTodo?.id;
@@ -1234,9 +1242,10 @@ class _TodoPanelState extends State<TodoPanel> {
                                             'tag-filter-drawer-content',
                                           ),
                                           controller: widget.controller,
-                                          selectedTagId: _selectedTagId,
+                                          selectedTagIds: _selectedTagIds,
                                           borderOnLeft: !tagDrawerOnLeft,
-                                          onSelected: _selectTagFilter,
+                                          onToggled: _toggleTagFilter,
+                                          onClear: _clearTagFilters,
                                           onManageTags: _openTagManagement,
                                           onClose: _closeActiveDrawer,
                                           closeFocusNode:
@@ -1494,19 +1503,23 @@ class _TodoList extends StatelessWidget {
     required this.controller,
     required this.scope,
     required this.query,
-    required this.selectedTagId,
+    required this.selectedTagIds,
+    required this.onClearTagFilters,
     required this.onOpenTagManagement,
     required this.onOpenDetails,
     required this.onEditTodo,
+    required this.onDeleteTodo,
   });
 
   final TodoViewModel controller;
   final TodoListScope scope;
   final String query;
-  final String? selectedTagId;
+  final Set<String> selectedTagIds;
+  final VoidCallback onClearTagFilters;
   final VoidCallback onOpenTagManagement;
   final ValueChanged<String> onOpenDetails;
   final ValueChanged<String> onEditTodo;
+  final ValueChanged<String> onDeleteTodo;
 
   @override
   Widget build(BuildContext context) {
@@ -1523,7 +1536,8 @@ class _TodoList extends StatelessWidget {
     if (entries.isEmpty) {
       return _EmptyList(
         scope: scope,
-        hasQuery: query.isNotEmpty || selectedTagId != null,
+        hasQuery: query.isNotEmpty || selectedTagIds.isNotEmpty,
+        onClearTagFilters: selectedTagIds.isEmpty ? null : onClearTagFilters,
       );
     }
 
@@ -1541,16 +1555,25 @@ class _TodoList extends StatelessWidget {
             onToggle: () =>
                 unawaited(controller.toggleCompletion(entry.item.id)),
             onOpenDetails: () => onOpenDetails(entry.item.id),
-            onEdit: () => onEditTodo(entry.item.id),
+            onEdit: scope == TodoListScope.archived
+                ? null
+                : () => onEditTodo(entry.item.id),
             onArchive: () => unawaited(controller.archive(entry.item.id)),
             onRestore: () => unawaited(controller.restore(entry.item.id)),
             tags: controller.tags,
             assignedTagIds: controller.tagIdsForTodo(entry.item.id),
-            onToggleTag: (tagId) => controller.toggleTagForTodo(
-              todoId: entry.item.id,
-              tagId: tagId,
-            ),
-            onOpenTagManagement: onOpenTagManagement,
+            onToggleTag: scope == TodoListScope.archived
+                ? null
+                : (tagId) => controller.toggleTagForTodo(
+                    todoId: entry.item.id,
+                    tagId: tagId,
+                  ),
+            onOpenTagManagement: scope == TodoListScope.archived
+                ? null
+                : onOpenTagManagement,
+            onDeletePermanently: scope == TodoListScope.archived
+                ? () => onDeleteTodo(entry.item.id)
+                : null,
           ),
         };
       },
@@ -1562,7 +1585,7 @@ class _TodoList extends StatelessWidget {
     final items = controller.itemsForView(
       archived: archived,
       query: query,
-      selectedTagId: selectedTagId,
+      selectedTagIds: selectedTagIds,
     );
 
     DateTime relevantDate(TodoItem item) {
@@ -1636,10 +1659,15 @@ class _DateDivider extends StatelessWidget {
 }
 
 class _EmptyList extends StatelessWidget {
-  const _EmptyList({required this.scope, required this.hasQuery});
+  const _EmptyList({
+    required this.scope,
+    required this.hasQuery,
+    this.onClearTagFilters,
+  });
 
   final TodoListScope scope;
   final bool hasQuery;
+  final VoidCallback? onClearTagFilters;
 
   @override
   Widget build(BuildContext context) {
@@ -1698,6 +1726,23 @@ class _EmptyList extends StatelessWidget {
                 fontSize: 12,
               ),
             ),
+            if (onClearTagFilters != null) ...[
+              const SizedBox(height: 10),
+              TextButton(
+                key: const Key('clear-active-tag-filters'),
+                onPressed: onClearTagFilters,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: Text(localizations.clearTagFilterTooltip),
+              ),
+            ],
           ],
         ),
       ),

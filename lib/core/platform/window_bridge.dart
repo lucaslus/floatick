@@ -28,7 +28,7 @@ abstract interface class WindowBridge {
 
   Future<void> setAlwaysOnTop(bool alwaysOnTop);
 
-  Future<void> configureTransparentSecondaryWindow(int viewId);
+  Future<void> configureBorderlessSecondaryWindow(int viewId);
 }
 
 class MethodChannelWindowBridge implements WindowBridge {
@@ -68,9 +68,9 @@ class MethodChannelWindowBridge implements WindowBridge {
   }
 
   @override
-  Future<void> configureTransparentSecondaryWindow(int viewId) {
+  Future<void> configureBorderlessSecondaryWindow(int viewId) {
     return _channel.invokeMethod<void>(
-      'configureTransparentSecondaryWindow',
+      'configureBorderlessSecondaryWindow',
       viewId,
     );
   }

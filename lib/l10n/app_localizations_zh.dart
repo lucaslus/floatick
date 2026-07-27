@@ -424,6 +424,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get archiveTooltip => '归档';
 
   @override
+  String get deleteTodoPermanentlyTooltip => '永久删除';
+
+  @override
+  String get cancelDeleteTodoTooltip => '保留归档待办';
+
+  @override
+  String get confirmDeleteTodoTooltip => '永久删除这个待办';
+
+  @override
+  String get archivedTodoNoContentMessage => '没有保存更多说明。';
+
+  @override
   String get noSearchResultsTitle => '没有匹配的结果';
 
   @override

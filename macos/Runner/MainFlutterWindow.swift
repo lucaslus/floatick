@@ -31,10 +31,23 @@ final class MainFlutterWindow: NSWindow {
   private weak var flutterContentView: NSView?
   private var windowChannel: FlutterMethodChannel?
   private var updateService: UpdateService?
-  private var alwaysOnTop = true
+  private var appliedAlwaysOnTop: Bool?
 
   override var canBecomeKey: Bool { true }
   override var canBecomeMain: Bool { true }
+
+  override func sendEvent(_ event: NSEvent) {
+    if
+      isExpanded,
+      event.type == .leftMouseDown,
+      !isKeyWindow
+    {
+      NSApp.activate(ignoringOtherApps: true)
+      makeKey()
+      _ = focusFlutterContent()
+    }
+    super.sendEvent(event)
+  }
 
   override func awakeFromNib() {
     let engine = FlutterEngine(
@@ -160,20 +173,20 @@ final class MainFlutterWindow: NSWindow {
         }
         self.setAlwaysOnTop(alwaysOnTop)
         result(nil)
-      case "configureTransparentSecondaryWindow":
+      case "configureBorderlessSecondaryWindow":
         guard
           let viewIdentifier = (call.arguments as? NSNumber)?.int64Value
         else {
           result(
             FlutterError(
               code: "invalid_argument",
-              message: "configureTransparentSecondaryWindow expects a view ID.",
+              message: "configureBorderlessSecondaryWindow expects a view ID.",
               details: nil
             )
           )
           return
         }
-        guard self.configureTransparentSecondaryWindow(
+        guard self.configureBorderlessSecondaryWindow(
           viewIdentifier: viewIdentifier
         ) else {
           result(
@@ -193,7 +206,7 @@ final class MainFlutterWindow: NSWindow {
     windowChannel = channel
   }
 
-  private func configureTransparentSecondaryWindow(
+  private func configureBorderlessSecondaryWindow(
     viewIdentifier: Int64
   ) -> Bool {
     guard
@@ -214,20 +227,38 @@ final class MainFlutterWindow: NSWindow {
     }
 
     flutterViewController.backgroundColor = .clear
+    let existingFrame = targetWindow.frame
+    targetWindow.styleMask = [.borderless, .resizable]
+    targetWindow.setFrame(existingFrame, display: true)
     targetWindow.backgroundColor = .clear
     targetWindow.isOpaque = false
     targetWindow.hasShadow = false
+    targetWindow.preservesContentDuringLiveResize = true
     targetWindow.contentView?.wantsLayer = true
     targetWindow.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
+    targetWindow.contentView?.layerContentsRedrawPolicy = .onSetNeedsDisplay
+    targetWindow.contentView?.layerContentsPlacement = .scaleAxesIndependently
+    if isExpanded {
+      DispatchQueue.main.async { [weak self] in
+        guard let self, self.isExpanded else {
+          return
+        }
+        self.activateAndFocusFlutterContent()
+      }
+    }
     return true
   }
 
   private func setAlwaysOnTop(_ alwaysOnTop: Bool) {
-    guard self.alwaysOnTop != alwaysOnTop else {
+    let targetLevel: NSWindow.Level = alwaysOnTop ? .statusBar : .normal
+    guard
+      appliedAlwaysOnTop != alwaysOnTop ||
+      level != targetLevel
+    else {
       return
     }
-    self.alwaysOnTop = alwaysOnTop
-    level = alwaysOnTop ? .statusBar : .normal
+    appliedAlwaysOnTop = alwaysOnTop
+    level = targetLevel
     if alwaysOnTop {
       orderFrontRegardless()
     }

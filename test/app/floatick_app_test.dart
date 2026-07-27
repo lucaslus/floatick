@@ -89,8 +89,45 @@ void main() {
     expect(floatingMark.shape, FloatickBrandMarkShape.circle);
     expect(floatingMark.shadows, isEmpty);
 
+    await tester.pump();
+    final tooltipMouse = await tester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
+    await tooltipMouse.addPointer(
+      location: tester.getCenter(find.byKey(const Key('collapse-button'))),
+    );
+
     windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
     await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TooltipVisibility>(
+            find.byKey(const Key('panel-tooltip-visibility')),
+          )
+          .visible,
+      isFalse,
+    );
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('收起（Esc）'), findsNothing);
+
+    await tooltipMouse.moveTo(Offset.zero);
+    await tester.pump();
+    expect(
+      tester
+          .widget<TooltipVisibility>(
+            find.byKey(const Key('panel-tooltip-visibility')),
+          )
+          .visible,
+      isTrue,
+    );
+    await tooltipMouse.moveTo(
+      tester.getCenter(find.byKey(const Key('collapse-button'))),
+    );
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('收起（Esc）'), findsOneWidget);
+    await tooltipMouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
+    await tooltipMouse.removePointer();
 
     expect(windowBridge.expandedValues, <bool>[true]);
     expect(find.text('Floatick'), findsNothing);
@@ -374,6 +411,14 @@ void main() {
 
     expect(windowBridge.expandedValues, <bool>[true, false]);
     expect(find.byKey(const ValueKey('floating-todo-icon')), findsOneWidget);
+    expect(
+      tester
+          .widget<TooltipVisibility>(
+            find.byKey(const Key('panel-tooltip-visibility')),
+          )
+          .visible,
+      isFalse,
+    );
   });
 
   testWidgets('tags can be created, assigned, and used as a filter', (
@@ -476,6 +521,12 @@ void main() {
     expect(controller.tags.single.name, 'Work');
     expect(tagRepository.savedWorkspace.tags.single.name, 'Work');
     expect(find.byKey(const Key('managed-tag-tag-work')), findsOneWidget);
+    expect(
+      tester
+          .widget<ListView>(find.byKey(const Key('tag-management-list')))
+          .itemExtent,
+      44,
+    );
 
     await tester.tap(find.byKey(const Key('tag-management-close')));
     await tester.pumpAndSettle();
@@ -631,6 +682,11 @@ void main() {
           .icon,
       Icons.sell_rounded,
     );
+    await tester.tap(
+      find.byKey(const Key('tag-assignment-bottom-sheet-close')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-assignment-bottom-sheet')), findsNothing);
 
     await tester.tap(find.byKey(const Key('add-todo-button')));
     await tester.pumpAndSettle();
@@ -642,13 +698,61 @@ void main() {
     await tester.tap(find.byKey(const Key('save-todo-details')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('tag-filter-button')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('tag-filter-tag-work')));
+    expect(
+      await controller.create(
+        'Personal task',
+        tagIds: const <String>['tag-personal'],
+      ),
+      isNotNull,
+    );
+    expect(
+      await controller.createTag(name: 'Unused', colorValue: 0xFF20B8A8),
+      TagMutationResult.success,
+    );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('active-tag-filter')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tag-filter-button')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ListView>(find.byKey(const Key('tag-filter-list')))
+          .itemExtent,
+      44,
+    );
+    await tester.tap(find.byKey(const Key('tag-filter-tag-work')));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('tag-filter-tag-work')),
+        matching: find.byIcon(Icons.check_rounded),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('tag-filter-tag-work')),
+        matching: find.byType(AnimatedContainer),
+      ),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('tag-filter-drawer')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tag-filter-tag-personal')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-filter-drawer')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('tag-filter-count')),
+        matching: find.text('2'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('tag-filter-close')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('active-tag-filter')), findsNothing);
+    expect(find.byKey(const Key('tag-filter-count')), findsOneWidget);
     expect(find.text('Tagged task').hitTestable(), findsOneWidget);
+    expect(find.text('Personal task').hitTestable(), findsOneWidget);
     expect(find.text('Other task').hitTestable(), findsNothing);
     expect(tester.takeException(), isNull);
 
@@ -664,6 +768,29 @@ void main() {
       tester.getTopRight(find.byKey(const Key('tag-filter-drawer'))).dx,
       tester.getTopRight(find.byKey(const Key('todo-panel-surface'))).dx,
     );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('tag-filter-count')),
+        matching: find.text('2'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('tag-filter-all')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-filter-count')), findsNothing);
+    await tester.tap(find.byKey(const Key('tag-filter-tag-3')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tag-filter-close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('clear-active-tag-filters')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('clear-active-tag-filters')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-filter-count')), findsNothing);
+    expect(find.text('Tagged task').hitTestable(), findsOneWidget);
+    expect(find.text('Personal task').hitTestable(), findsOneWidget);
+    expect(find.text('Other task').hitTestable(), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tag-filter-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('manage-tags-button')));
     await tester.pumpAndSettle();
 
@@ -1147,5 +1274,5 @@ class _WidgetTestWindowBridge implements WindowBridge {
   }
 
   @override
-  Future<void> configureTransparentSecondaryWindow(int viewId) async {}
+  Future<void> configureBorderlessSecondaryWindow(int viewId) async {}
 }

@@ -9,6 +9,8 @@ import 'todo_view_model.dart';
 import 'widgets/floatick_tag_chip.dart';
 import 'widgets/tag_palette.dart';
 
+const double _managedTagRowExtent = 44;
+
 class TagManagementDrawer extends StatefulWidget {
   const TagManagementDrawer({
     required this.controller,
@@ -210,6 +212,9 @@ class _TagManagementDrawerState extends State<TagManagementDrawer> {
                 return query.isEmpty || tag.name.toLowerCase().contains(query);
               })
               .toList(growable: false);
+          final usageCounts = widget.controller.tagUsageCountsFor(
+            filteredTags.map((tag) => tag.id),
+          );
           final canSubmit = !_isSaving;
 
           return Column(
@@ -380,28 +385,32 @@ class _TagManagementDrawerState extends State<TagManagementDrawer> {
               Expanded(
                 child: filteredTags.isEmpty
                     ? _EmptyTagResults(hasQuery: query.isNotEmpty)
-                    : ListView.separated(
+                    : ListView.builder(
+                        key: const Key('tag-management-list'),
                         padding: const EdgeInsets.fromLTRB(10, 9, 10, 14),
+                        itemExtent: _managedTagRowExtent,
                         itemCount: filteredTags.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 2),
                         itemBuilder: (context, index) {
                           final tag = filteredTags[index];
-                          return _ManagedTagRow(
-                            key: ValueKey<String>('managed-tag-${tag.id}'),
-                            tag: tag,
-                            usageCount: widget.controller.tagUsageCount(tag.id),
-                            isEditing: _editingTagId == tag.id,
-                            isConfirmingDelete: _pendingDeleteTagId == tag.id,
-                            enabled: !_isSaving,
-                            onEdit: () => _beginEditing(tag),
-                            onRequestDelete: () {
-                              setState(() => _pendingDeleteTagId = tag.id);
-                            },
-                            onCancelDelete: () {
-                              setState(() => _pendingDeleteTagId = null);
-                            },
-                            onConfirmDelete: () =>
-                                unawaited(_confirmDelete(tag.id)),
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: _ManagedTagRow(
+                              key: ValueKey<String>('managed-tag-${tag.id}'),
+                              tag: tag,
+                              usageCount: usageCounts[tag.id] ?? 0,
+                              isEditing: _editingTagId == tag.id,
+                              isConfirmingDelete: _pendingDeleteTagId == tag.id,
+                              enabled: !_isSaving,
+                              onEdit: () => _beginEditing(tag),
+                              onRequestDelete: () {
+                                setState(() => _pendingDeleteTagId = tag.id);
+                              },
+                              onCancelDelete: () {
+                                setState(() => _pendingDeleteTagId = null);
+                              },
+                              onConfirmDelete: () =>
+                                  unawaited(_confirmDelete(tag.id)),
+                            ),
                           );
                         },
                       ),

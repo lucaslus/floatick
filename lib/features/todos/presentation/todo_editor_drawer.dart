@@ -26,6 +26,7 @@ class TodoEditorDrawer extends StatefulWidget {
     required this.onSave,
     required this.onSaved,
     required this.closeFocusNode,
+    this.canEdit = true,
     super.key,
   });
 
@@ -35,6 +36,7 @@ class TodoEditorDrawer extends StatefulWidget {
   final List<String> originalAssignedTagIds;
   final List<String> assignedTagIds;
   final bool isOpen;
+  final bool canEdit;
   final VoidCallback onClose;
   final VoidCallback onEdit;
   final VoidCallback onOpenTagAssignment;
@@ -207,6 +209,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
           children: <Widget>[
             _DrawerHeader(
               mode: widget.mode,
+              canEdit: widget.canEdit,
               onEdit: widget.onEdit,
               onClose: widget.onClose,
               closeFocusNode: widget.closeFocusNode,
@@ -231,6 +234,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
                           'details-${widget.item?.id ?? 'missing'}',
                         ),
                         item: widget.item,
+                        canEdit: widget.canEdit,
                         tags: availableTags
                             .where(
                               (tag) => widget.assignedTagIds.contains(tag.id),
@@ -275,12 +279,14 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
 class _DrawerHeader extends StatelessWidget {
   const _DrawerHeader({
     required this.mode,
+    required this.canEdit,
     required this.onEdit,
     required this.onClose,
     required this.closeFocusNode,
   });
 
   final TodoEditorDrawerMode mode;
+  final bool canEdit;
   final VoidCallback onEdit;
   final VoidCallback onClose;
   final FocusNode closeFocusNode;
@@ -304,7 +310,7 @@ class _DrawerHeader extends StatelessWidget {
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-          if (mode == TodoEditorDrawerMode.details)
+          if (mode == TodoEditorDrawerMode.details && canEdit)
             TextButton(
               key: const Key('todo-details-edit'),
               onPressed: onEdit,
@@ -690,10 +696,16 @@ class _EditorModeButton extends StatelessWidget {
 }
 
 class _TodoDetails extends StatelessWidget {
-  const _TodoDetails({required this.item, required this.tags, super.key});
+  const _TodoDetails({
+    required this.item,
+    required this.tags,
+    required this.canEdit,
+    super.key,
+  });
 
   final TodoItem? item;
   final List<TodoTag> tags;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -731,7 +743,7 @@ class _TodoDetails extends StatelessWidget {
           const SizedBox(height: 14),
           Expanded(
             child: item.content.trim().isEmpty
-                ? const _EmptyTodoContent()
+                ? _EmptyTodoContent(canEdit: canEdit)
                 : TodoMarkdownContent(
                     key: const Key('todo-details-markdown'),
                     content: item.content,
@@ -744,7 +756,9 @@ class _TodoDetails extends StatelessWidget {
 }
 
 class _EmptyTodoContent extends StatelessWidget {
-  const _EmptyTodoContent();
+  const _EmptyTodoContent({required this.canEdit});
+
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -769,7 +783,9 @@ class _EmptyTodoContent extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text(
-              context.l10n.noTodoContentMessage,
+              canEdit
+                  ? context.l10n.noTodoContentMessage
+                  : context.l10n.archivedTodoNoContentMessage,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: onSurface.withValues(alpha: 0.48),

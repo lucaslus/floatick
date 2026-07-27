@@ -192,7 +192,7 @@ class StickyBoardWindowCoordinator {
     _windowIdsByBoardId[boardId] = viewId;
     final window = MultiViewDesktop.fromId(viewId);
     await window.setHasShadow(false);
-    await windowBridge.configureTransparentSecondaryWindow(viewId);
+    await windowBridge.configureBorderlessSecondaryWindow(viewId);
     await window.setVisibleOnAllWorkspaces(true, visibleOnFullScreen: true);
     if (frame != null) {
       await window.setPosition(Offset(frame.left, frame.top));

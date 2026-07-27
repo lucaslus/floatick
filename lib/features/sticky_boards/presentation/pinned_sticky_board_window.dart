@@ -10,6 +10,7 @@ import '../../todos/presentation/widgets/todo_list_row.dart';
 import '../domain/sticky_board.dart';
 import 'sticky_board_view_model.dart';
 import 'sticky_board_window_coordinator.dart';
+import 'widgets/sticky_board_todo_details.dart';
 
 class PinnedStickyBoardWindow extends StatefulWidget {
   const PinnedStickyBoardWindow({
@@ -35,6 +36,7 @@ class PinnedStickyBoardWindow extends StatefulWidget {
 class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
     with WindowListener {
   bool _isClosing = false;
+  String? _detailsTodoId;
 
   @override
   void initState() {
@@ -62,9 +64,20 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
   }
 
   void _handleModelChanged() {
-    if (mounted) {
-      setState(() {});
+    if (!mounted) {
+      return;
     }
+    final detailsTodoId = _detailsTodoId;
+    if (detailsTodoId != null) {
+      final item = widget.todoController.itemById(detailsTodoId);
+      final belongsToBoard = widget.boardController
+          .todoIdsForBoard(widget.boardId)
+          .contains(detailsTodoId);
+      if (item == null || item.isArchived || !belongsToBoard) {
+        _detailsTodoId = null;
+      }
+    }
+    setState(() {});
   }
 
   @override
@@ -117,6 +130,14 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
     );
   }
 
+  void _showTodoDetails(String todoId) {
+    setState(() => _detailsTodoId = todoId);
+  }
+
+  void _closeTodoDetails() {
+    setState(() => _detailsTodoId = null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final board = widget.boardController.boardById(widget.boardId);
@@ -130,36 +151,62 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
     }
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final detailsItem = _detailsTodoId == null
+        ? null
+        : widget.todoController.itemById(_detailsTodoId!);
+
     return Material(
       type: MaterialType.transparency,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xF7182226) : const Color(0xFAFAFCFB),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : Colors.white.withValues(alpha: 0.90),
-            ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF182226) : const Color(0xFFFAFCFB),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.12)
+                : Colors.white.withValues(alpha: 0.90),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(21),
-            child: Column(
-              children: <Widget>[
-                _PinnedHeader(board: board, onUnpin: () => unawaited(_unpin())),
-                Divider(
-                  height: 1,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.08),
-                ),
-                Expanded(child: _buildTodoList(board)),
-                _PinnedFooter(onOpenMain: _openMain),
-              ],
+        ),
+        child: Column(
+          children: <Widget>[
+            _PinnedHeader(board: board, onUnpin: () => unawaited(_unpin())),
+            Divider(
+              height: 1,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.08),
             ),
-          ),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : const Duration(milliseconds: 150),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: detailsItem == null
+                    ? _buildTodoList(board)
+                    : StickyBoardTodoDetails(
+                        key: ValueKey<String>(
+                          'sticky-board-details-${detailsItem.id}',
+                        ),
+                        item: detailsItem,
+                        tags: widget.todoController.tags
+                            .where(
+                              (tag) => widget.todoController
+                                  .tagIdsForTodo(detailsItem.id)
+                                  .contains(tag.id),
+                            )
+                            .toList(growable: false),
+                        onBack: _closeTodoDetails,
+                        onEdit: () => _openMain(
+                          destination:
+                              StickyBoardMainWindowDestination.todoEdit,
+                          todoId: detailsItem.id,
+                        ),
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -192,10 +239,7 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
           archivedScope: false,
           onToggle: () =>
               unawaited(widget.todoController.toggleCompletion(item.id)),
-          onOpenDetails: () => _openMain(
-            destination: StickyBoardMainWindowDestination.todoDetails,
-            todoId: item.id,
-          ),
+          onOpenDetails: () => _showTodoDetails(item.id),
           onEdit: () => _openMain(
             destination: StickyBoardMainWindowDestination.todoEdit,
             todoId: item.id,
@@ -260,25 +304,6 @@ class _PinnedHeader extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _PinnedFooter extends StatelessWidget {
-  const _PinnedFooter({required this.onOpenMain});
-
-  final VoidCallback onOpenMain;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 8, 11),
-      child: OutlinedButton.icon(
-        key: const Key('pinned-sticky-board-open-main'),
-        onPressed: onOpenMain,
-        icon: const Icon(Icons.open_in_new_rounded, size: 16),
-        label: Text(context.l10n.openMainListAction),
       ),
     );
   }

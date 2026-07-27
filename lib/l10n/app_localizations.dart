@@ -890,6 +890,30 @@ abstract class AppLocalizations {
   /// **'Archive'**
   String get archiveTooltip;
 
+  /// No description provided for @deleteTodoPermanentlyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get deleteTodoPermanentlyTooltip;
+
+  /// No description provided for @cancelDeleteTodoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep archived todo'**
+  String get cancelDeleteTodoTooltip;
+
+  /// No description provided for @confirmDeleteTodoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete this todo'**
+  String get confirmDeleteTodoTooltip;
+
+  /// No description provided for @archivedTodoNoContentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No additional notes were saved.'**
+  String get archivedTodoNoContentMessage;
+
   /// No description provided for @noSearchResultsTitle.
   ///
   /// In en, this message translates to:

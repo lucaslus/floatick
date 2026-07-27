@@ -5,21 +5,22 @@ import '../domain/todo_tag.dart';
 import 'todo_view_model.dart';
 import 'widgets/tag_palette.dart';
 
+const double _tagFilterRowExtent = 44;
+
 enum TagDrawerSelectionMode { filter, assignment }
 
 class TagFilterDrawer extends StatelessWidget {
   const TagFilterDrawer.filter({
     required this.controller,
-    required this.selectedTagId,
+    required this.selectedTagIds,
     required this.borderOnLeft,
-    required this.onSelected,
+    required this.onToggled,
+    required this.onClear,
     required this.onManageTags,
     required this.onClose,
     required this.closeFocusNode,
     super.key,
-  }) : mode = TagDrawerSelectionMode.filter,
-       selectedTagIds = const <String>{},
-       onToggled = null;
+  }) : mode = TagDrawerSelectionMode.filter;
 
   const TagFilterDrawer.assignment({
     required this.controller,
@@ -31,16 +32,14 @@ class TagFilterDrawer extends StatelessWidget {
     required this.closeFocusNode,
     super.key,
   }) : mode = TagDrawerSelectionMode.assignment,
-       selectedTagId = null,
-       onSelected = null;
+       onClear = null;
 
   final TagDrawerSelectionMode mode;
   final TodoViewModel controller;
-  final String? selectedTagId;
   final Set<String> selectedTagIds;
   final bool borderOnLeft;
-  final ValueChanged<String?>? onSelected;
-  final ValueChanged<String>? onToggled;
+  final ValueChanged<String> onToggled;
+  final VoidCallback? onClear;
   final VoidCallback onManageTags;
   final VoidCallback onClose;
   final FocusNode closeFocusNode;
@@ -75,12 +74,13 @@ class TagFilterDrawer extends StatelessWidget {
         animation: controller,
         builder: (context, _) {
           final tags = controller.tags;
-          final effectiveSelectedTagId =
-              tags.any((tag) => tag.id == selectedTagId) ? selectedTagId : null;
           final knownTagIds = tags.map((tag) => tag.id).toSet();
           final effectiveSelectedTagIds = selectedTagIds
               .where(knownTagIds.contains)
               .toSet();
+          final usageCounts = controller.tagUsageCountsFor(
+            tags.map((tag) => tag.id),
+          );
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -135,48 +135,62 @@ class TagFilterDrawer extends StatelessWidget {
                     : Colors.black.withValues(alpha: 0.06),
               ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
-                  children: <Widget>[
-                    if (!isAssignment)
-                      _TagFilterRow(
-                        key: const Key('tag-filter-all'),
-                        label: context.l10n.allTagsFilterLabel,
-                        selected: effectiveSelectedTagId == null,
-                        onPressed: () => onSelected!(null),
-                      ),
-                    if (tags.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 28, 18, 16),
-                        child: Text(
-                          context.l10n.noTagsToFilterMessage,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.46,
+                child: tags.isEmpty
+                    ? ListView(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
+                        children: <Widget>[
+                          if (!isAssignment)
+                            SizedBox(
+                              height: _tagFilterRowExtent,
+                              child: _TagFilterRow(
+                                key: const Key('tag-filter-all'),
+                                label: context.l10n.allTagsFilterLabel,
+                                selected: effectiveSelectedTagIds.isEmpty,
+                                onPressed: onClear!,
+                              ),
                             ),
-                            height: 1.4,
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 28, 18, 16),
+                            child: Text(
+                              context.l10n.noTagsToFilterMessage,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.46,
+                                ),
+                                height: 1.4,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       )
-                    else
-                      for (final tag in tags)
-                        _TagFilterRow(
-                          key: ValueKey<String>(
-                            '${isAssignment ? 'tag-assignment' : 'tag-filter'}-${tag.id}',
-                          ),
-                          tag: tag,
-                          label: tag.name,
-                          trailing: '${controller.tagUsageCount(tag.id)}',
-                          selected: isAssignment
-                              ? effectiveSelectedTagIds.contains(tag.id)
-                              : effectiveSelectedTagId == tag.id,
-                          onPressed: isAssignment
-                              ? () => onToggled!(tag.id)
-                              : () => onSelected!(tag.id),
-                        ),
-                  ],
-                ),
+                    : ListView.builder(
+                        key: const Key('tag-filter-list'),
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
+                        itemExtent: _tagFilterRowExtent,
+                        itemCount: tags.length + (isAssignment ? 0 : 1),
+                        itemBuilder: (context, index) {
+                          if (!isAssignment && index == 0) {
+                            return _TagFilterRow(
+                              key: const Key('tag-filter-all'),
+                              label: context.l10n.allTagsFilterLabel,
+                              selected: effectiveSelectedTagIds.isEmpty,
+                              onPressed: onClear!,
+                            );
+                          }
+                          final tag = tags[index - (isAssignment ? 0 : 1)];
+                          return _TagFilterRow(
+                            key: ValueKey<String>(
+                              '${isAssignment ? 'tag-assignment' : 'tag-filter'}-${tag.id}',
+                            ),
+                            tag: tag,
+                            label: tag.name,
+                            trailing: '${usageCounts[tag.id] ?? 0}',
+                            selected: effectiveSelectedTagIds.contains(tag.id),
+                            onPressed: () => onToggled(tag.id),
+                          );
+                        },
+                      ),
               ),
             ],
           );
@@ -215,17 +229,9 @@ class _TagFilterRow extends StatelessWidget {
           onTap: onPressed,
           borderRadius: BorderRadius.circular(10),
           hoverColor: theme.colorScheme.primary.withValues(alpha: 0.07),
-          child: AnimatedContainer(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 160),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            decoration: BoxDecoration(
-              color: selected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.09)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-            ),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: _tagFilterRowExtent),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: <Widget>[
                 SizedBox(
@@ -256,7 +262,7 @@ class _TagFilterRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),

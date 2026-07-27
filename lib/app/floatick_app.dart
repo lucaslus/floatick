@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/platform/window_bridge.dart';
 import '../features/settings/domain/app_settings.dart';
@@ -102,6 +103,7 @@ class _FloatickShellState extends State<_FloatickShell>
   bool _isExpanded = false;
   bool _isChangingWindow = false;
   bool _isPanelPrepared = false;
+  bool _panelTooltipsEnabled = false;
   bool _hasSyncedPreferredLanguage = false;
   bool _hasSyncedAlwaysOnTop = false;
   String? _lastSyncedLanguageCode;
@@ -275,6 +277,20 @@ class _FloatickShellState extends State<_FloatickShell>
     unawaited(_setExpanded(true, requestedAnchor: expansionAnchor));
   }
 
+  void _enablePanelTooltips() {
+    if (!_isExpanded || _panelTooltipsEnabled) {
+      return;
+    }
+    setState(() => _panelTooltipsEnabled = true);
+  }
+
+  KeyEventResult _handlePanelKeyEvent(FocusNode _, KeyEvent event) {
+    if (event is KeyDownEvent) {
+      _enablePanelTooltips();
+    }
+    return KeyEventResult.ignored;
+  }
+
   Future<void> _setExpanded(
     bool expanded, {
     WindowExpansionAnchor? requestedAnchor,
@@ -297,7 +313,10 @@ class _FloatickShellState extends State<_FloatickShell>
     final reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final previousExpanded = _isExpanded;
-    setState(() => _isChangingWindow = true);
+    setState(() {
+      _isChangingWindow = true;
+      _panelTooltipsEnabled = false;
+    });
 
     try {
       if (expanded) {
@@ -405,21 +424,43 @@ class _FloatickShellState extends State<_FloatickShell>
                               alignment: expansionAlignment,
                               child: RepaintBoundary(
                                 key: const ValueKey('todo-panel'),
-                                child: TodoPanel(
-                                  controller: widget.controller,
-                                  settingsController: widget.settingsController,
-                                  updateController: widget.updateController,
-                                  stickyBoardController:
-                                      widget.stickyBoardController,
-                                  stickyBoardWindowCoordinator:
-                                      widget.stickyBoardWindowCoordinator,
-                                  windowBridge: widget.windowBridge,
-                                  expansionAnchor: _expansionAnchor,
-                                  stickyBoardRequest: _stickyBoardRequest,
-                                  stickyBoardRequestSerial:
-                                      _stickyBoardRequestSerial,
-                                  onCollapse: () =>
-                                      unawaited(_setExpanded(false)),
+                                child: Focus(
+                                  canRequestFocus: false,
+                                  onKeyEvent: _handlePanelKeyEvent,
+                                  child: Listener(
+                                    behavior: HitTestBehavior.translucent,
+                                    onPointerHover: (event) {
+                                      if (event.delta.distanceSquared > 0) {
+                                        _enablePanelTooltips();
+                                      }
+                                    },
+                                    onPointerDown: (_) =>
+                                        _enablePanelTooltips(),
+                                    child: TooltipVisibility(
+                                      key: const Key(
+                                        'panel-tooltip-visibility',
+                                      ),
+                                      visible: _panelTooltipsEnabled,
+                                      child: TodoPanel(
+                                        controller: widget.controller,
+                                        settingsController:
+                                            widget.settingsController,
+                                        updateController:
+                                            widget.updateController,
+                                        stickyBoardController:
+                                            widget.stickyBoardController,
+                                        stickyBoardWindowCoordinator:
+                                            widget.stickyBoardWindowCoordinator,
+                                        windowBridge: widget.windowBridge,
+                                        expansionAnchor: _expansionAnchor,
+                                        stickyBoardRequest: _stickyBoardRequest,
+                                        stickyBoardRequestSerial:
+                                            _stickyBoardRequestSerial,
+                                        onCollapse: () =>
+                                            unawaited(_setExpanded(false)),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

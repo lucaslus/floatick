@@ -10,6 +10,8 @@ abstract final class FloatickColors {
   static const darkSurfaceElevated = Color(0xFF222D31);
 }
 
+const _iconButtonStateDuration = Duration(milliseconds: 120);
+
 ThemeData buildFloatickTheme(Brightness brightness) {
   final isDark = brightness == Brightness.dark;
   final colorScheme =
@@ -33,6 +35,26 @@ ThemeData buildFloatickTheme(Brightness brightness) {
     canvasColor: Colors.transparent,
     splashFactory: NoSplash.splashFactory,
     visualDensity: VisualDensity.standard,
+    iconButtonTheme: IconButtonThemeData(
+      style: ButtonStyle(
+        animationDuration: _iconButtonStateDuration,
+        overlayColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+        foregroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return colorScheme.onSurface.withValues(alpha: 0.28);
+          }
+          if (states.contains(WidgetState.selected) ||
+              states.contains(WidgetState.pressed)) {
+            return colorScheme.primary;
+          }
+          if (states.contains(WidgetState.hovered) ||
+              states.contains(WidgetState.focused)) {
+            return colorScheme.onSurface.withValues(alpha: 0.92);
+          }
+          return colorScheme.onSurface.withValues(alpha: 0.62);
+        }),
+      ),
+    ),
     textSelectionTheme: TextSelectionThemeData(
       cursorColor: colorScheme.primary,
       selectionColor: colorScheme.primary.withValues(alpha: 0.22),

@@ -48,6 +48,7 @@ class TodoViewModel extends ChangeNotifier {
 
   List<TodoItem> _items = <TodoItem>[];
   TagWorkspace _tagWorkspace = TagWorkspace.empty();
+  Map<String, int> _tagUsageCounts = const <String, int>{};
   StorageFailure? _error;
   bool _isLoading = false;
   Future<void> _mutationQueue = Future<void>.value();
@@ -94,30 +95,31 @@ class TodoViewModel extends ChangeNotifier {
     );
   }
 
-  int tagUsageCount(String tagId) {
-    return _tagWorkspace.assignments.values
-        .where((tagIds) => tagIds.contains(tagId))
-        .length;
+  int tagUsageCount(String tagId) => _tagUsageCounts[tagId] ?? 0;
+
+  Map<String, int> tagUsageCountsFor(Iterable<String> tagIds) {
+    return Map<String, int>.unmodifiable(<String, int>{
+      for (final tagId in tagIds) tagId: _tagUsageCounts[tagId] ?? 0,
+    });
   }
 
   List<TodoItem> itemsForView({
     required bool archived,
     required String query,
-    String? selectedTagId,
+    Set<String> selectedTagIds = const <String>{},
   }) {
     final normalizedQuery = query.trim().toLowerCase();
     final visibleItems = _items.where((item) {
       final matchesScope = archived ? item.isArchived : !item.isArchived;
       final assignedTagIds = tagIdsForTodo(item.id);
       final matchesTag =
-          selectedTagId == null || assignedTagIds.contains(selectedTagId);
+          selectedTagIds.isEmpty || selectedTagIds.any(assignedTagIds.contains);
       final assignedTagNames = _tagWorkspace.tags
           .where((tag) => assignedTagIds.contains(tag.id))
           .map((tag) => tag.name.toLowerCase());
       final matchesQuery =
           normalizedQuery.isEmpty ||
           item.title.toLowerCase().contains(normalizedQuery) ||
-          item.content.toLowerCase().contains(normalizedQuery) ||
           assignedTagNames.any((name) => name.contains(normalizedQuery));
       return matchesScope && matchesTag && matchesQuery;
     }).toList();
@@ -148,7 +150,7 @@ class TodoViewModel extends ChangeNotifier {
     }
 
     try {
-      _tagWorkspace = await _tagRepository.load();
+      _setTagWorkspace(await _tagRepository.load());
     } on StorageFailure catch (error) {
       loadError ??= error;
     } finally {
@@ -208,6 +210,9 @@ class TodoViewModel extends ChangeNotifier {
 
   Future<void> toggleCompletion(String id) {
     return _updateItem(id, (item) {
+      if (item.isArchived) {
+        return item;
+      }
       return item.withCompletedAt(item.isCompleted ? null : _clock().toUtc());
     });
   }
@@ -223,6 +228,9 @@ class TodoViewModel extends ChangeNotifier {
       return false;
     }
     final existingItem = _items[existingIndex];
+    if (existingItem.isArchived) {
+      return false;
+    }
     if (existingItem.title == normalizedTitle) {
       return true;
     }
@@ -247,6 +255,10 @@ class TodoViewModel extends ChangeNotifier {
       if (existingIndex == -1) {
         return false;
       }
+      final existingItem = _items[existingIndex];
+      if (existingItem.isArchived) {
+        return false;
+      }
       final normalizedTagIds = tagIds == null
           ? tagIdsForTodo(id)
           : _normalizeKnownTagIds(tagIds);
@@ -254,7 +266,6 @@ class TodoViewModel extends ChangeNotifier {
         return false;
       }
 
-      final existingItem = _items[existingIndex];
       final todoChanged =
           existingItem.title != normalizedTitle ||
           existingItem.content != content;
@@ -288,6 +299,28 @@ class TodoViewModel extends ChangeNotifier {
 
   Future<void> restore(String id) {
     return _updateItem(id, (item) => item.withArchivedAt(null));
+  }
+
+  Future<bool> deletePermanently(String id) {
+    return _enqueueTodoAndTagMutation(() async {
+      final existingItem = itemById(id);
+      if (existingItem == null || !existingItem.isArchived) {
+        return false;
+      }
+
+      final updatedAssignments = <String, Iterable<String>>{
+        ..._tagWorkspace.assignments,
+      }..remove(id);
+      return _commitTodoAndTags(
+        updatedItems: _items.where((item) => item.id != id).toList(),
+        updatedWorkspace: TagWorkspace(
+          tags: _tagWorkspace.tags,
+          assignments: updatedAssignments,
+        ),
+        todoChanged: true,
+        tagsChanged: _tagWorkspace.assignments.containsKey(id),
+      );
+    });
   }
 
   Future<TagMutationResult> createTag({
@@ -402,14 +435,14 @@ class TodoViewModel extends ChangeNotifier {
     });
   }
 
-  Future<void> toggleTagForTodo({
+  Future<bool> toggleTagForTodo({
     required String todoId,
     required String tagId,
   }) {
     return _enqueueTagMutation(() async {
-      final todoExists = _items.any((item) => item.id == todoId);
-      if (!todoExists || tagById(tagId) == null) {
-        return;
+      final todo = itemById(todoId);
+      if (todo == null || todo.isArchived || tagById(tagId) == null) {
+        return false;
       }
 
       final assignedTagIds = tagIdsForTodo(todoId).toSet();
@@ -427,7 +460,7 @@ class TodoViewModel extends ChangeNotifier {
             .map((tag) => tag.id);
       }
 
-      await _saveTagWorkspace(
+      return _saveTagWorkspace(
         TagWorkspace(tags: _tagWorkspace.tags, assignments: updatedAssignments),
       );
     });
@@ -550,7 +583,7 @@ class TodoViewModel extends ChangeNotifier {
         await _tagRepository.save(updatedWorkspace);
       }
       _items = updatedItems;
-      _tagWorkspace = updatedWorkspace;
+      _setTagWorkspace(updatedWorkspace);
       _error = null;
       notifyListeners();
       return true;
@@ -574,7 +607,7 @@ class TodoViewModel extends ChangeNotifier {
   Future<bool> _saveTagWorkspace(TagWorkspace workspace) async {
     try {
       await _tagRepository.save(workspace);
-      _tagWorkspace = workspace;
+      _setTagWorkspace(workspace);
       _error = null;
       notifyListeners();
       return true;
@@ -594,6 +627,22 @@ class TodoViewModel extends ChangeNotifier {
       return TagMutationResult.nameTooLong;
     }
     return TagMutationResult.success;
+  }
+
+  void _setTagWorkspace(TagWorkspace workspace) {
+    final usageCounts = <String, int>{
+      for (final tag in workspace.tags) tag.id: 0,
+    };
+    for (final assignedTagIds in workspace.assignments.values) {
+      for (final tagId in assignedTagIds) {
+        final currentCount = usageCounts[tagId];
+        if (currentCount != null) {
+          usageCounts[tagId] = currentCount + 1;
+        }
+      }
+    }
+    _tagWorkspace = workspace;
+    _tagUsageCounts = Map<String, int>.unmodifiable(usageCounts);
   }
 
   static bool _sameTagName(String left, String right) {

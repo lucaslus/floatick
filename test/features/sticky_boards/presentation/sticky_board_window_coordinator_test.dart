@@ -46,7 +46,7 @@ void main() {
 
 class _MemoryWindowBridge implements WindowBridge {
   @override
-  Future<void> configureTransparentSecondaryWindow(int viewId) async {}
+  Future<void> configureBorderlessSecondaryWindow(int viewId) async {}
 
   @override
   Future<WindowExpansionAnchor> preferredExpansionAnchor() async {

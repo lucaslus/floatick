@@ -449,6 +449,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get archiveTooltip => 'Archive';
 
   @override
+  String get deleteTodoPermanentlyTooltip => 'Delete permanently';
+
+  @override
+  String get cancelDeleteTodoTooltip => 'Keep archived todo';
+
+  @override
+  String get confirmDeleteTodoTooltip => 'Permanently delete this todo';
+
+  @override
+  String get archivedTodoNoContentMessage => 'No additional notes were saved.';
+
+  @override
   String get noSearchResultsTitle => 'No matching results';
 
   @override
