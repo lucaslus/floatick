@@ -194,13 +194,6 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
                 : Colors.black.withValues(alpha: 0.07),
           ),
         ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.12),
-            blurRadius: 28,
-            offset: const Offset(0, -8),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
@@ -311,18 +304,11 @@ class _DrawerHeader extends StatelessWidget {
             ),
           ),
           if (mode == TodoEditorDrawerMode.details && canEdit)
-            TextButton(
+            IconButton(
               key: const Key('todo-details-edit'),
               onPressed: onEdit,
-              style: TextButton.styleFrom(
-                minimumSize: const Size(0, 36),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                textStyle: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              child: Text(context.l10n.editTodoAction),
+              tooltip: context.l10n.editTodoAction,
+              icon: const Icon(Icons.edit_outlined, size: 19),
             ),
           IconButton(
             key: const Key('todo-drawer-close'),

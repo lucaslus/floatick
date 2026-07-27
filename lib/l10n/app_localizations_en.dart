@@ -327,16 +327,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'No todos are available to add.';
 
   @override
+  String get emptyPinnedStickyBoardMessage => 'No todos on this board.';
+
+  @override
   String get newTodoInStickyBoardAction => 'New todo';
 
   @override
   String get removeFromStickyBoardTooltip => 'Remove from sticky board';
-
-  @override
-  String get openMainListTooltip => 'Open main list';
-
-  @override
-  String get openMainListAction => 'Open in Floatick';
 
   @override
   String get stickyBoardDeleteKeepsTodosHint =>

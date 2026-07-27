@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../app/theme/floatick_theme.dart';
 import '../../../core/platform/window_bridge.dart';
 import '../../../core/ui/floatick_brand_mark.dart';
+import '../../../core/ui/floatick_surface_metrics.dart';
 import '../../../l10n/l10n.dart';
 import '../../../l10n/storage_failure_localizations.dart';
 import '../../settings/presentation/settings_drawer.dart';
@@ -21,9 +23,6 @@ import 'todo_view_model.dart';
 import 'widgets/tag_menus.dart';
 import 'widgets/todo_list_row.dart';
 
-const double _panelWindowInset = 8;
-const double _panelOuterRadius = 26;
-const double _panelContentRadius = 25;
 const double _settingsDrawerWidth = 268;
 const double _tagDrawerWidth = 292;
 const double _stickyBoardDrawerWidth = 336;
@@ -106,6 +105,7 @@ class _TodoPanelState extends State<TodoPanel> {
       <_TodoPanelDrawerFamily>{};
   String? _selectedStickyBoardId;
   String? _todoCreationBoardId;
+  String? _pendingCreatedTodoId;
   int _todoEditorSession = 0;
   int _lastHandledStickyBoardRequestSerial = -1;
   int _drawerRequestSerial = 0;
@@ -273,6 +273,7 @@ class _TodoPanelState extends State<TodoPanel> {
 
   void _openTodoCreate({String? stickyBoardId}) {
     _todoCreationBoardId = stickyBoardId;
+    _pendingCreatedTodoId = null;
     _todoDrawerReturnMode = stickyBoardId == null
         ? null
         : _TodoPanelDrawerMode.stickyBoardDetail;
@@ -307,14 +308,87 @@ class _TodoPanelState extends State<TodoPanel> {
   }
 
   Future<void> _deleteArchivedTodoPermanently(String todoId) async {
-    final deleted = await widget.controller.deletePermanently(todoId);
-    if (!deleted) {
+    final boardIds = widget.stickyBoardController.boards
+        .where(
+          (board) => widget.stickyBoardController
+              .todoIdsForBoard(board.id)
+              .contains(todoId),
+        )
+        .map((board) => board.id)
+        .toList(growable: false);
+    final removedFromBoards = await widget.stickyBoardController
+        .removeTodoFromAllBoards(todoId);
+    if (!removedFromBoards) {
       return;
     }
-    await widget.stickyBoardController.removeTodoFromAllBoards(todoId);
+    final deleted = await widget.controller.deletePermanently(todoId);
+    if (!deleted) {
+      if (widget.controller.itemById(todoId) != null) {
+        for (final boardId in boardIds) {
+          await widget.stickyBoardController.addTodo(
+            boardId: boardId,
+            todoId: todoId,
+          );
+        }
+      }
+      return;
+    }
     if (mounted && _selectedTodoId == todoId) {
       _closeActiveDrawer();
     }
+  }
+
+  Future<bool> _saveCreatedTodo({
+    required String title,
+    required String content,
+    required Iterable<String> tagIds,
+  }) async {
+    final boardId = _todoCreationBoardId;
+    var todoId = _pendingCreatedTodoId;
+    if (todoId == null) {
+      final todoIdsBeforeSave = widget.controller.items
+          .map((item) => item.id)
+          .toSet();
+      final item = await widget.controller.create(
+        title,
+        content: content,
+        tagIds: tagIds,
+      );
+      if (item == null) {
+        final partiallySavedItems = widget.controller.items
+            .where((item) => !todoIdsBeforeSave.contains(item.id))
+            .toList(growable: false);
+        if (partiallySavedItems.length == 1) {
+          _pendingCreatedTodoId = partiallySavedItems.single.id;
+        }
+        return false;
+      }
+      todoId = item.id;
+      _pendingCreatedTodoId = todoId;
+    } else {
+      final updated = await widget.controller.updateDetails(
+        id: todoId,
+        title: title,
+        content: content,
+        tagIds: tagIds,
+      );
+      if (!updated) {
+        return false;
+      }
+    }
+
+    if (boardId == null) {
+      _pendingCreatedTodoId = null;
+      return true;
+    }
+    final linked = await widget.stickyBoardController.addTodo(
+      boardId: boardId,
+      todoId: todoId,
+    );
+    if (linked) {
+      _pendingCreatedTodoId = null;
+    }
+    return linked;
   }
 
   void _openTagAssignmentFromTodo() {
@@ -522,6 +596,7 @@ class _TodoPanelState extends State<TodoPanel> {
       if (_isTodoDrawerMode(closedMode)) {
         _todoDrawerReturnMode = null;
         _todoCreationBoardId = null;
+        _pendingCreatedTodoId = null;
       }
     });
     if (returnMode != null) {
@@ -706,14 +781,18 @@ class _TodoPanelState extends State<TodoPanel> {
               child: Container(
                 width: 440,
                 height: 700,
-                padding: const EdgeInsets.all(_panelWindowInset),
+                padding: const EdgeInsets.all(
+                  FloatickSurfaceMetrics.windowInset,
+                ),
                 child: DecoratedBox(
                   key: const Key('todo-panel-surface'),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xF2172024)
-                        : const Color(0xF7FAFCFB),
-                    borderRadius: BorderRadius.circular(_panelOuterRadius),
+                        ? FloatickColors.darkGlassSurface
+                        : FloatickColors.lightGlassSurface,
+                    borderRadius: BorderRadius.circular(
+                      FloatickSurfaceMetrics.panelRadius,
+                    ),
                     border: Border.all(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.12)
@@ -721,7 +800,9 @@ class _TodoPanelState extends State<TodoPanel> {
                     ),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(_panelContentRadius),
+                    borderRadius: BorderRadius.circular(
+                      FloatickSurfaceMetrics.panelContentRadius,
+                    ),
                     child: Stack(
                       fit: StackFit.expand,
                       children: <Widget>[
@@ -861,6 +942,23 @@ class _TodoPanelState extends State<TodoPanel> {
                                           ),
                                       onDismiss: widget.controller.dismissError,
                                     ),
+                                  AnimatedBuilder(
+                                    animation: widget.stickyBoardController,
+                                    builder: (context, _) {
+                                      final error =
+                                          widget.stickyBoardController.error;
+                                      if (error == null) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      return _ErrorBanner(
+                                        message: context.l10n
+                                            .messageForStorageFailure(error),
+                                        onDismiss: widget
+                                            .stickyBoardController
+                                            .dismissError,
+                                      );
+                                    },
+                                  ),
                                   Divider(
                                     height: 1,
                                     thickness: 1,
@@ -1089,29 +1187,11 @@ class _TodoPanelState extends State<TodoPanel> {
                                         onSave: (title, content, tagIds) {
                                           if (todoEditorMode ==
                                               TodoEditorDrawerMode.create) {
-                                            return () async {
-                                              final item = await widget
-                                                  .controller
-                                                  .create(
-                                                    title,
-                                                    content: content,
-                                                    tagIds: tagIds,
-                                                  );
-                                              if (item == null) {
-                                                return false;
-                                              }
-                                              final boardId =
-                                                  _todoCreationBoardId;
-                                              if (boardId == null) {
-                                                return true;
-                                              }
-                                              return widget
-                                                  .stickyBoardController
-                                                  .addTodo(
-                                                    boardId: boardId,
-                                                    todoId: item.id,
-                                                  );
-                                            }();
+                                            return _saveCreatedTodo(
+                                              title: title,
+                                              content: content,
+                                              tagIds: tagIds,
+                                            );
                                           }
                                           final todoId = selectedTodo?.id;
                                           if (todoId == null) {

@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:multiview_desktop/multiview_desktop.dart';
 
+import '../../../app/theme/floatick_theme.dart';
 import '../../../l10n/l10n.dart';
 import '../../todos/domain/todo_item.dart';
 import '../../todos/presentation/todo_view_model.dart';
 import '../../todos/presentation/widgets/todo_list_row.dart';
 import '../domain/sticky_board.dart';
+import 'sticky_board_frame_save_scheduler.dart';
 import 'sticky_board_view_model.dart';
 import 'sticky_board_window_coordinator.dart';
 import 'widgets/sticky_board_todo_details.dart';
@@ -35,6 +37,8 @@ class PinnedStickyBoardWindow extends StatefulWidget {
 
 class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
     with WindowListener {
+  final StickyBoardFrameSaveScheduler _frameSaveScheduler =
+      StickyBoardFrameSaveScheduler();
   bool _isClosing = false;
   String? _detailsTodoId;
 
@@ -57,9 +61,13 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
 
   @override
   void dispose() {
+    _frameSaveScheduler.cancel();
     widget.boardController.removeListener(_handleModelChanged);
     widget.todoController.removeListener(_handleModelChanged);
-    widget.coordinator.forgetWindow(widget.boardId);
+    widget.coordinator.forgetWindow(
+      boardId: widget.boardId,
+      viewId: widget.viewId,
+    );
     super.dispose();
   }
 
@@ -83,42 +91,64 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
   @override
   void onWindowClose() {
     if (!_isClosing) {
-      unawaited(widget.coordinator.unpin(widget.boardId));
+      _frameSaveScheduler.cancel();
+      unawaited(_persistBoundsAndUnpin());
     }
   }
 
   @override
   void onWindowMoved() {
-    unawaited(_persistBounds());
+    _scheduleBoundsSave();
   }
 
   @override
   void onWindowResized() {
-    unawaited(_persistBounds());
+    _scheduleBoundsSave();
   }
 
-  Future<void> _persistBounds() async {
-    if (!mounted || _isClosing) {
+  void _scheduleBoundsSave() {
+    _frameSaveScheduler.schedule(() => unawaited(_persistBounds()));
+  }
+
+  Future<void> _persistBounds({bool allowClosing = false}) async {
+    if (!mounted || (_isClosing && !allowClosing)) {
       return;
     }
-    final bounds = await MultiViewDesktop.of(context).getBounds();
-    await widget.coordinator.saveWindowFrame(
-      boardId: widget.boardId,
-      bounds: bounds,
-    );
+    try {
+      final bounds = await MultiViewDesktop.of(context).getBounds();
+      await widget.coordinator.saveWindowFrame(
+        boardId: widget.boardId,
+        bounds: bounds,
+      );
+    } on Object catch (error, stackTrace) {
+      debugPrint(
+        'Floatick could not save sticky board ${widget.boardId} bounds: '
+        '$error',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   Future<void> _unpin() async {
     if (_isClosing) {
       return;
     }
+    _frameSaveScheduler.cancel();
     _isClosing = true;
     await widget.coordinator.unpin(widget.boardId);
   }
 
+  Future<void> _persistBoundsAndUnpin() async {
+    if (_isClosing) {
+      return;
+    }
+    _isClosing = true;
+    await _persistBounds(allowClosing: true);
+    await widget.coordinator.unpin(widget.boardId);
+  }
+
   void _openMain({
-    StickyBoardMainWindowDestination destination =
-        StickyBoardMainWindowDestination.board,
+    required StickyBoardMainWindowDestination destination,
     String? todoId,
   }) {
     widget.coordinator.requestMainWindow(
@@ -159,7 +189,9 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
       type: MaterialType.transparency,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF182226) : const Color(0xFFFAFCFB),
+          color: isDark
+              ? FloatickColors.darkGlassSurface
+              : FloatickColors.lightGlassSurface,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: isDark
@@ -221,10 +253,18 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
         .toList(growable: false);
     if (items.isEmpty) {
       return Center(
-        child: TextButton.icon(
-          onPressed: _openMain,
-          icon: const Icon(Icons.open_in_new_rounded, size: 17),
-          label: Text(context.l10n.openMainListAction),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            key: const Key('pinned-sticky-board-empty'),
+            context.l10n.emptyPinnedStickyBoardMessage,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.52),
+            ),
+          ),
         ),
       );
     }

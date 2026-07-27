@@ -366,6 +366,72 @@ void main() {
     expect(tagRepository.saveCount, 1);
   });
 
+  test('a failed rollback completes the original save when possible', () async {
+    tagRepository.savedWorkspace = TagWorkspace(
+      tags: <TodoTag>[
+        TodoTag(
+          id: 'tag-focus',
+          name: 'Focus',
+          colorValue: 0xFF4C8FF5,
+          createdAt: DateTime.parse(firstDate),
+        ),
+      ],
+      assignments: const <String, List<String>>{},
+    );
+    await controller.load();
+    repository.saveCallsToFail.add(2);
+    tagRepository.failNextSave = true;
+
+    final didAdd = await controller.add(
+      'Recovered todo',
+      tagIds: const <String>['tag-focus'],
+    );
+
+    expect(didAdd, isTrue);
+    expect(controller.items.single.title, 'Recovered todo');
+    expect(controller.tagIdsForTodo(controller.items.single.id), <String>[
+      'tag-focus',
+    ]);
+    expect(repository.saveCount, 2);
+    expect(tagRepository.saveCount, 2);
+    expect(controller.error, isNull);
+  });
+
+  test(
+    'an unrecoverable partial save never reports a successful add',
+    () async {
+      tagRepository.savedWorkspace = TagWorkspace(
+        tags: <TodoTag>[
+          TodoTag(
+            id: 'tag-focus',
+            name: 'Focus',
+            colorValue: 0xFF4C8FF5,
+            createdAt: DateTime.parse(firstDate),
+          ),
+        ],
+        assignments: const <String, List<String>>{},
+      );
+      await controller.load();
+      repository.saveCallsToFail.add(2);
+      tagRepository.saveCallsToFail.addAll(<int>{1, 2});
+
+      final didAdd = await controller.add(
+        'Partially persisted todo',
+        tagIds: const <String>['tag-focus'],
+      );
+
+      expect(didAdd, isFalse);
+      expect(repository.savedItems.single.title, 'Partially persisted todo');
+      expect(controller.items, repository.savedItems);
+      expect(
+        controller.tagIdsForTodo(repository.savedItems.single.id),
+        isEmpty,
+      );
+      expect(controller.error?.kind, StorageFailureKind.write);
+      expect(repository.saveCount, 2);
+    },
+  );
+
   test(
     'a failed save keeps visible state unchanged and queue usable',
     () async {
@@ -649,6 +715,7 @@ class _MemoryTodoRepository implements TodoRepository {
   List<TodoItem> savedItems = <TodoItem>[];
   int saveCount = 0;
   bool failNextSave = false;
+  final Set<int> saveCallsToFail = <int>{};
 
   @override
   String get storagePath => '/tmp/floatick-test/todos.json';
@@ -661,7 +728,7 @@ class _MemoryTodoRepository implements TodoRepository {
   @override
   Future<void> save(List<TodoItem> items) async {
     saveCount += 1;
-    if (failNextSave) {
+    if (failNextSave || saveCallsToFail.remove(saveCount)) {
       failNextSave = false;
       throw const StorageFailure(kind: StorageFailureKind.write);
     }
@@ -673,6 +740,7 @@ class _MemoryTagRepository implements TagRepository {
   TagWorkspace savedWorkspace = TagWorkspace.empty();
   int saveCount = 0;
   bool failNextSave = false;
+  final Set<int> saveCallsToFail = <int>{};
 
   @override
   String get storagePath => '/tmp/floatick-test/tags.json';
@@ -683,7 +751,7 @@ class _MemoryTagRepository implements TagRepository {
   @override
   Future<void> save(TagWorkspace workspace) async {
     saveCount += 1;
-    if (failNextSave) {
+    if (failNextSave || saveCallsToFail.remove(saveCount)) {
       failNextSave = false;
       throw const StorageFailure(kind: StorageFailureKind.write);
     }

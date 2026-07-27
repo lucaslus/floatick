@@ -304,16 +304,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noTodosAvailableForBoardMessage => '暂无可添加的待办。';
 
   @override
+  String get emptyPinnedStickyBoardMessage => '这个便利板还没有待办。';
+
+  @override
   String get newTodoInStickyBoardAction => '新建待办';
 
   @override
   String get removeFromStickyBoardTooltip => '从便利板移除';
-
-  @override
-  String get openMainListTooltip => '打开主列表';
-
-  @override
-  String get openMainListAction => '在 Floatick 中打开';
 
   @override
   String get stickyBoardDeleteKeepsTodosHint => '删除便利板不会删除其中的待办。';

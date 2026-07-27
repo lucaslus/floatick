@@ -21,10 +21,42 @@ void main() {
         });
     final bridge = MethodChannelWindowBridge();
 
-    await bridge.configureBorderlessSecondaryWindow(42);
+    await bridge.configureBorderlessSecondaryWindow(
+      42,
+      positionAdjacentToMainWindow: true,
+    );
 
     expect(calls, hasLength(1));
     expect(calls.single.method, 'configureBorderlessSecondaryWindow');
-    expect(calls.single.arguments, 42);
+    expect(calls.single.arguments, <String, Object>{
+      'viewId': 42,
+      'positionAdjacentToMainWindow': true,
+    });
+  });
+
+  test('coordinates the fixed main window and native floating icon', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call);
+          return null;
+        });
+    final bridge = MethodChannelWindowBridge();
+
+    await bridge.setFloatingIconCount(7);
+    await bridge.setPreferredTheme('dark');
+    await bridge.setExpanded(true, animated: false);
+
+    expect(calls.map((call) => call.method), <String>[
+      'setFloatingIconCount',
+      'setPreferredTheme',
+      'setExpanded',
+    ]);
+    expect(calls.first.arguments, 7);
+    expect(calls[1].arguments, 'dark');
+    expect(calls.last.arguments, <String, bool>{
+      'expanded': true,
+      'animated': false,
+    });
   });
 }

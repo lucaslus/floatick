@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
-import '../domain/todo_tag.dart';
 import 'todo_view_model.dart';
-import 'widgets/tag_palette.dart';
-
-const double _tagFilterRowExtent = 44;
+import 'widgets/tag_selection_row.dart';
 
 enum TagDrawerSelectionMode { filter, assignment }
 
@@ -141,8 +138,8 @@ class TagFilterDrawer extends StatelessWidget {
                         children: <Widget>[
                           if (!isAssignment)
                             SizedBox(
-                              height: _tagFilterRowExtent,
-                              child: _TagFilterRow(
+                              height: tagSelectionRowExtent,
+                              child: TagSelectionRow(
                                 key: const Key('tag-filter-all'),
                                 label: context.l10n.allTagsFilterLabel,
                                 selected: effectiveSelectedTagIds.isEmpty,
@@ -167,11 +164,11 @@ class TagFilterDrawer extends StatelessWidget {
                     : ListView.builder(
                         key: const Key('tag-filter-list'),
                         padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
-                        itemExtent: _tagFilterRowExtent,
+                        itemExtent: tagSelectionRowExtent,
                         itemCount: tags.length + (isAssignment ? 0 : 1),
                         itemBuilder: (context, index) {
                           if (!isAssignment && index == 0) {
-                            return _TagFilterRow(
+                            return TagSelectionRow(
                               key: const Key('tag-filter-all'),
                               label: context.l10n.allTagsFilterLabel,
                               selected: effectiveSelectedTagIds.isEmpty,
@@ -179,7 +176,7 @@ class TagFilterDrawer extends StatelessWidget {
                             );
                           }
                           final tag = tags[index - (isAssignment ? 0 : 1)];
-                          return _TagFilterRow(
+                          return TagSelectionRow(
                             key: ValueKey<String>(
                               '${isAssignment ? 'tag-assignment' : 'tag-filter'}-${tag.id}',
                             ),
@@ -195,103 +192,6 @@ class TagFilterDrawer extends StatelessWidget {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _TagFilterRow extends StatelessWidget {
-  const _TagFilterRow({
-    required this.label,
-    required this.selected,
-    required this.onPressed,
-    this.tag,
-    this.trailing,
-    super.key,
-  });
-
-  final TodoTag? tag;
-  final String label;
-  final String? trailing;
-  final bool selected;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final tagColor = tag == null ? null : TagPalette.color(tag!.colorValue);
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(10),
-          hoverColor: theme.colorScheme.primary.withValues(alpha: 0.07),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: _tagFilterRowExtent),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              children: <Widget>[
-                SizedBox(
-                  width: 18,
-                  child: tagColor == null
-                      ? Icon(
-                          Icons.layers_outlined,
-                          size: 15,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.44,
-                          ),
-                        )
-                      : Center(
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: tagColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                if (trailing != null) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    trailing!,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.40,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 18,
-                  child: selected
-                      ? Icon(
-                          Icons.check_rounded,
-                          size: 17,
-                          color: theme.colorScheme.primary,
-                        )
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -11,6 +11,8 @@ import '../domain/sticky_board.dart';
 import 'sticky_board_palette.dart';
 import 'sticky_board_view_model.dart';
 
+const BorderRadius _selectionRowRadius = BorderRadius.all(Radius.circular(11));
+
 class StickyBoardManagementDrawer extends StatefulWidget {
   const StickyBoardManagementDrawer({
     required this.controller,
@@ -588,16 +590,11 @@ class _StickyBoardTodoPickerDrawerState
 
   @override
   Widget build(BuildContext context) {
-    final query = _searchController.text.trim().toLowerCase();
-    final items = widget.todoController.items
-        .where(
-          (item) =>
-              !item.isArchived &&
-              (query.isEmpty ||
-                  item.title.toLowerCase().contains(query) ||
-                  item.content.toLowerCase().contains(query)),
-        )
-        .toList(growable: false);
+    final theme = Theme.of(context);
+    final items = widget.todoController.itemsForView(
+      archived: false,
+      query: _searchController.text,
+    );
     return _StickyBoardDrawerSurface(
       key: const Key('sticky-board-todo-picker-drawer'),
       borderOnLeft: widget.borderOnLeft,
@@ -668,32 +665,45 @@ class _StickyBoardTodoPickerDrawerState
                         boardId: widget.board.id,
                         todoId: item.id,
                       );
-                      return Material(
-                        type: MaterialType.transparency,
-                        child: CheckboxListTile(
-                          key: ValueKey<String>(
-                            'sticky-board-picker-${item.id}',
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Material(
+                          type: MaterialType.transparency,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: _selectionRowRadius,
                           ),
-                          value: selected,
-                          onChanged: (value) {
-                            unawaited(
-                              widget.boardController.setTodoMembership(
-                                boardId: widget.board.id,
-                                todoId: item.id,
-                                selected: value ?? false,
-                              ),
-                            );
-                          },
-                          dense: true,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                          ),
-                          title: Text(
-                            item.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                          clipBehavior: Clip.antiAlias,
+                          child: CheckboxListTile(
+                            key: ValueKey<String>(
+                              'sticky-board-picker-${item.id}',
+                            ),
+                            value: selected,
+                            onChanged: (value) {
+                              unawaited(
+                                widget.boardController.setTodoMembership(
+                                  boardId: widget.board.id,
+                                  todoId: item.id,
+                                  selected: value ?? false,
+                                ),
+                              );
+                            },
+                            dense: true,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                            ),
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: _selectionRowRadius,
+                            ),
+                            hoverColor: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.045,
+                            ),
+                            title: Text(
+                              item.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium,
+                            ),
                           ),
                         ),
                       );
@@ -918,15 +928,24 @@ class _ManagedBoardRowState extends State<_ManagedBoardRow> {
                   ],
                 ),
               ),
-              if (widget.board.isPinned)
-                Tooltip(
-                  message: context.l10n.stickyBoardPinnedLabel,
-                  child: Icon(
-                    Icons.push_pin_rounded,
-                    size: 14,
-                    color: theme.colorScheme.primary,
-                  ),
+              IconButton(
+                key: ValueKey<String>(
+                  'toggle-sticky-board-pin-${widget.board.id}',
                 ),
+                tooltip: widget.board.isPinned
+                    ? context.l10n.unpinStickyBoardTooltip
+                    : context.l10n.pinStickyBoardTooltip,
+                onPressed: widget.onTogglePin,
+                icon: Icon(
+                  widget.board.isPinned
+                      ? Icons.push_pin_rounded
+                      : Icons.push_pin_outlined,
+                  size: 16,
+                  color: widget.board.isPinned
+                      ? theme.colorScheme.primary
+                      : null,
+                ),
+              ),
               AnimatedOpacity(
                 duration: MediaQuery.disableAnimationsOf(context)
                     ? Duration.zero
@@ -941,18 +960,6 @@ class _ManagedBoardRowState extends State<_ManagedBoardRow> {
                         tooltip: context.l10n.renameStickyBoardTooltip,
                         onPressed: widget.onEdit,
                         icon: const Icon(Icons.edit_outlined, size: 16),
-                      ),
-                      IconButton(
-                        tooltip: widget.board.isPinned
-                            ? context.l10n.unpinStickyBoardTooltip
-                            : context.l10n.pinStickyBoardTooltip,
-                        onPressed: widget.onTogglePin,
-                        icon: Icon(
-                          widget.board.isPinned
-                              ? Icons.push_pin_rounded
-                              : Icons.push_pin_outlined,
-                          size: 16,
-                        ),
                       ),
                       IconButton(
                         tooltip: context.l10n.deleteStickyBoardTooltip,

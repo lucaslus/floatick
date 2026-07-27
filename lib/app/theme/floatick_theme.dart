@@ -8,6 +8,8 @@ abstract final class FloatickColors {
   static const mutedInk = Color(0xFF657178);
   static const darkSurface = Color(0xFF182125);
   static const darkSurfaceElevated = Color(0xFF222D31);
+  static const darkGlassSurface = Color(0xDE182125);
+  static const lightGlassSurface = Color(0xEBF9FBFA);
 }
 
 const _iconButtonStateDuration = Duration(milliseconds: 120);

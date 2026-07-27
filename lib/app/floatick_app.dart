@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/platform/window_bridge.dart';
+import '../core/ui/floatick_surface_metrics.dart';
 import '../features/settings/domain/app_settings.dart';
 import '../features/settings/presentation/settings_view_model.dart';
 import '../features/sticky_boards/presentation/sticky_board_view_model.dart';
 import '../features/sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import '../features/todos/presentation/todo_panel.dart';
 import '../features/todos/presentation/todo_view_model.dart';
-import '../features/todos/presentation/widgets/floating_todo_icon.dart';
 import '../features/updates/presentation/update_view_model.dart';
 import '../l10n/app_localizations.dart';
 import 'theme/floatick_theme.dart';
@@ -94,51 +94,39 @@ class _FloatickShell extends StatefulWidget {
   State<_FloatickShell> createState() => _FloatickShellState();
 }
 
-class _FloatickShellState extends State<_FloatickShell>
-    with SingleTickerProviderStateMixin {
+class _FloatickShellState extends State<_FloatickShell> {
   static const _expandedPanelSize = Size(440, 700);
-  static const _expandDuration = Duration(milliseconds: 180);
-  static const _collapseDuration = Duration(milliseconds: 150);
 
   bool _isExpanded = false;
   bool _isChangingWindow = false;
   bool _isPanelPrepared = false;
   bool _panelTooltipsEnabled = false;
   bool _hasSyncedPreferredLanguage = false;
+  bool _hasSyncedPreferredTheme = false;
   bool _hasSyncedAlwaysOnTop = false;
   String? _lastSyncedLanguageCode;
+  AppThemePreference? _lastSyncedThemePreference;
   bool? _lastSyncedAlwaysOnTop;
+  int? _lastSyncedFloatingIconCount;
   WindowExpansionAnchor _expansionAnchor = WindowExpansionAnchor.topRight;
   StickyBoardMainWindowRequest? _stickyBoardRequest;
   int _stickyBoardRequestSerial = 0;
   Future<void>? _rendererWarmUpFuture;
   Future<void>? _panelPreparationFuture;
-  late final AnimationController _panelAnimationController;
-  late final Animation<double> _panelOpacity;
-  late final Animation<double> _panelScale;
 
   @override
   void initState() {
     super.initState();
-    _panelAnimationController = AnimationController(
-      vsync: this,
-      duration: _expandDuration,
-      reverseDuration: _collapseDuration,
-    );
-    final panelCurve = CurvedAnimation(
-      parent: _panelAnimationController,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    );
-    _panelOpacity = panelCurve;
-    _panelScale = Tween<double>(begin: 0.97, end: 1).animate(panelCurve);
     widget.windowBridge.setExpandRequestHandler(_handleNativeExpandRequest);
+    widget.controller.addListener(_handleTodoStateChanged);
     widget.settingsController.addListener(_handleSettingsChanged);
     widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
       _handleStickyBoardWindowRequest,
     );
     unawaited(_syncPreferredLanguage());
+    unawaited(_syncPreferredTheme());
     unawaited(_syncAlwaysOnTop());
+    unawaited(_syncFloatingIconCount());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_preparePanelAndRestorePinnedBoards());
     });
@@ -151,7 +139,14 @@ class _FloatickShellState extends State<_FloatickShell>
       oldWidget.windowBridge.setExpandRequestHandler(null);
       widget.windowBridge.setExpandRequestHandler(_handleNativeExpandRequest);
       _hasSyncedPreferredLanguage = false;
+      _hasSyncedPreferredTheme = false;
       _hasSyncedAlwaysOnTop = false;
+      _lastSyncedFloatingIconCount = null;
+    }
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_handleTodoStateChanged);
+      widget.controller.addListener(_handleTodoStateChanged);
+      _lastSyncedFloatingIconCount = null;
     }
     if (oldWidget.settingsController != widget.settingsController) {
       oldWidget.settingsController.removeListener(_handleSettingsChanged);
@@ -169,17 +164,23 @@ class _FloatickShellState extends State<_FloatickShell>
     if (!_hasSyncedPreferredLanguage) {
       unawaited(_syncPreferredLanguage());
     }
+    if (!_hasSyncedPreferredTheme) {
+      unawaited(_syncPreferredTheme());
+    }
     if (!_hasSyncedAlwaysOnTop) {
       unawaited(_syncAlwaysOnTop());
+    }
+    if (_lastSyncedFloatingIconCount == null) {
+      unawaited(_syncFloatingIconCount());
     }
   }
 
   @override
   void dispose() {
     widget.windowBridge.setExpandRequestHandler(null);
+    widget.controller.removeListener(_handleTodoStateChanged);
     widget.settingsController.removeListener(_handleSettingsChanged);
     widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
-    _panelAnimationController.dispose();
     super.dispose();
   }
 
@@ -193,7 +194,12 @@ class _FloatickShellState extends State<_FloatickShell>
 
   void _handleSettingsChanged() {
     unawaited(_syncPreferredLanguage());
+    unawaited(_syncPreferredTheme());
     unawaited(_syncAlwaysOnTop());
+  }
+
+  void _handleTodoStateChanged() {
+    unawaited(_syncFloatingIconCount());
   }
 
   void _startRendererWarmUp() {
@@ -273,6 +279,43 @@ class _FloatickShellState extends State<_FloatickShell>
     }
   }
 
+  Future<void> _syncPreferredTheme() async {
+    final themePreference = widget.settingsController.themePreference;
+    if (_hasSyncedPreferredTheme &&
+        themePreference == _lastSyncedThemePreference) {
+      return;
+    }
+
+    _hasSyncedPreferredTheme = true;
+    _lastSyncedThemePreference = themePreference;
+    try {
+      await widget.windowBridge.setPreferredTheme(themePreference.storageValue);
+    } on Object catch (error, stackTrace) {
+      if (_lastSyncedThemePreference == themePreference) {
+        _hasSyncedPreferredTheme = false;
+      }
+      debugPrint('Floatick could not update the native appearance: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> _syncFloatingIconCount() async {
+    final activeCount = widget.controller.activeCount;
+    if (_lastSyncedFloatingIconCount == activeCount) {
+      return;
+    }
+    _lastSyncedFloatingIconCount = activeCount;
+    try {
+      await widget.windowBridge.setFloatingIconCount(activeCount);
+    } on Object catch (error, stackTrace) {
+      if (_lastSyncedFloatingIconCount == activeCount) {
+        _lastSyncedFloatingIconCount = null;
+      }
+      debugPrint('Floatick could not update the floating icon count: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   void _handleNativeExpandRequest(WindowExpansionAnchor expansionAnchor) {
     unawaited(_setExpanded(true, requestedAnchor: expansionAnchor));
   }
@@ -300,8 +343,9 @@ class _FloatickShellState extends State<_FloatickShell>
     }
     if (_isExpanded == expanded) {
       if (expanded) {
+        unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
         try {
-          await widget.windowBridge.setExpanded(true);
+          await widget.windowBridge.setExpanded(true, animated: false);
         } on Object catch (error, stackTrace) {
           debugPrint('Floatick could not focus the native window: $error');
           debugPrintStack(stackTrace: stackTrace);
@@ -324,39 +368,42 @@ class _FloatickShellState extends State<_FloatickShell>
         if (!mounted) {
           return;
         }
+        unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
         final expansionAnchor =
             requestedAnchor ??
             await widget.windowBridge.preferredExpansionAnchor();
         if (!mounted) {
           return;
         }
-        setState(() => _expansionAnchor = expansionAnchor);
+        setState(() {
+          _expansionAnchor = expansionAnchor;
+          _isExpanded = true;
+        });
         await WidgetsBinding.instance.endOfFrame;
-        await widget.windowBridge.setExpanded(true);
+        await widget.windowBridge.setExpanded(true, animated: !reduceMotion);
+      } else {
+        await widget.windowBridge.setExpanded(false, animated: !reduceMotion);
         if (!mounted) {
           return;
         }
-        setState(() => _isExpanded = true);
-        if (reduceMotion) {
-          _panelAnimationController.value = 1;
-        } else {
-          await _panelAnimationController.forward().orCancel;
-        }
-      } else {
         setState(() => _isExpanded = false);
-        if (reduceMotion) {
-          _panelAnimationController.value = 0;
-        } else {
-          await _panelAnimationController.reverse().orCancel;
-        }
-        await widget.windowBridge.setExpanded(false);
       }
     } on Object catch (error, stackTrace) {
       debugPrint('Floatick could not change the native window: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (mounted) {
+        try {
+          await widget.windowBridge.setExpanded(
+            previousExpanded,
+            animated: false,
+          );
+        } on Object catch (restoreError, restoreStackTrace) {
+          debugPrint(
+            'Floatick could not restore the native window state: $restoreError',
+          );
+          debugPrintStack(stackTrace: restoreStackTrace);
+        }
         setState(() => _isExpanded = previousExpanded);
-        _panelAnimationController.value = previousExpanded ? 1 : 0;
       }
     } finally {
       if (mounted) {
@@ -367,112 +414,51 @@ class _FloatickShellState extends State<_FloatickShell>
 
   @override
   Widget build(BuildContext context) {
-    final expansionAlignment = switch (_expansionAnchor) {
-      WindowExpansionAnchor.topLeft => Alignment.topLeft,
-      WindowExpansionAnchor.topRight => Alignment.topRight,
-      WindowExpansionAnchor.bottomLeft => Alignment.bottomLeft,
-      WindowExpansionAnchor.bottomRight => Alignment.bottomRight,
-    };
-
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final panelSize = Size(
-            constraints.maxWidth < _expandedPanelSize.width
-                ? _expandedPanelSize.width
-                : constraints.maxWidth,
-            constraints.maxHeight < _expandedPanelSize.height
-                ? _expandedPanelSize.height
-                : constraints.maxHeight,
-          );
-          return Stack(
-            clipBehavior: Clip.none,
-            children: <Widget>[
-              Align(
-                alignment: expansionAlignment,
-                child: FadeTransition(
-                  opacity: ReverseAnimation(_panelOpacity),
-                  child: IgnorePointer(
-                    ignoring: _isExpanded || _isChangingWindow,
-                    child: FloatingTodoIcon(
-                      key: const ValueKey('floating-todo-icon'),
-                      activeCount: widget.controller.activeCount,
-                      onOpen: () => unawaited(_setExpanded(true)),
-                    ),
-                  ),
-                ),
-              ),
-              if (_isPanelPrepared)
-                Positioned.fill(
-                  child: OverflowBox(
-                    alignment: expansionAlignment,
-                    minWidth: panelSize.width,
-                    maxWidth: panelSize.width,
-                    minHeight: panelSize.height,
-                    maxHeight: panelSize.height,
-                    child: SizedBox.fromSize(
-                      size: panelSize,
-                      child: IgnorePointer(
-                        ignoring: !_isExpanded,
-                        child: TickerMode(
-                          enabled: _isExpanded,
-                          child: FadeTransition(
-                            opacity: _panelOpacity,
-                            child: ScaleTransition(
-                              scale: _panelScale,
-                              alignment: expansionAlignment,
-                              child: RepaintBoundary(
-                                key: const ValueKey('todo-panel'),
-                                child: Focus(
-                                  canRequestFocus: false,
-                                  onKeyEvent: _handlePanelKeyEvent,
-                                  child: Listener(
-                                    behavior: HitTestBehavior.translucent,
-                                    onPointerHover: (event) {
-                                      if (event.delta.distanceSquared > 0) {
-                                        _enablePanelTooltips();
-                                      }
-                                    },
-                                    onPointerDown: (_) =>
-                                        _enablePanelTooltips(),
-                                    child: TooltipVisibility(
-                                      key: const Key(
-                                        'panel-tooltip-visibility',
-                                      ),
-                                      visible: _panelTooltipsEnabled,
-                                      child: TodoPanel(
-                                        controller: widget.controller,
-                                        settingsController:
-                                            widget.settingsController,
-                                        updateController:
-                                            widget.updateController,
-                                        stickyBoardController:
-                                            widget.stickyBoardController,
-                                        stickyBoardWindowCoordinator:
-                                            widget.stickyBoardWindowCoordinator,
-                                        windowBridge: widget.windowBridge,
-                                        expansionAnchor: _expansionAnchor,
-                                        stickyBoardRequest: _stickyBoardRequest,
-                                        stickyBoardRequestSerial:
-                                            _stickyBoardRequestSerial,
-                                        onCollapse: () =>
-                                            unawaited(_setExpanded(false)),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+      body: SizedBox.fromSize(
+        size: _expandedPanelSize,
+        child: _isPanelPrepared
+            ? IgnorePointer(
+                ignoring: !_isExpanded || _isChangingWindow,
+                child: TickerMode(
+                  enabled: _isExpanded,
+                  child: RepaintBoundary(
+                    key: const ValueKey('todo-panel'),
+                    child: Focus(
+                      canRequestFocus: false,
+                      onKeyEvent: _handlePanelKeyEvent,
+                      child: Listener(
+                        behavior: HitTestBehavior.translucent,
+                        onPointerHover: (event) {
+                          if (event.delta.distanceSquared > 0) {
+                            _enablePanelTooltips();
+                          }
+                        },
+                        onPointerDown: (_) => _enablePanelTooltips(),
+                        child: TooltipVisibility(
+                          key: const Key('panel-tooltip-visibility'),
+                          visible: _panelTooltipsEnabled,
+                          child: TodoPanel(
+                            controller: widget.controller,
+                            settingsController: widget.settingsController,
+                            updateController: widget.updateController,
+                            stickyBoardController: widget.stickyBoardController,
+                            stickyBoardWindowCoordinator:
+                                widget.stickyBoardWindowCoordinator,
+                            windowBridge: widget.windowBridge,
+                            expansionAnchor: _expansionAnchor,
+                            stickyBoardRequest: _stickyBoardRequest,
+                            stickyBoardRequestSerial: _stickyBoardRequestSerial,
+                            onCollapse: () => unawaited(_setExpanded(false)),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-            ],
-          );
-        },
+              )
+            : const SizedBox.shrink(),
       ),
     );
   }
@@ -486,10 +472,15 @@ class _FloatickShaderWarmUp extends ShaderWarmUp {
 
   @override
   Future<void> warmUpOnCanvas(Canvas canvas) {
-    final panelBounds = Rect.fromLTWH(8, 8, size.width - 16, size.height - 16);
+    final panelBounds = Rect.fromLTWH(
+      FloatickSurfaceMetrics.windowInset,
+      FloatickSurfaceMetrics.windowInset,
+      size.width - (FloatickSurfaceMetrics.windowInset * 2),
+      size.height - (FloatickSurfaceMetrics.windowInset * 2),
+    );
     final panelShape = RRect.fromRectAndRadius(
       panelBounds,
-      const Radius.circular(26),
+      const Radius.circular(FloatickSurfaceMetrics.panelRadius),
     );
     final gradientPaint = Paint()
       ..shader = const LinearGradient(
@@ -505,8 +496,6 @@ class _FloatickShaderWarmUp extends ShaderWarmUp {
     canvas.drawRRect(panelShape, gradientPaint);
     canvas.restore();
 
-    final shadowPath = Path()..addRRect(panelShape);
-    canvas.drawShadow(shadowPath, Colors.black, 6, false);
     canvas.drawCircle(
       const Offset(34, 34),
       16,

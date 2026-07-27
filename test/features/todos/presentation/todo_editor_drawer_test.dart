@@ -170,6 +170,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('todo-details-tags')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('todo-details-edit')),
+        matching: find.byIcon(Icons.edit_outlined),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('todo-details-edit')),
+        matching: find.text('Edit'),
+      ),
+      findsNothing,
+    );
     expect(find.text('Work'), findsOneWidget);
   });
 

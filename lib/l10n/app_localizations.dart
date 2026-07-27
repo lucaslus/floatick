@@ -650,6 +650,12 @@ abstract class AppLocalizations {
   /// **'No todos are available to add.'**
   String get noTodosAvailableForBoardMessage;
 
+  /// No description provided for @emptyPinnedStickyBoardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No todos on this board.'**
+  String get emptyPinnedStickyBoardMessage;
+
   /// No description provided for @newTodoInStickyBoardAction.
   ///
   /// In en, this message translates to:
@@ -661,18 +667,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove from sticky board'**
   String get removeFromStickyBoardTooltip;
-
-  /// No description provided for @openMainListTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Open main list'**
-  String get openMainListTooltip;
-
-  /// No description provided for @openMainListAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Open in Floatick'**
-  String get openMainListAction;
 
   /// No description provided for @stickyBoardDeleteKeepsTodosHint.
   ///

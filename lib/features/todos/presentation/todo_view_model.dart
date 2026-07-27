@@ -591,11 +591,20 @@ class TodoViewModel extends ChangeNotifier {
       if (todoSaved && tagsChanged) {
         try {
           await _repository.save(_items);
-        } on StorageFailure catch (rollbackError) {
-          _items = updatedItems;
-          _error = rollbackError;
-          notifyListeners();
-          return true;
+        } on StorageFailure {
+          try {
+            await _tagRepository.save(updatedWorkspace);
+            _items = updatedItems;
+            _setTagWorkspace(updatedWorkspace);
+            _error = null;
+            notifyListeners();
+            return true;
+          } on StorageFailure catch (recoveryError) {
+            _items = updatedItems;
+            _error = recoveryError;
+            notifyListeners();
+            return false;
+          }
         }
       }
       _error = error;

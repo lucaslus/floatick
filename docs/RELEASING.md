@@ -38,25 +38,26 @@ be used for normal development.
 Create a release branch from the commit intended for the release:
 
 ```bash
+VERSION=X.Y.Z
 git fetch origin
 git switch main
 git pull --ff-only
-git switch -c release/0.1.0
+git switch -c "release/$VERSION"
 ```
 
 Set the matching public version and an increasing positive build number:
 
 ```yaml
-version: 0.1.0+1
+version: X.Y.Z+N
 ```
 
 Then push the branch:
 
 ```bash
-git push -u origin release/0.1.0
+git push -u origin "release/$VERSION"
 ```
 
-Every push to `release/0.1.0` runs the Release Candidate workflow. It:
+Every push to `release/X.Y.Z` runs the Release Candidate workflow. It:
 
 1. validates that the branch name matches `pubspec.yaml`;
 2. runs formatting, analysis, and tests;
@@ -65,7 +66,7 @@ Every push to `release/0.1.0` runs the Release Candidate workflow. It:
 5. verifies both architectures and launches the app on the Apple silicon runner;
 6. creates the DMG, SHA-256 checksum, and build manifest;
 7. creates or updates a Draft Release associated with
-   `candidate/v0.1.0`.
+   `candidate/vX.Y.Z`.
 
 Only users with push access can list Draft Releases through the GitHub API.
 Because the repository is public, the temporary source tag itself is visible,
@@ -104,7 +105,7 @@ is rejected and a network failure leaves the installed app usable.
 
 ## Promote the accepted candidate
 
-Open a pull request from `release/0.1.0` into `main` and use a merge commit.
+Open a pull request from `release/X.Y.Z` into `main` and use a merge commit.
 Do not squash or rebase this release pull request: the accepted release-branch
 commit must remain reachable from `main` so the tag can identify the exact
 binary that was tested.
@@ -112,11 +113,12 @@ binary that was tested.
 After the pull request is merged:
 
 ```bash
+VERSION=X.Y.Z
 git fetch origin
-candidate_sha=$(git rev-parse origin/release/0.1.0)
+candidate_sha=$(git rev-parse "origin/release/$VERSION")
 git merge-base --is-ancestor "$candidate_sha" origin/main
-git tag -a v0.1.0 "$candidate_sha" -m "Floatick 0.1.0"
-git push origin v0.1.0
+git tag -a "v$VERSION" "$candidate_sha" -m "Floatick $VERSION"
+git push origin "v$VERSION"
 ```
 
 Pushing the stable tag starts the Release workflow. Its preflight job has no
@@ -145,8 +147,9 @@ the already published assets.
 After a successful release, delete the release branch:
 
 ```bash
-git push origin --delete release/0.1.0
-git branch -d release/0.1.0
+VERSION=X.Y.Z
+git push origin --delete "release/$VERSION"
+git branch -d "release/$VERSION"
 ```
 
 ## Hotfixes
@@ -155,7 +158,9 @@ For a production-only hotfix, branch from the latest stable tag instead of
 including unrelated unreleased work:
 
 ```bash
-git switch -c release/0.1.1 v0.1.0
+LATEST_TAG=$(git describe --tags --abbrev=0)
+NEXT_VERSION=X.Y.Z
+git switch -c "release/$NEXT_VERSION" "$LATEST_TAG"
 ```
 
 Apply the fix, increase both the public version and build number, and use the

@@ -360,9 +360,9 @@
 		33CC10E92044A3C60003C045 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = (
-				33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */,
-				F10A00012F21000100F10A01 /* UpdateService.swift in Sources */,
+				files = (
+					33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */,
+					F10A00012F21000100F10A01 /* UpdateService.swift in Sources */,
 				33CC10F12044A3C60003C045 /* AppDelegate.swift in Sources */,
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,
 			);
