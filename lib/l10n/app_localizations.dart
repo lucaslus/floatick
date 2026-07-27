@@ -152,6 +152,18 @@ abstract class AppLocalizations {
   /// **'English'**
   String get languageEnglishTooltip;
 
+  /// No description provided for @windowSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get windowSectionTitle;
+
+  /// No description provided for @alwaysOnTopLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep above other apps'**
+  String get alwaysOnTopLabel;
+
   /// No description provided for @updatesSectionTitle.
   ///
   /// In en, this message translates to:
@@ -655,6 +667,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open main list'**
   String get openMainListTooltip;
+
+  /// No description provided for @openMainListAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Floatick'**
+  String get openMainListAction;
 
   /// No description provided for @stickyBoardDeleteKeepsTodosHint.
   ///

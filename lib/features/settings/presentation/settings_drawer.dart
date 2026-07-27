@@ -7,6 +7,7 @@ import '../../../l10n/storage_failure_localizations.dart';
 import '../../updates/presentation/update_view_model.dart';
 import '../domain/app_settings.dart';
 import 'settings_view_model.dart';
+import 'widgets/compact_settings_toggle.dart';
 import 'widgets/update_settings_section.dart';
 
 class SettingsDrawer extends StatelessWidget {
@@ -80,6 +81,15 @@ class SettingsDrawer extends StatelessWidget {
                       const SizedBox(height: 12),
                       _LanguagePreferencePicker(viewModel: viewModel),
                       const SizedBox(height: 28),
+                      Text(
+                        context.l10n.windowSectionTitle,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _AlwaysOnTopSetting(viewModel: viewModel),
+                      const SizedBox(height: 28),
                       UpdateSettingsSection(viewModel: updateViewModel),
                       const SizedBox(height: 28),
                       Text(
@@ -119,6 +129,70 @@ class SettingsDrawer extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _AlwaysOnTopSetting extends StatelessWidget {
+  const _AlwaysOnTopSetting({required this.viewModel});
+
+  final SettingsViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final enabled = !viewModel.isSaving;
+    return Semantics(
+      label: context.l10n.alwaysOnTopLabel,
+      toggled: viewModel.alwaysOnTop,
+      enabled: enabled,
+      child: ExcludeSemantics(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const Key('always-on-top-setting'),
+            borderRadius: BorderRadius.circular(8),
+            hoverColor: theme.colorScheme.primary.withValues(alpha: 0.06),
+            highlightColor: theme.colorScheme.primary.withValues(alpha: 0.10),
+            onTap: enabled
+                ? () {
+                    unawaited(viewModel.setAlwaysOnTop(!viewModel.alwaysOnTop));
+                  }
+                : null,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 34),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        context.l10n.alwaysOnTopLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: enabled
+                              ? null
+                              : theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.38,
+                                ),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    CompactSettingsToggle(
+                      key: const Key('always-on-top-toggle'),
+                      value: viewModel.alwaysOnTop,
+                      enabled: enabled,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -81,11 +81,11 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
         oldWidget.item?.content != widget.item?.content;
     final didOpen = !oldWidget.isOpen && widget.isOpen;
     if (changedContext) {
+      _formKey.currentState?.reset();
       _syncControllers();
       _showPreview = false;
       _isSaving = false;
       _saveFailed = false;
-      _formKey.currentState?.reset();
     }
     if (widget.isOpen && (changedContext || didOpen)) {
       _requestInitialFocus();

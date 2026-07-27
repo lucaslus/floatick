@@ -33,6 +33,7 @@ void main() {
       expect(settings, const AppSettings());
       expect(settings.themePreference, AppThemePreference.system);
       expect(settings.languagePreference, AppLanguagePreference.system);
+      expect(settings.alwaysOnTop, isTrue);
       expect(await repository.rootDirectory.exists(), isTrue);
     },
   );
@@ -41,6 +42,7 @@ void main() {
     const settings = AppSettings(
       themePreference: AppThemePreference.light,
       languagePreference: AppLanguagePreference.simplifiedChinese,
+      alwaysOnTop: false,
     );
 
     await repository.save(settings);
@@ -49,9 +51,10 @@ void main() {
 
     expect(loadedSettings, settings);
     expect(json, <String, Object?>{
-      'version': 2,
+      'version': 3,
       'theme': 'light',
       'language': 'zh',
+      'alwaysOnTop': false,
     });
   });
 
@@ -65,6 +68,19 @@ void main() {
 
     expect(settings.themePreference, AppThemePreference.dark);
     expect(settings.languagePreference, AppLanguagePreference.system);
+    expect(settings.alwaysOnTop, isTrue);
+  });
+
+  test('version 2 settings default to keeping the window on top', () async {
+    await repository.rootDirectory.create(recursive: true);
+    await File(
+      repository.storagePath,
+    ).writeAsString('{"version": 2, "theme": "system", "language": "en"}');
+
+    final settings = await repository.load();
+
+    expect(settings.languagePreference, AppLanguagePreference.english);
+    expect(settings.alwaysOnTop, isTrue);
   });
 
   test('damaged storage is reported and left unchanged', () async {
@@ -91,6 +107,27 @@ void main() {
     final file = File(repository.storagePath);
     const damagedContent =
         '{"version": 2, "theme": "system", "language": "fr"}';
+    await file.writeAsString(damagedContent);
+
+    await expectLater(
+      repository.load(),
+      throwsA(
+        isA<StorageFailure>().having(
+          (error) => error.kind,
+          'kind',
+          StorageFailureKind.invalidData,
+        ),
+      ),
+    );
+    expect(await file.readAsString(), damagedContent);
+  });
+
+  test('invalid window level setting is reported and left unchanged', () async {
+    await repository.rootDirectory.create(recursive: true);
+    final file = File(repository.storagePath);
+    const damagedContent =
+        '{"version": 3, "theme": "system", "language": "en",'
+        '"alwaysOnTop": "yes"}';
     await file.writeAsString(damagedContent);
 
     await expectLater(

@@ -18,6 +18,7 @@ class SettingsViewModel extends ChangeNotifier {
   AppSettings get settings => _settings;
   AppThemePreference get themePreference => _settings.themePreference;
   AppLanguagePreference get languagePreference => _settings.languagePreference;
+  bool get alwaysOnTop => _settings.alwaysOnTop;
   StorageFailure? get error => _error;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
@@ -53,6 +54,14 @@ class SettingsViewModel extends ChangeNotifier {
     }
 
     await _save(_settings.copyWith(languagePreference: preference));
+  }
+
+  Future<void> setAlwaysOnTop(bool alwaysOnTop) async {
+    if (_isSaving || alwaysOnTop == _settings.alwaysOnTop) {
+      return;
+    }
+
+    await _save(_settings.copyWith(alwaysOnTop: alwaysOnTop));
   }
 
   Future<void> _save(AppSettings nextSettings) async {

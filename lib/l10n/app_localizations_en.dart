@@ -36,6 +36,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageEnglishTooltip => 'English';
 
   @override
+  String get windowSectionTitle => 'Window';
+
+  @override
+  String get alwaysOnTopLabel => 'Keep above other apps';
+
+  @override
   String get updatesSectionTitle => 'Updates';
 
   @override
@@ -328,6 +334,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openMainListTooltip => 'Open main list';
+
+  @override
+  String get openMainListAction => 'Open in Floatick';
 
   @override
   String get stickyBoardDeleteKeepsTodosHint =>

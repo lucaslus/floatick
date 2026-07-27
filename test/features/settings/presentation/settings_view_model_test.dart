@@ -19,12 +19,14 @@ void main() {
     repository.savedSettings = const AppSettings(
       themePreference: AppThemePreference.dark,
       languagePreference: AppLanguagePreference.english,
+      alwaysOnTop: false,
     );
 
     await controller.load();
 
     expect(controller.themePreference, AppThemePreference.dark);
     expect(controller.languagePreference, AppLanguagePreference.english);
+    expect(controller.alwaysOnTop, isFalse);
     expect(controller.error, isNull);
   });
 
@@ -104,6 +106,29 @@ void main() {
     expect(controller.error?.kind, StorageFailureKind.write);
     expect(controller.isSaving, isFalse);
   });
+
+  test('window level changes immediately and persists', () async {
+    await controller.load();
+
+    await controller.setAlwaysOnTop(false);
+
+    expect(controller.alwaysOnTop, isFalse);
+    expect(repository.savedSettings.alwaysOnTop, isFalse);
+    expect(controller.error, isNull);
+  });
+
+  test(
+    'a failed window level save rolls the visible preference back',
+    () async {
+      await controller.load();
+      repository.failNextSave = true;
+
+      await controller.setAlwaysOnTop(false);
+
+      expect(controller.alwaysOnTop, isTrue);
+      expect(controller.error?.kind, StorageFailureKind.write);
+    },
+  );
 }
 
 class _MemorySettingsRepository implements SettingsRepository {

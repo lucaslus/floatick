@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/l10n.dart';
 import '../../domain/todo_item.dart';
 import '../../domain/todo_tag.dart';
+import 'floatick_tag_chip.dart';
 import 'tag_menus.dart';
 
 class TodoListRow extends StatefulWidget {
@@ -16,12 +17,17 @@ class TodoListRow extends StatefulWidget {
     required this.onRestore,
     required this.tags,
     required this.assignedTagIds,
-    required this.onToggleTag,
-    required this.onOpenTagManagement,
+    this.onToggleTag,
+    this.onOpenTagManagement,
+    this.onOpenTagAssignment,
     this.onRemoveFromStickyBoard,
+    this.showArchiveAction = true,
     this.compact = false,
     super.key,
-  });
+  }) : assert(
+         onOpenTagAssignment != null ||
+             (onToggleTag != null && onOpenTagManagement != null),
+       );
 
   final TodoItem item;
   final bool archivedScope;
@@ -32,9 +38,11 @@ class TodoListRow extends StatefulWidget {
   final VoidCallback onRestore;
   final List<TodoTag> tags;
   final List<String> assignedTagIds;
-  final Future<void> Function(String tagId) onToggleTag;
-  final VoidCallback onOpenTagManagement;
+  final Future<void> Function(String tagId)? onToggleTag;
+  final VoidCallback? onOpenTagManagement;
+  final VoidCallback? onOpenTagAssignment;
   final VoidCallback? onRemoveFromStickyBoard;
+  final bool showArchiveAction;
   final bool compact;
 
   @override
@@ -62,7 +70,9 @@ class _TodoListRowState extends State<TodoListRow> {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final showContextActions = _isHovered || _hasFocus;
     final trailingActionCount =
-        3 + (widget.onRemoveFromStickyBoard == null ? 0 : 1);
+        2 +
+        (widget.showArchiveAction ? 1 : 0) +
+        (widget.onRemoveFromStickyBoard == null ? 0 : 1);
 
     return Focus(
       focusNode: _rowFocusNode,
@@ -182,13 +192,20 @@ class _TodoListRowState extends State<TodoListRow> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: <Widget>[
                           Expanded(
-                            child: TagAssignmentMenu(
-                              todoId: item.id,
-                              tags: widget.tags,
-                              assignedTagIds: widget.assignedTagIds,
-                              onToggle: widget.onToggleTag,
-                              onManageTags: widget.onOpenTagManagement,
-                            ),
+                            child: widget.onOpenTagAssignment == null
+                                ? TagAssignmentMenu(
+                                    todoId: item.id,
+                                    tags: widget.tags,
+                                    assignedTagIds: widget.assignedTagIds,
+                                    onToggle: widget.onToggleTag!,
+                                    onManageTags: widget.onOpenTagManagement!,
+                                  )
+                                : _ExternalTagAssignment(
+                                    todoId: item.id,
+                                    tags: widget.tags,
+                                    assignedTagIds: widget.assignedTagIds,
+                                    onPressed: widget.onOpenTagAssignment!,
+                                  ),
                           ),
                           const SizedBox(width: 7),
                           Padding(
@@ -233,17 +250,18 @@ class _TodoListRowState extends State<TodoListRow> {
                             : Theme.of(context).colorScheme.primary,
                         key: ValueKey<String>('view-todo-${widget.item.id}'),
                       ),
-                      _ActionButton(
-                        tooltip: widget.archivedScope
-                            ? localizations.restoreTooltip
-                            : localizations.archiveTooltip,
-                        onPressed: widget.archivedScope
-                            ? widget.onRestore
-                            : widget.onArchive,
-                        icon: widget.archivedScope
-                            ? Icons.unarchive_outlined
-                            : Icons.archive_outlined,
-                      ),
+                      if (widget.showArchiveAction)
+                        _ActionButton(
+                          tooltip: widget.archivedScope
+                              ? localizations.restoreTooltip
+                              : localizations.archiveTooltip,
+                          onPressed: widget.archivedScope
+                              ? widget.onRestore
+                              : widget.onArchive,
+                          icon: widget.archivedScope
+                              ? Icons.unarchive_outlined
+                              : Icons.archive_outlined,
+                        ),
                       if (widget.onRemoveFromStickyBoard != null)
                         _HoverAction(
                           visible: showContextActions,
@@ -259,6 +277,58 @@ class _TodoListRowState extends State<TodoListRow> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ExternalTagAssignment extends StatelessWidget {
+  const _ExternalTagAssignment({
+    required this.todoId,
+    required this.tags,
+    required this.assignedTagIds,
+    required this.onPressed,
+  });
+
+  final String todoId;
+  final List<TodoTag> tags;
+  final List<String> assignedTagIds;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final assignedIds = assignedTagIds.toSet();
+    final assignedTags = tags
+        .where((tag) => assignedIds.contains(tag.id))
+        .toList(growable: false);
+
+    return Wrap(
+      spacing: 4,
+      runSpacing: 3,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        for (final tag in assignedTags)
+          FloatickTagChip(
+            key: ValueKey<String>('todo-tag-$todoId-${tag.id}'),
+            tag: tag,
+            compact: true,
+          ),
+        SizedBox.square(
+          dimension: 20,
+          child: IconButton(
+            key: ValueKey<String>('assign-tags-$todoId'),
+            tooltip: context.l10n.assignTagsTooltip,
+            onPressed: onPressed,
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              assignedTags.isEmpty ? Icons.sell_outlined : Icons.sell_rounded,
+              size: 13,
+              color: assignedTags.isEmpty
+                  ? null
+                  : Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

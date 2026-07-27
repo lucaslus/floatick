@@ -5,15 +5,11 @@ import 'package:multiview_desktop/multiview_desktop.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../todos/domain/todo_item.dart';
-import '../../todos/presentation/tag_filter_drawer.dart';
-import '../../todos/presentation/todo_editor_drawer.dart';
 import '../../todos/presentation/todo_view_model.dart';
 import '../../todos/presentation/widgets/todo_list_row.dart';
 import '../domain/sticky_board.dart';
 import 'sticky_board_view_model.dart';
 import 'sticky_board_window_coordinator.dart';
-
-enum _PinnedDrawerMode { none, create, details, edit, tagAssignment }
 
 class PinnedStickyBoardWindow extends StatefulWidget {
   const PinnedStickyBoardWindow({
@@ -38,14 +34,6 @@ class PinnedStickyBoardWindow extends StatefulWidget {
 
 class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
     with WindowListener {
-  final _todoDrawerCloseFocusNode = FocusNode();
-  final _tagDrawerCloseFocusNode = FocusNode();
-
-  _PinnedDrawerMode _drawerMode = _PinnedDrawerMode.none;
-  _PinnedDrawerMode _todoDrawerMode = _PinnedDrawerMode.create;
-  String? _selectedTodoId;
-  Set<String> _todoEditorTagIds = <String>{};
-  int _editorSession = 0;
   bool _isClosing = false;
 
   @override
@@ -69,8 +57,6 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
   void dispose() {
     widget.boardController.removeListener(_handleModelChanged);
     widget.todoController.removeListener(_handleModelChanged);
-    _todoDrawerCloseFocusNode.dispose();
-    _tagDrawerCloseFocusNode.dispose();
     widget.coordinator.forgetWindow(widget.boardId);
     super.dispose();
   }
@@ -117,57 +103,18 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
     await widget.coordinator.unpin(widget.boardId);
   }
 
-  void _openCreate() {
-    setState(() {
-      _editorSession += 1;
-      _selectedTodoId = null;
-      _todoEditorTagIds = <String>{};
-      _todoDrawerMode = _PinnedDrawerMode.create;
-      _drawerMode = _PinnedDrawerMode.create;
-    });
-  }
-
-  void _openDetails(String todoId) {
-    setState(() {
-      _selectedTodoId = todoId;
-      _todoEditorTagIds = widget.todoController.tagIdsForTodo(todoId).toSet();
-      _todoDrawerMode = _PinnedDrawerMode.details;
-      _drawerMode = _PinnedDrawerMode.details;
-    });
-  }
-
-  void _openEdit(String todoId) {
-    setState(() {
-      _selectedTodoId = todoId;
-      _todoEditorTagIds = widget.todoController.tagIdsForTodo(todoId).toSet();
-      _todoDrawerMode = _PinnedDrawerMode.edit;
-      _drawerMode = _PinnedDrawerMode.edit;
-    });
-  }
-
-  void _openTagAssignment() {
-    if (_drawerMode == _PinnedDrawerMode.create ||
-        _drawerMode == _PinnedDrawerMode.edit) {
-      setState(() => _drawerMode = _PinnedDrawerMode.tagAssignment);
-    }
-  }
-
-  void _closeDrawer() {
-    setState(() {
-      if (_drawerMode == _PinnedDrawerMode.tagAssignment) {
-        _drawerMode = _todoDrawerMode;
-      } else {
-        _drawerMode = _PinnedDrawerMode.none;
-      }
-    });
-  }
-
-  void _toggleEditorTag(String tagId) {
-    setState(() {
-      if (!_todoEditorTagIds.add(tagId)) {
-        _todoEditorTagIds.remove(tagId);
-      }
-    });
+  void _openMain({
+    StickyBoardMainWindowDestination destination =
+        StickyBoardMainWindowDestination.board,
+    String? todoId,
+  }) {
+    widget.coordinator.requestMainWindow(
+      StickyBoardMainWindowRequest(
+        boardId: widget.boardId,
+        destination: destination,
+        todoId: todoId,
+      ),
+    );
   }
 
   @override
@@ -182,19 +129,6 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
       return const SizedBox.shrink();
     }
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isTodoDrawerOpen =
-        _drawerMode == _PinnedDrawerMode.create ||
-        _drawerMode == _PinnedDrawerMode.details ||
-        _drawerMode == _PinnedDrawerMode.edit;
-    final isTagAssignmentOpen = _drawerMode == _PinnedDrawerMode.tagAssignment;
-    final selectedTodo = _selectedTodoId == null
-        ? null
-        : widget.todoController.itemById(_selectedTodoId!);
-    final editorMode = switch (_todoDrawerMode) {
-      _PinnedDrawerMode.details => TodoEditorDrawerMode.details,
-      _PinnedDrawerMode.edit => TodoEditorDrawerMode.edit,
-      _ => TodoEditorDrawerMode.create,
-    };
 
     return Material(
       type: MaterialType.transparency,
@@ -209,145 +143,20 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
                   ? Colors.white.withValues(alpha: 0.12)
                   : Colors.white.withValues(alpha: 0.90),
             ),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.24 : 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(21),
-            child: Stack(
-              fit: StackFit.expand,
+            child: Column(
               children: <Widget>[
-                Column(
-                  children: <Widget>[
-                    _PinnedHeader(
-                      board: board,
-                      onUnpin: () => unawaited(_unpin()),
-                    ),
-                    Divider(
-                      height: 1,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.08),
-                    ),
-                    Expanded(child: _buildTodoList(board)),
-                    _PinnedFooter(
-                      onAddTodo: _openCreate,
-                      onOpenMain: () =>
-                          widget.coordinator.requestMainWindow(board.id),
-                    ),
-                  ],
+                _PinnedHeader(board: board, onUnpin: () => unawaited(_unpin())),
+                Divider(
+                  height: 1,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.08),
                 ),
-                if (_drawerMode != _PinnedDrawerMode.none)
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _closeDrawer,
-                    child: ColoredBox(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.22 : 0.12,
-                      ),
-                    ),
-                  ),
-                Positioned.fill(
-                  child: IgnorePointer(
-                    ignoring: !isTodoDrawerOpen,
-                    child: AnimatedSlide(
-                      duration: const Duration(milliseconds: 210),
-                      curve: Curves.easeOutCubic,
-                      offset: isTodoDrawerOpen
-                          ? Offset.zero
-                          : const Offset(0, 1),
-                      child: TodoEditorDrawer(
-                        key: ValueKey<int>(_editorSession),
-                        mode: editorMode,
-                        item: selectedTodo,
-                        availableTags: widget.todoController.tags,
-                        originalAssignedTagIds: selectedTodo == null
-                            ? const <String>[]
-                            : widget.todoController.tagIdsForTodo(
-                                selectedTodo.id,
-                              ),
-                        assignedTagIds: widget.todoController.tags
-                            .where((tag) => _todoEditorTagIds.contains(tag.id))
-                            .map((tag) => tag.id)
-                            .toList(growable: false),
-                        isOpen: isTodoDrawerOpen,
-                        onClose: _closeDrawer,
-                        onEdit: () {
-                          if (selectedTodo != null) {
-                            _openEdit(selectedTodo.id);
-                          }
-                        },
-                        onOpenTagAssignment: _openTagAssignment,
-                        onSave: (title, content, tagIds) async {
-                          if (editorMode == TodoEditorDrawerMode.create) {
-                            final item = await widget.todoController.create(
-                              title,
-                              content: content,
-                              tagIds: tagIds,
-                            );
-                            if (item == null) {
-                              return false;
-                            }
-                            return widget.boardController.addTodo(
-                              boardId: board.id,
-                              todoId: item.id,
-                            );
-                          }
-                          if (selectedTodo == null) {
-                            return false;
-                          }
-                          return widget.todoController.updateDetails(
-                            id: selectedTodo.id,
-                            title: title,
-                            content: content,
-                            tagIds: tagIds,
-                          );
-                        },
-                        onSaved: () {
-                          if (editorMode == TodoEditorDrawerMode.edit &&
-                              selectedTodo != null) {
-                            _openDetails(selectedTodo.id);
-                          } else {
-                            _closeDrawer();
-                          }
-                        },
-                        closeFocusNode: _todoDrawerCloseFocusNode,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  bottom: 0,
-                  width: 292,
-                  child: IgnorePointer(
-                    ignoring: !isTagAssignmentOpen,
-                    child: AnimatedSlide(
-                      duration: const Duration(milliseconds: 210),
-                      curve: Curves.easeOutCubic,
-                      offset: isTagAssignmentOpen
-                          ? Offset.zero
-                          : const Offset(1, 0),
-                      child: TagFilterDrawer.assignment(
-                        controller: widget.todoController,
-                        selectedTagIds: _todoEditorTagIds,
-                        borderOnLeft: true,
-                        onToggled: _toggleEditorTag,
-                        onManageTags: () {
-                          widget.coordinator.requestMainWindow(board.id);
-                        },
-                        onClose: _closeDrawer,
-                        closeFocusNode: _tagDrawerCloseFocusNode,
-                      ),
-                    ),
-                  ),
-                ),
+                Expanded(child: _buildTodoList(board)),
+                _PinnedFooter(onOpenMain: _openMain),
               ],
             ),
           ),
@@ -366,9 +175,9 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
     if (items.isEmpty) {
       return Center(
         child: TextButton.icon(
-          onPressed: _openCreate,
-          icon: const Icon(Icons.add_rounded, size: 17),
-          label: Text(context.l10n.newTodoInStickyBoardAction),
+          onPressed: _openMain,
+          icon: const Icon(Icons.open_in_new_rounded, size: 17),
+          label: Text(context.l10n.openMainListAction),
         ),
       );
     }
@@ -383,25 +192,23 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
           archivedScope: false,
           onToggle: () =>
               unawaited(widget.todoController.toggleCompletion(item.id)),
-          onOpenDetails: () => _openDetails(item.id),
-          onEdit: () => _openEdit(item.id),
+          onOpenDetails: () => _openMain(
+            destination: StickyBoardMainWindowDestination.todoDetails,
+            todoId: item.id,
+          ),
+          onEdit: () => _openMain(
+            destination: StickyBoardMainWindowDestination.todoEdit,
+            todoId: item.id,
+          ),
           onArchive: () => unawaited(widget.todoController.archive(item.id)),
           onRestore: () => unawaited(widget.todoController.restore(item.id)),
           tags: widget.todoController.tags,
           assignedTagIds: widget.todoController.tagIdsForTodo(item.id),
-          onToggleTag: (tagId) => widget.todoController.toggleTagForTodo(
+          onOpenTagAssignment: () => _openMain(
+            destination: StickyBoardMainWindowDestination.todoEdit,
             todoId: item.id,
-            tagId: tagId,
           ),
-          onOpenTagManagement: () {
-            widget.coordinator.requestMainWindow(board.id);
-          },
-          onRemoveFromStickyBoard: () => unawaited(
-            widget.boardController.removeTodo(
-              boardId: board.id,
-              todoId: item.id,
-            ),
-          ),
+          showArchiveAction: false,
           compact: true,
         );
       },
@@ -459,32 +266,19 @@ class _PinnedHeader extends StatelessWidget {
 }
 
 class _PinnedFooter extends StatelessWidget {
-  const _PinnedFooter({required this.onAddTodo, required this.onOpenMain});
+  const _PinnedFooter({required this.onOpenMain});
 
-  final VoidCallback onAddTodo;
   final VoidCallback onOpenMain;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 11),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: FilledButton.tonalIcon(
-              key: const Key('pinned-sticky-board-add-todo'),
-              onPressed: onAddTodo,
-              icon: const Icon(Icons.add_rounded, size: 17),
-              label: Text(context.l10n.newTodoInStickyBoardAction),
-            ),
-          ),
-          const SizedBox(width: 6),
-          IconButton(
-            tooltip: context.l10n.openMainListTooltip,
-            onPressed: onOpenMain,
-            icon: const Icon(Icons.open_in_new_rounded, size: 17),
-          ),
-        ],
+      child: OutlinedButton.icon(
+        key: const Key('pinned-sticky-board-open-main'),
+        onPressed: onOpenMain,
+        icon: const Icon(Icons.open_in_new_rounded, size: 16),
+        label: Text(context.l10n.openMainListAction),
       ),
     );
   }

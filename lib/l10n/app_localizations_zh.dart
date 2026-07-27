@@ -36,6 +36,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get languageEnglishTooltip => 'English';
 
   @override
+  String get windowSectionTitle => '窗口';
+
+  @override
+  String get alwaysOnTopLabel => '始终置顶';
+
+  @override
   String get updatesSectionTitle => '更新';
 
   @override
@@ -305,6 +311,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openMainListTooltip => '打开主列表';
+
+  @override
+  String get openMainListAction => '在 Floatick 中打开';
 
   @override
   String get stickyBoardDeleteKeepsTodosHint => '删除便利板不会删除其中的待办。';

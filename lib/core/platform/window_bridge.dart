@@ -25,6 +25,8 @@ abstract interface class WindowBridge {
   Future<void> setExpanded(bool expanded);
 
   Future<void> setPreferredLanguage(String? languageCode);
+
+  Future<void> setAlwaysOnTop(bool alwaysOnTop);
 }
 
 class MethodChannelWindowBridge implements WindowBridge {
@@ -56,6 +58,11 @@ class MethodChannelWindowBridge implements WindowBridge {
   @override
   Future<void> setPreferredLanguage(String? languageCode) {
     return _channel.invokeMethod<void>('setPreferredLanguage', languageCode);
+  }
+
+  @override
+  Future<void> setAlwaysOnTop(bool alwaysOnTop) {
+    return _channel.invokeMethod<void>('setAlwaysOnTop', alwaysOnTop);
   }
 
   Future<void> _handleNativeMethod(MethodCall call) async {

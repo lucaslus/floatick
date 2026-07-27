@@ -12,6 +12,8 @@ import 'package:floatick/features/todos/data/tag_repository.dart';
 import 'package:floatick/features/todos/data/todo_repository.dart';
 import 'package:floatick/features/todos/domain/tag_workspace.dart';
 import 'package:floatick/features/todos/domain/todo_item.dart';
+import 'package:floatick/features/todos/presentation/todo_editor_drawer.dart';
+import 'package:floatick/features/todos/presentation/todo_panel.dart';
 import 'package:floatick/features/todos/presentation/todo_view_model.dart';
 import 'package:floatick/features/todos/presentation/widgets/floating_todo_icon.dart';
 import 'package:floatick/features/updates/data/update_repository.dart';
@@ -121,6 +123,8 @@ void main() {
     expect(find.byType(Dialog), findsNothing);
     expect(find.text('设置'), findsOneWidget);
     expect(find.text('语言'), findsOneWidget);
+    expect(find.text('窗口'), findsOneWidget);
+    expect(find.text('始终置顶'), findsOneWidget);
     expect(find.text('更新'), findsOneWidget);
     expect(find.text('v0.1.0'), findsOneWidget);
     expect(find.text('工作目录'), findsOneWidget);
@@ -147,6 +151,16 @@ void main() {
       tester.getSize(find.byKey(const Key('automatic-update-toggle'))),
       const Size(32, 18),
     );
+    expect(
+      tester.getSize(find.byKey(const Key('always-on-top-toggle'))),
+      const Size(32, 18),
+    );
+    expect(windowBridge.alwaysOnTopValues, <bool>[true]);
+    await tester.tap(find.byKey(const Key('always-on-top-setting')));
+    await tester.pumpAndSettle();
+    expect(settingsController.alwaysOnTop, isFalse);
+    expect(settingsRepository.savedSettings.alwaysOnTop, isFalse);
+    expect(windowBridge.alwaysOnTopValues, <bool>[true, false]);
     expect(
       tester.getSize(find.byKey(const Key('update-settings-section'))).height,
       lessThan(105),
@@ -742,6 +756,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('sticky-board-detail-drawer')), findsOneWidget);
 
+    tester.widget<TodoPanel>(find.byType(TodoPanel)).onCollapse();
+    await tester.pumpAndSettle();
+    expect(windowBridge.expandedValues, <bool>[true, false]);
+    windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
+    await tester.pumpAndSettle();
+    expect(windowBridge.expandedValues, <bool>[true, false, true]);
+    expect(find.byKey(const Key('sticky-board-detail-drawer')), findsOneWidget);
+    expect(
+      tester
+          .widget<AnimatedSlide>(
+            find.byKey(const Key('sticky-board-drawer-slide')),
+          )
+          .offset,
+      Offset.zero,
+    );
+
     await tester.tap(find.byKey(const Key('sticky-board-add-existing')));
     await tester.pumpAndSettle();
     expect(
@@ -788,6 +818,45 @@ void main() {
       'created-todo-1',
     ]);
     expect(find.text('Share the release notes'), findsWidgets);
+
+    stickyBoardWindowCoordinator.requestMainWindow(
+      const StickyBoardMainWindowRequest(
+        boardId: 'board-launch',
+        destination: StickyBoardMainWindowDestination.todoEdit,
+        todoId: 'existing-todo',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Edit todo'), findsOneWidget);
+    expect(
+      tester.widget<TodoEditorDrawer>(find.byType(TodoEditorDrawer)).item?.id,
+      'existing-todo',
+    );
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('todo-title-field')))
+          .controller
+          ?.text,
+      'Review the launch checklist',
+    );
+    await tester.tap(find.byKey(const Key('todo-drawer-close')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Close Sticky Boards'));
+    await tester.pumpAndSettle();
+
+    tester.widget<TodoPanel>(find.byType(TodoPanel)).onCollapse();
+    await tester.pumpAndSettle();
+    windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<AnimatedSlide>(
+            find.byKey(const Key('sticky-board-drawer-slide')),
+          )
+          .offset,
+      isNot(Offset.zero),
+    );
+    expect(find.byKey(const Key('search-field')).hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -858,6 +927,8 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('Language'), findsOneWidget);
+    expect(find.text('Window'), findsOneWidget);
+    expect(find.text('Keep above other apps'), findsOneWidget);
     expect(find.text('Updates'), findsOneWidget);
     expect(find.text('v0.1.0'), findsOneWidget);
     expect(find.text('Automatic checks'), findsOneWidget);
@@ -1042,6 +1113,7 @@ class _WidgetTestUpdateRepository implements UpdateRepository {
 class _WidgetTestWindowBridge implements WindowBridge {
   final List<bool> expandedValues = <bool>[];
   final List<String?> preferredLanguageValues = <String?>[];
+  final List<bool> alwaysOnTopValues = <bool>[];
   ExpandRequestHandler? expandRequestHandler;
 
   @override
@@ -1062,5 +1134,10 @@ class _WidgetTestWindowBridge implements WindowBridge {
   @override
   Future<void> setPreferredLanguage(String? languageCode) async {
     preferredLanguageValues.add(languageCode);
+  }
+
+  @override
+  Future<void> setAlwaysOnTop(bool alwaysOnTop) async {
+    alwaysOnTopValues.add(alwaysOnTop);
   }
 }

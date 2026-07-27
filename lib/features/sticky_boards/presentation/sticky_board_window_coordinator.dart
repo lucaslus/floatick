@@ -8,7 +8,25 @@ import '../domain/sticky_board.dart';
 import 'pinned_sticky_board_window.dart';
 import 'sticky_board_view_model.dart';
 
-typedef StickyBoardMainWindowRequest = void Function(String boardId);
+enum StickyBoardMainWindowDestination { board, todoDetails, todoEdit }
+
+class StickyBoardMainWindowRequest {
+  const StickyBoardMainWindowRequest({
+    required this.boardId,
+    this.destination = StickyBoardMainWindowDestination.board,
+    this.todoId,
+  }) : assert(
+         destination == StickyBoardMainWindowDestination.board ||
+             todoId != null,
+       );
+
+  final String boardId;
+  final StickyBoardMainWindowDestination destination;
+  final String? todoId;
+}
+
+typedef StickyBoardMainWindowRequestHandler =
+    void Function(StickyBoardMainWindowRequest request);
 
 class StickyBoardWindowCoordinator {
   StickyBoardWindowCoordinator({
@@ -25,15 +43,17 @@ class StickyBoardWindowCoordinator {
   final TodoViewModel _todos;
   final Map<String, int> _windowIdsByBoardId = <String, int>{};
 
-  StickyBoardMainWindowRequest? _mainWindowRequest;
+  StickyBoardMainWindowRequestHandler? _mainWindowRequest;
   bool _didRestorePinnedBoards = false;
 
-  void setMainWindowRequestHandler(StickyBoardMainWindowRequest? handler) {
+  void setMainWindowRequestHandler(
+    StickyBoardMainWindowRequestHandler? handler,
+  ) {
     _mainWindowRequest = handler;
   }
 
-  void requestMainWindow(String boardId) {
-    _mainWindowRequest?.call(boardId);
+  void requestMainWindow(StickyBoardMainWindowRequest request) {
+    _mainWindowRequest?.call(request);
   }
 
   Future<void> restorePinnedBoards() async {
@@ -168,7 +188,7 @@ class StickyBoardWindowCoordinator {
     );
     _windowIdsByBoardId[boardId] = viewId;
     final window = MultiViewDesktop.fromId(viewId);
-    await window.setHasShadow(true);
+    await window.setHasShadow(false);
     await window.setVisibleOnAllWorkspaces(true, visibleOnFullScreen: true);
     if (frame != null) {
       await window.setPosition(Offset(frame.left, frame.top));

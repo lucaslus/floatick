@@ -9,6 +9,8 @@
   "languageSystemTooltip": "Follow system",
   "languageSimplifiedChineseTooltip": "Simplified Chinese",
   "languageEnglishTooltip": "English",
+  "windowSectionTitle": "Window",
+  "alwaysOnTopLabel": "Keep above other apps",
   "updatesSectionTitle": "Updates",
   "currentVersionLabel": "v{version}",
   "@currentVersionLabel": {
@@ -142,6 +144,7 @@
   "newTodoInStickyBoardAction": "New todo",
   "removeFromStickyBoardTooltip": "Remove from sticky board",
   "openMainListTooltip": "Open main list",
+  "openMainListAction": "Open in Floatick",
   "stickyBoardDeleteKeepsTodosHint": "Deleting a sticky board never deletes its todos.",
   "collapseTooltip": "Collapse (Esc)",
   "activeScopeLabel": "Todos",

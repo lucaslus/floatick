@@ -93,30 +93,52 @@ class _FloatickShell extends StatefulWidget {
   State<_FloatickShell> createState() => _FloatickShellState();
 }
 
-class _FloatickShellState extends State<_FloatickShell> {
-  static const _motionDuration = Duration(milliseconds: 220);
+class _FloatickShellState extends State<_FloatickShell>
+    with SingleTickerProviderStateMixin {
+  static const _expandedPanelSize = Size(440, 700);
+  static const _expandDuration = Duration(milliseconds: 180);
+  static const _collapseDuration = Duration(milliseconds: 150);
 
   bool _isExpanded = false;
   bool _isChangingWindow = false;
+  bool _isPanelPrepared = false;
   bool _hasSyncedPreferredLanguage = false;
+  bool _hasSyncedAlwaysOnTop = false;
   String? _lastSyncedLanguageCode;
+  bool? _lastSyncedAlwaysOnTop;
   WindowExpansionAnchor _expansionAnchor = WindowExpansionAnchor.topRight;
-  String? _requestedStickyBoardId;
+  StickyBoardMainWindowRequest? _stickyBoardRequest;
   int _stickyBoardRequestSerial = 0;
   Future<void>? _rendererWarmUpFuture;
+  Future<void>? _panelPreparationFuture;
+  late final AnimationController _panelAnimationController;
+  late final Animation<double> _panelOpacity;
+  late final Animation<double> _panelScale;
 
   @override
   void initState() {
     super.initState();
+    _panelAnimationController = AnimationController(
+      vsync: this,
+      duration: _expandDuration,
+      reverseDuration: _collapseDuration,
+    );
+    final panelCurve = CurvedAnimation(
+      parent: _panelAnimationController,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    _panelOpacity = panelCurve;
+    _panelScale = Tween<double>(begin: 0.97, end: 1).animate(panelCurve);
     widget.windowBridge.setExpandRequestHandler(_handleNativeExpandRequest);
     widget.settingsController.addListener(_handleSettingsChanged);
     widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
       _handleStickyBoardWindowRequest,
     );
     unawaited(_syncPreferredLanguage());
+    unawaited(_syncAlwaysOnTop());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startRendererWarmUp();
-      unawaited(_restorePinnedBoardsAfterWarmUp());
+      unawaited(_preparePanelAndRestorePinnedBoards());
     });
   }
 
@@ -127,11 +149,13 @@ class _FloatickShellState extends State<_FloatickShell> {
       oldWidget.windowBridge.setExpandRequestHandler(null);
       widget.windowBridge.setExpandRequestHandler(_handleNativeExpandRequest);
       _hasSyncedPreferredLanguage = false;
+      _hasSyncedAlwaysOnTop = false;
     }
     if (oldWidget.settingsController != widget.settingsController) {
       oldWidget.settingsController.removeListener(_handleSettingsChanged);
       widget.settingsController.addListener(_handleSettingsChanged);
       _hasSyncedPreferredLanguage = false;
+      _hasSyncedAlwaysOnTop = false;
     }
     if (oldWidget.stickyBoardWindowCoordinator !=
         widget.stickyBoardWindowCoordinator) {
@@ -143,6 +167,9 @@ class _FloatickShellState extends State<_FloatickShell> {
     if (!_hasSyncedPreferredLanguage) {
       unawaited(_syncPreferredLanguage());
     }
+    if (!_hasSyncedAlwaysOnTop) {
+      unawaited(_syncAlwaysOnTop());
+    }
   }
 
   @override
@@ -150,12 +177,13 @@ class _FloatickShellState extends State<_FloatickShell> {
     widget.windowBridge.setExpandRequestHandler(null);
     widget.settingsController.removeListener(_handleSettingsChanged);
     widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
+    _panelAnimationController.dispose();
     super.dispose();
   }
 
-  void _handleStickyBoardWindowRequest(String boardId) {
+  void _handleStickyBoardWindowRequest(StickyBoardMainWindowRequest request) {
     setState(() {
-      _requestedStickyBoardId = boardId;
+      _stickyBoardRequest = request;
       _stickyBoardRequestSerial += 1;
     });
     unawaited(_setExpanded(true));
@@ -163,6 +191,7 @@ class _FloatickShellState extends State<_FloatickShell> {
 
   void _handleSettingsChanged() {
     unawaited(_syncPreferredLanguage());
+    unawaited(_syncAlwaysOnTop());
   }
 
   void _startRendererWarmUp() {
@@ -178,13 +207,25 @@ class _FloatickShellState extends State<_FloatickShell> {
     }
   }
 
-  Future<void> _restorePinnedBoardsAfterWarmUp() async {
-    _startRendererWarmUp();
-    await _rendererWarmUpFuture;
+  Future<void> _preparePanelAndRestorePinnedBoards() async {
+    await _ensurePanelPrepared();
     if (!mounted) {
       return;
     }
     await widget.stickyBoardWindowCoordinator.restorePinnedBoards();
+  }
+
+  Future<void> _ensurePanelPrepared() {
+    return _panelPreparationFuture ??= _preparePanel();
+  }
+
+  Future<void> _preparePanel() async {
+    if (!_isPanelPrepared && mounted) {
+      setState(() => _isPanelPrepared = true);
+      await WidgetsBinding.instance.endOfFrame;
+    }
+    _startRendererWarmUp();
+    await _rendererWarmUpFuture;
   }
 
   Future<void> _syncPreferredLanguage() async {
@@ -211,6 +252,25 @@ class _FloatickShellState extends State<_FloatickShell> {
     }
   }
 
+  Future<void> _syncAlwaysOnTop() async {
+    final alwaysOnTop = widget.settingsController.alwaysOnTop;
+    if (_hasSyncedAlwaysOnTop && alwaysOnTop == _lastSyncedAlwaysOnTop) {
+      return;
+    }
+
+    _hasSyncedAlwaysOnTop = true;
+    _lastSyncedAlwaysOnTop = alwaysOnTop;
+    try {
+      await widget.windowBridge.setAlwaysOnTop(alwaysOnTop);
+    } on Object catch (error, stackTrace) {
+      if (_lastSyncedAlwaysOnTop == alwaysOnTop) {
+        _hasSyncedAlwaysOnTop = false;
+      }
+      debugPrint('Floatick could not update the window level: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   void _handleNativeExpandRequest(WindowExpansionAnchor expansionAnchor) {
     unawaited(_setExpanded(true, requestedAnchor: expansionAnchor));
   }
@@ -219,19 +279,29 @@ class _FloatickShellState extends State<_FloatickShell> {
     bool expanded, {
     WindowExpansionAnchor? requestedAnchor,
   }) async {
-    if (_isChangingWindow || _isExpanded == expanded) {
+    if (_isChangingWindow) {
+      return;
+    }
+    if (_isExpanded == expanded) {
+      if (expanded) {
+        try {
+          await widget.windowBridge.setExpanded(true);
+        } on Object catch (error, stackTrace) {
+          debugPrint('Floatick could not focus the native window: $error');
+          debugPrintStack(stackTrace: stackTrace);
+        }
+      }
       return;
     }
 
     final reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final motionDuration = reduceMotion ? Duration.zero : _motionDuration;
+    final previousExpanded = _isExpanded;
     setState(() => _isChangingWindow = true);
 
     try {
       if (expanded) {
-        _startRendererWarmUp();
-        await _rendererWarmUpFuture;
+        await _ensurePanelPrepared();
         if (!mounted) {
           return;
         }
@@ -244,16 +314,21 @@ class _FloatickShellState extends State<_FloatickShell> {
         setState(() => _expansionAnchor = expansionAnchor);
         await WidgetsBinding.instance.endOfFrame;
         await widget.windowBridge.setExpanded(true);
-        await WidgetsBinding.instance.endOfFrame;
         if (!mounted) {
           return;
         }
         setState(() => _isExpanded = true);
+        if (reduceMotion) {
+          _panelAnimationController.value = 1;
+        } else {
+          await _panelAnimationController.forward().orCancel;
+        }
       } else {
         setState(() => _isExpanded = false);
-        await WidgetsBinding.instance.endOfFrame;
-        if (motionDuration > Duration.zero) {
-          await Future<void>.delayed(motionDuration);
+        if (reduceMotion) {
+          _panelAnimationController.value = 0;
+        } else {
+          await _panelAnimationController.reverse().orCancel;
         }
         await widget.windowBridge.setExpanded(false);
       }
@@ -261,7 +336,8 @@ class _FloatickShellState extends State<_FloatickShell> {
       debugPrint('Floatick could not change the native window: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (mounted) {
-        setState(() => _isExpanded = !expanded);
+        setState(() => _isExpanded = previousExpanded);
+        _panelAnimationController.value = previousExpanded ? 1 : 0;
       }
     } finally {
       if (mounted) {
@@ -272,8 +348,6 @@ class _FloatickShellState extends State<_FloatickShell> {
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final transitionDuration = reduceMotion ? Duration.zero : _motionDuration;
     final expansionAlignment = switch (_expansionAnchor) {
       WindowExpansionAnchor.topLeft => Alignment.topLeft,
       WindowExpansionAnchor.topRight => Alignment.topRight,
@@ -283,59 +357,81 @@ class _FloatickShellState extends State<_FloatickShell> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SizedBox.expand(
-        child: AnimatedSwitcher(
-          duration: transitionDuration,
-          reverseDuration: transitionDuration,
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) {
-            final curvedAnimation = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-              reverseCurve: Curves.easeInCubic,
-            );
-            final isPanel = child.key == const ValueKey('todo-panel');
-            final scaleAnimation = Tween<double>(
-              begin: isPanel ? 0.95 : 0.92,
-              end: 1,
-            ).animate(curvedAnimation);
-            return FadeTransition(
-              opacity: curvedAnimation,
-              child: ScaleTransition(
-                scale: scaleAnimation,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final panelSize = Size(
+            constraints.maxWidth < _expandedPanelSize.width
+                ? _expandedPanelSize.width
+                : constraints.maxWidth,
+            constraints.maxHeight < _expandedPanelSize.height
+                ? _expandedPanelSize.height
+                : constraints.maxHeight,
+          );
+          return Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              Align(
                 alignment: expansionAlignment,
-                child: child,
-              ),
-            );
-          },
-          child: _isExpanded
-              ? RepaintBoundary(
-                  key: const ValueKey('todo-panel'),
-                  child: TodoPanel(
-                    controller: widget.controller,
-                    settingsController: widget.settingsController,
-                    updateController: widget.updateController,
-                    stickyBoardController: widget.stickyBoardController,
-                    stickyBoardWindowCoordinator:
-                        widget.stickyBoardWindowCoordinator,
-                    windowBridge: widget.windowBridge,
-                    expansionAnchor: _expansionAnchor,
-                    requestedStickyBoardId: _requestedStickyBoardId,
-                    stickyBoardRequestSerial: _stickyBoardRequestSerial,
-                    onCollapse: () => unawaited(_setExpanded(false)),
-                  ),
-                )
-              : Align(
-                  key: const ValueKey('collapsed-icon-alignment'),
-                  alignment: expansionAlignment,
-                  child: FloatingTodoIcon(
-                    key: const ValueKey('floating-todo-icon'),
-                    activeCount: widget.controller.activeCount,
-                    onOpen: () => unawaited(_setExpanded(true)),
+                child: FadeTransition(
+                  opacity: ReverseAnimation(_panelOpacity),
+                  child: IgnorePointer(
+                    ignoring: _isExpanded || _isChangingWindow,
+                    child: FloatingTodoIcon(
+                      key: const ValueKey('floating-todo-icon'),
+                      activeCount: widget.controller.activeCount,
+                      onOpen: () => unawaited(_setExpanded(true)),
+                    ),
                   ),
                 ),
-        ),
+              ),
+              if (_isPanelPrepared)
+                Positioned.fill(
+                  child: OverflowBox(
+                    alignment: expansionAlignment,
+                    minWidth: panelSize.width,
+                    maxWidth: panelSize.width,
+                    minHeight: panelSize.height,
+                    maxHeight: panelSize.height,
+                    child: SizedBox.fromSize(
+                      size: panelSize,
+                      child: IgnorePointer(
+                        ignoring: !_isExpanded,
+                        child: TickerMode(
+                          enabled: _isExpanded,
+                          child: FadeTransition(
+                            opacity: _panelOpacity,
+                            child: ScaleTransition(
+                              scale: _panelScale,
+                              alignment: expansionAlignment,
+                              child: RepaintBoundary(
+                                key: const ValueKey('todo-panel'),
+                                child: TodoPanel(
+                                  controller: widget.controller,
+                                  settingsController: widget.settingsController,
+                                  updateController: widget.updateController,
+                                  stickyBoardController:
+                                      widget.stickyBoardController,
+                                  stickyBoardWindowCoordinator:
+                                      widget.stickyBoardWindowCoordinator,
+                                  windowBridge: widget.windowBridge,
+                                  expansionAnchor: _expansionAnchor,
+                                  stickyBoardRequest: _stickyBoardRequest,
+                                  stickyBoardRequestSerial:
+                                      _stickyBoardRequestSerial,
+                                  onCollapse: () =>
+                                      unawaited(_setExpanded(false)),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

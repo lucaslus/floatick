@@ -31,6 +31,7 @@ final class MainFlutterWindow: NSWindow {
   private weak var flutterContentView: NSView?
   private var windowChannel: FlutterMethodChannel?
   private var updateService: UpdateService?
+  private var alwaysOnTop = true
 
   override var canBecomeKey: Bool { true }
   override var canBecomeMain: Bool { true }
@@ -77,7 +78,7 @@ final class MainFlutterWindow: NSWindow {
     backgroundColor = .clear
     isOpaque = false
     hasShadow = false
-    level = .floating
+    level = .statusBar
     collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
     animationBehavior = .none
     isMovable = false
@@ -146,11 +147,35 @@ final class MainFlutterWindow: NSWindow {
         NativeCopy.preferredLanguageCode = languageCode
         self.collapsedDragOverlay?.refreshLocalizedContent()
         result(nil)
+      case "setAlwaysOnTop":
+        guard let alwaysOnTop = call.arguments as? Bool else {
+          result(
+            FlutterError(
+              code: "invalid_argument",
+              message: "setAlwaysOnTop expects a Boolean argument.",
+              details: nil
+            )
+          )
+          return
+        }
+        self.setAlwaysOnTop(alwaysOnTop)
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }
     }
     windowChannel = channel
+  }
+
+  private func setAlwaysOnTop(_ alwaysOnTop: Bool) {
+    guard self.alwaysOnTop != alwaysOnTop else {
+      return
+    }
+    self.alwaysOnTop = alwaysOnTop
+    level = alwaysOnTop ? .statusBar : .normal
+    if alwaysOnTop {
+      orderFrontRegardless()
+    }
   }
 
   private func configureUpdateService(
@@ -212,6 +237,9 @@ final class MainFlutterWindow: NSWindow {
     completion: @escaping () -> Void
   ) {
     guard expanded != isExpanded else {
+      if expanded {
+        activateAndFocusFlutterContent()
+      }
       completion()
       return
     }

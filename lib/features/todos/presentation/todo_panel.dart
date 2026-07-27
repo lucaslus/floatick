@@ -59,7 +59,7 @@ class TodoPanel extends StatefulWidget {
     required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
     required this.expansionAnchor,
-    required this.requestedStickyBoardId,
+    required this.stickyBoardRequest,
     required this.stickyBoardRequestSerial,
     required this.onCollapse,
     super.key,
@@ -72,7 +72,7 @@ class TodoPanel extends StatefulWidget {
   final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
   final WindowExpansionAnchor expansionAnchor;
-  final String? requestedStickyBoardId;
+  final StickyBoardMainWindowRequest? stickyBoardRequest;
   final int stickyBoardRequestSerial;
   final VoidCallback onCollapse;
 
@@ -149,16 +149,70 @@ class _TodoPanelState extends State<TodoPanel> {
       return;
     }
     _lastHandledStickyBoardRequestSerial = widget.stickyBoardRequestSerial;
-    final boardId = widget.requestedStickyBoardId;
-    if (boardId == null ||
-        widget.stickyBoardController.boardById(boardId) == null) {
+    final request = widget.stickyBoardRequest;
+    if (request == null ||
+        widget.stickyBoardController.boardById(request.boardId) == null) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _openStickyBoard(boardId);
+      if (!mounted) {
+        return;
       }
+      _openRequestedStickyBoard(request);
     });
+  }
+
+  void _openRequestedStickyBoard(StickyBoardMainWindowRequest request) {
+    final boardId = request.boardId;
+    final todoId = request.todoId;
+    if (widget.stickyBoardController.boardById(boardId) == null) {
+      return;
+    }
+    if (todoId != null && widget.controller.itemById(todoId) == null) {
+      return;
+    }
+
+    _selectedStickyBoardId = boardId;
+    if (!_mountedDrawerFamilies.contains(_TodoPanelDrawerFamily.stickyBoards)) {
+      setState(
+        () => _mountedDrawerFamilies.add(_TodoPanelDrawerFamily.stickyBoards),
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _performStickyBoardRequest(request);
+        }
+      });
+      return;
+    }
+    _performStickyBoardRequest(request);
+  }
+
+  void _performStickyBoardRequest(StickyBoardMainWindowRequest request) {
+    final todoId = request.todoId;
+    switch (request.destination) {
+      case StickyBoardMainWindowDestination.board:
+        _openStickyBoard(request.boardId);
+      case StickyBoardMainWindowDestination.todoDetails:
+        if (todoId == null) {
+          return;
+        }
+        _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
+        _showTodoDrawer(
+          _TodoPanelDrawerMode.todoDetails,
+          todoId: todoId,
+          initialTagIds: widget.controller.tagIdsForTodo(todoId),
+        );
+      case StickyBoardMainWindowDestination.todoEdit:
+        if (todoId == null) {
+          return;
+        }
+        _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
+        _showTodoDrawer(
+          _TodoPanelDrawerMode.editTodo,
+          todoId: todoId,
+          initialTagIds: widget.controller.tagIdsForTodo(todoId),
+        );
+    }
   }
 
   void _openStickyBoards() {
