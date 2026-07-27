@@ -39,7 +39,7 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
     with WindowListener {
   final StickyBoardFrameSaveScheduler _frameSaveScheduler =
       StickyBoardFrameSaveScheduler();
-  bool _isClosing = false;
+  bool _isUnpinning = false;
   String? _detailsTodoId;
 
   @override
@@ -90,7 +90,7 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
 
   @override
   void onWindowClose() {
-    if (!_isClosing) {
+    if (!_isUnpinning) {
       _frameSaveScheduler.cancel();
       unawaited(_persistBoundsAndUnpin());
     }
@@ -111,7 +111,7 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
   }
 
   Future<void> _persistBounds({bool allowClosing = false}) async {
-    if (!mounted || (_isClosing && !allowClosing)) {
+    if (!mounted || (_isUnpinning && !allowClosing)) {
       return;
     }
     try {
@@ -130,21 +130,29 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
   }
 
   Future<void> _unpin() async {
-    if (_isClosing) {
+    if (_isUnpinning) {
       return;
     }
     _frameSaveScheduler.cancel();
-    _isClosing = true;
-    await widget.coordinator.unpin(widget.boardId);
+    _isUnpinning = true;
+    try {
+      await widget.coordinator.unpin(widget.boardId);
+    } finally {
+      _isUnpinning = false;
+    }
   }
 
   Future<void> _persistBoundsAndUnpin() async {
-    if (_isClosing) {
+    if (_isUnpinning) {
       return;
     }
-    _isClosing = true;
-    await _persistBounds(allowClosing: true);
-    await widget.coordinator.unpin(widget.boardId);
+    _isUnpinning = true;
+    try {
+      await _persistBounds(allowClosing: true);
+      await widget.coordinator.unpin(widget.boardId);
+    } finally {
+      _isUnpinning = false;
+    }
   }
 
   void _openMain({

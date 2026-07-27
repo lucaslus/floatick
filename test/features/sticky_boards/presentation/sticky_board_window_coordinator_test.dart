@@ -144,6 +144,7 @@ void main() {
         ),
       ),
     );
+    final hiddenBoardIds = <String>[];
     await boardController.load();
     final coordinator = StickyBoardWindowCoordinator(
       boardController: boardController,
@@ -153,6 +154,7 @@ void main() {
       ),
       windowBridge: _MemoryWindowBridge(),
       windowLauncher: (_) async {},
+      windowHider: (boardId) async => hiddenBoardIds.add(boardId),
     );
 
     await coordinator.togglePin('board-toggle');
@@ -160,6 +162,47 @@ void main() {
 
     await coordinator.togglePin('board-toggle');
     expect(boardController.boardById('board-toggle')?.isPinned, isFalse);
+    expect(hiddenBoardIds, <String>['board-toggle']);
+
+    await coordinator.togglePin('board-toggle');
+    expect(boardController.boardById('board-toggle')?.isPinned, isTrue);
+
+    await coordinator.togglePin('board-toggle');
+    expect(boardController.boardById('board-toggle')?.isPinned, isFalse);
+    expect(hiddenBoardIds, <String>['board-toggle', 'board-toggle']);
+  });
+
+  test('restores pinned state when hiding the board window fails', () async {
+    final boardController = StickyBoardViewModel(
+      repository: _MemoryStickyBoardRepository(
+        workspace: StickyBoardWorkspace(
+          boards: <StickyBoard>[
+            StickyBoard(
+              id: 'board-hide-failure',
+              name: 'Hide failure',
+              colorValue: 0xFF20B8A8,
+              createdAt: DateTime.utc(2026, 7, 27),
+              isPinned: true,
+            ),
+          ],
+          boardTodoIds: const <String, List<String>>{},
+        ),
+      ),
+    );
+    await boardController.load();
+    final coordinator = StickyBoardWindowCoordinator(
+      boardController: boardController,
+      todoController: TodoViewModel(
+        todoRepository: _MemoryTodoRepository(),
+        tagRepository: _MemoryTagRepository(),
+      ),
+      windowBridge: _MemoryWindowBridge(),
+      windowHider: (_) => throw StateError('window unavailable'),
+    );
+
+    await coordinator.unpin('board-hide-failure');
+
+    expect(boardController.boardById('board-hide-failure')?.isPinned, isTrue);
   });
 }
 

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:multiview_desktop/multiview_desktop.dart';
 
@@ -29,6 +27,7 @@ class StickyBoardMainWindowRequest {
 typedef StickyBoardMainWindowRequestHandler =
     void Function(StickyBoardMainWindowRequest request);
 typedef StickyBoardWindowLauncher = Future<void> Function(String boardId);
+typedef StickyBoardWindowHider = Future<void> Function(String boardId);
 
 class StickyBoardWindowCoordinator {
   StickyBoardWindowCoordinator({
@@ -36,6 +35,7 @@ class StickyBoardWindowCoordinator {
     required TodoViewModel todoController,
     required this.windowBridge,
     this.windowLauncher,
+    this.windowHider,
   }) : _boards = boardController,
        _todos = todoController;
 
@@ -47,6 +47,7 @@ class StickyBoardWindowCoordinator {
   final TodoViewModel _todos;
   final WindowBridge windowBridge;
   final StickyBoardWindowLauncher? windowLauncher;
+  final StickyBoardWindowHider? windowHider;
   final Map<String, int> _windowIdsByBoardId = <String, int>{};
   final Map<String, Future<void>> _boardWindowOperations =
       <String, Future<void>>{};
@@ -90,7 +91,7 @@ class StickyBoardWindowCoordinator {
         await _openWindow(boardId);
         _restoredPinnedBoardIds.add(boardId);
       } on Object catch (error, stackTrace) {
-        _closeRegisteredWindowWithoutWaiting(boardId);
+        await _hideRegisteredWindowBestEffort(boardId);
         hadFailure = true;
         debugPrint('Floatick could not restore sticky board $boardId: $error');
         debugPrintStack(stackTrace: stackTrace);
@@ -130,12 +131,12 @@ class StickyBoardWindowCoordinator {
     try {
       await _openWindow(boardId, positionAdjacentToMainWindow: true);
       if (!board.isPinned && !await _boards.setPinned(boardId, true)) {
-        _closeRegisteredWindowWithoutWaiting(boardId);
+        await _hideRegisteredWindowBestEffort(boardId);
         return;
       }
       _restoredPinnedBoardIds.add(boardId);
     } on Object catch (error, stackTrace) {
-      _closeRegisteredWindowWithoutWaiting(boardId);
+      await _hideRegisteredWindowBestEffort(boardId);
       debugPrint('Floatick could not pin sticky board $boardId: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
@@ -147,7 +148,20 @@ class StickyBoardWindowCoordinator {
     if (!await _boards.setPinned(boardId, false)) {
       return;
     }
-    _closeRegisteredWindowWithoutWaiting(boardId);
+    try {
+      await _hideRegisteredWindow(boardId);
+    } on Object catch (error, stackTrace) {
+      final restored = await _boards.setPinned(boardId, true);
+      if (restored) {
+        _restoredPinnedBoardIds.add(boardId);
+      } else {
+        debugPrint(
+          'Floatick could not restore the pin state for sticky board $boardId.',
+        );
+      }
+      debugPrint('Floatick could not unpin sticky board $boardId: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   Future<StickyBoardMutationResult> deleteBoard(String boardId) async {
@@ -155,7 +169,7 @@ class StickyBoardWindowCoordinator {
     _didRestorePinnedBoards = false;
     final result = await _boards.deleteBoard(boardId);
     if (result == StickyBoardMutationResult.success) {
-      _closeRegisteredWindowWithoutWaiting(boardId);
+      await _hideRegisteredWindowBestEffort(boardId);
     }
     return result;
   }
@@ -262,24 +276,23 @@ class StickyBoardWindowCoordinator {
     });
   }
 
-  void _closeRegisteredWindowWithoutWaiting(String boardId) {
-    final viewId = _windowIdsByBoardId.remove(boardId);
-    if (viewId == null) {
+  Future<void> _hideRegisteredWindow(String boardId) async {
+    final hider = windowHider;
+    if (hider != null) {
+      await hider(boardId);
       return;
     }
-    unawaited(_closeWindow(boardId: boardId, viewId: viewId));
+    final viewId = _windowIdsByBoardId[boardId];
+    if (viewId != null) {
+      await MultiViewDesktop.fromId(viewId).hide();
+    }
   }
 
-  Future<void> _closeWindow({
-    required String boardId,
-    required int viewId,
-  }) async {
+  Future<void> _hideRegisteredWindowBestEffort(String boardId) async {
     try {
-      final window = MultiViewDesktop.fromId(viewId);
-      await window.setPreventClose(false);
-      await window.closeWindow();
+      await _hideRegisteredWindow(boardId);
     } on Object catch (error, stackTrace) {
-      debugPrint('Floatick could not close sticky board $boardId: $error');
+      debugPrint('Floatick could not hide sticky board $boardId: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
   }
