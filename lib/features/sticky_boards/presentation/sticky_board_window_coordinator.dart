@@ -33,10 +33,9 @@ class StickyBoardWindowCoordinator {
   StickyBoardWindowCoordinator({
     required StickyBoardViewModel boardController,
     required TodoViewModel todoController,
-    required WindowBridge windowBridge,
+    required this.windowBridge,
   }) : _boards = boardController,
-       _todos = todoController,
-       _windowBridge = windowBridge;
+       _todos = todoController;
 
   static const Size defaultWindowSize = Size(380, 460);
   static const Size minimumWindowSize = Size(320, 300);
@@ -44,7 +43,7 @@ class StickyBoardWindowCoordinator {
 
   final StickyBoardViewModel _boards;
   final TodoViewModel _todos;
-  final WindowBridge _windowBridge;
+  final WindowBridge windowBridge;
   final Map<String, int> _windowIdsByBoardId = <String, int>{};
 
   StickyBoardMainWindowRequestHandler? _mainWindowRequest;
@@ -193,7 +192,7 @@ class StickyBoardWindowCoordinator {
     _windowIdsByBoardId[boardId] = viewId;
     final window = MultiViewDesktop.fromId(viewId);
     await window.setHasShadow(false);
-    await _windowBridge.configureTransparentSecondaryWindow(viewId);
+    await windowBridge.configureTransparentSecondaryWindow(viewId);
     await window.setVisibleOnAllWorkspaces(true, visibleOnFullScreen: true);
     if (frame != null) {
       await window.setPosition(Offset(frame.left, frame.top));
