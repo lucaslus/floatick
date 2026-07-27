@@ -36,9 +36,11 @@ Future<void> main() async {
     updateController.load(),
     stickyBoardController.load(),
   ]);
+  final windowBridge = MethodChannelWindowBridge();
   final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
     boardController: stickyBoardController,
     todoController: controller,
+    windowBridge: windowBridge,
   );
 
   runMultiApp(
@@ -48,7 +50,7 @@ Future<void> main() async {
       updateController: updateController,
       stickyBoardController: stickyBoardController,
       stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
-      windowBridge: MethodChannelWindowBridge(),
+      windowBridge: windowBridge,
     ),
   );
 }

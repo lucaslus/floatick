@@ -56,6 +56,7 @@ void main() {
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: controller,
+      windowBridge: windowBridge,
     );
     await controller.load();
     await settingsController.load();
@@ -405,11 +406,12 @@ void main() {
     final stickyBoardController = StickyBoardViewModel(
       repository: _WidgetTestStickyBoardRepository(),
     );
+    final windowBridge = _WidgetTestWindowBridge();
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: controller,
+      windowBridge: windowBridge,
     );
-    final windowBridge = _WidgetTestWindowBridge();
     await controller.load();
     await settingsController.load();
     await updateController.load();
@@ -707,6 +709,7 @@ void main() {
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: todoController,
+      windowBridge: windowBridge,
     );
     await Future.wait<void>(<Future<void>>[
       todoController.load(),
@@ -881,11 +884,12 @@ void main() {
     final stickyBoardController = StickyBoardViewModel(
       repository: _WidgetTestStickyBoardRepository(),
     );
+    final windowBridge = _WidgetTestWindowBridge();
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: controller,
+      windowBridge: windowBridge,
     );
-    final windowBridge = _WidgetTestWindowBridge();
     await controller.load();
     await settingsController.load();
     await updateController.load();
@@ -959,11 +963,12 @@ void main() {
     final stickyBoardController = StickyBoardViewModel(
       repository: _WidgetTestStickyBoardRepository(),
     );
+    final windowBridge = _WidgetTestWindowBridge();
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: controller,
+      windowBridge: windowBridge,
     );
-    final windowBridge = _WidgetTestWindowBridge();
     await controller.load();
     await settingsController.load();
     await updateController.load();
@@ -1140,4 +1145,7 @@ class _WidgetTestWindowBridge implements WindowBridge {
   Future<void> setAlwaysOnTop(bool alwaysOnTop) async {
     alwaysOnTopValues.add(alwaysOnTop);
   }
+
+  @override
+  Future<void> configureTransparentSecondaryWindow(int viewId) async {}
 }

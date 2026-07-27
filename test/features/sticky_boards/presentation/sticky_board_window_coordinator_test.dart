@@ -1,3 +1,4 @@
+import 'package:floatick/core/platform/window_bridge.dart';
 import 'package:floatick/features/sticky_boards/data/sticky_board_repository.dart';
 import 'package:floatick/features/sticky_boards/domain/sticky_board_workspace.dart';
 import 'package:floatick/features/sticky_boards/presentation/sticky_board_view_model.dart';
@@ -19,6 +20,7 @@ void main() {
         todoRepository: _MemoryTodoRepository(),
         tagRepository: _MemoryTagRepository(),
       ),
+      windowBridge: _MemoryWindowBridge(),
     );
     StickyBoardMainWindowRequest? receivedRequest;
     coordinator.setMainWindowRequestHandler((request) {
@@ -40,6 +42,28 @@ void main() {
     );
     expect(receivedRequest?.todoId, 'todo-1');
   });
+}
+
+class _MemoryWindowBridge implements WindowBridge {
+  @override
+  Future<void> configureTransparentSecondaryWindow(int viewId) async {}
+
+  @override
+  Future<WindowExpansionAnchor> preferredExpansionAnchor() async {
+    return WindowExpansionAnchor.topRight;
+  }
+
+  @override
+  void setExpandRequestHandler(ExpandRequestHandler? handler) {}
+
+  @override
+  Future<void> setExpanded(bool expanded) async {}
+
+  @override
+  Future<void> setPreferredLanguage(String? languageCode) async {}
+
+  @override
+  Future<void> setAlwaysOnTop(bool alwaysOnTop) async {}
 }
 
 class _MemoryStickyBoardRepository implements StickyBoardRepository {

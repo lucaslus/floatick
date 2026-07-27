@@ -160,11 +160,66 @@ final class MainFlutterWindow: NSWindow {
         }
         self.setAlwaysOnTop(alwaysOnTop)
         result(nil)
+      case "configureTransparentSecondaryWindow":
+        guard
+          let viewIdentifier = (call.arguments as? NSNumber)?.int64Value
+        else {
+          result(
+            FlutterError(
+              code: "invalid_argument",
+              message: "configureTransparentSecondaryWindow expects a view ID.",
+              details: nil
+            )
+          )
+          return
+        }
+        guard self.configureTransparentSecondaryWindow(
+          viewIdentifier: viewIdentifier
+        ) else {
+          result(
+            FlutterError(
+              code: "window_unavailable",
+              message: "The secondary Flutter window could not be found.",
+              details: viewIdentifier
+            )
+          )
+          return
+        }
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }
     }
     windowChannel = channel
+  }
+
+  private func configureTransparentSecondaryWindow(
+    viewIdentifier: Int64
+  ) -> Bool {
+    guard
+      let targetWindow = NSApp.windows.first(where: { window in
+        guard
+          window !== self,
+          let controller = window.contentViewController
+            as? FlutterViewController
+        else {
+          return false
+        }
+        return controller.viewIdentifier == viewIdentifier
+      }),
+      let flutterViewController = targetWindow.contentViewController
+        as? FlutterViewController
+    else {
+      return false
+    }
+
+    flutterViewController.backgroundColor = .clear
+    targetWindow.backgroundColor = .clear
+    targetWindow.isOpaque = false
+    targetWindow.hasShadow = false
+    targetWindow.contentView?.wantsLayer = true
+    targetWindow.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
+    return true
   }
 
   private func setAlwaysOnTop(_ alwaysOnTop: Bool) {

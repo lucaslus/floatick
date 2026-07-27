@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:multiview_desktop/multiview_desktop.dart';
 
+import '../../../core/platform/window_bridge.dart';
 import '../../todos/presentation/todo_view_model.dart';
 import '../domain/sticky_board.dart';
 import 'pinned_sticky_board_window.dart';
@@ -32,8 +33,10 @@ class StickyBoardWindowCoordinator {
   StickyBoardWindowCoordinator({
     required StickyBoardViewModel boardController,
     required TodoViewModel todoController,
+    required WindowBridge windowBridge,
   }) : _boards = boardController,
-       _todos = todoController;
+       _todos = todoController,
+       _windowBridge = windowBridge;
 
   static const Size defaultWindowSize = Size(380, 460);
   static const Size minimumWindowSize = Size(320, 300);
@@ -41,6 +44,7 @@ class StickyBoardWindowCoordinator {
 
   final StickyBoardViewModel _boards;
   final TodoViewModel _todos;
+  final WindowBridge _windowBridge;
   final Map<String, int> _windowIdsByBoardId = <String, int>{};
 
   StickyBoardMainWindowRequestHandler? _mainWindowRequest;
@@ -189,6 +193,7 @@ class StickyBoardWindowCoordinator {
     _windowIdsByBoardId[boardId] = viewId;
     final window = MultiViewDesktop.fromId(viewId);
     await window.setHasShadow(false);
+    await _windowBridge.configureTransparentSecondaryWindow(viewId);
     await window.setVisibleOnAllWorkspaces(true, visibleOnFullScreen: true);
     if (frame != null) {
       await window.setPosition(Offset(frame.left, frame.top));
