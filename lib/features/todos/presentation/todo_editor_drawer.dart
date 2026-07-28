@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/ui/floatick_hover_motion.dart';
 import '../../../l10n/l10n.dart';
 import '../domain/todo_item.dart';
 import '../domain/todo_tag.dart';
@@ -26,6 +27,7 @@ class TodoEditorDrawer extends StatefulWidget {
     required this.onSave,
     required this.onSaved,
     required this.closeFocusNode,
+    this.canEdit = true,
     super.key,
   });
 
@@ -35,6 +37,7 @@ class TodoEditorDrawer extends StatefulWidget {
   final List<String> originalAssignedTagIds;
   final List<String> assignedTagIds;
   final bool isOpen;
+  final bool canEdit;
   final VoidCallback onClose;
   final VoidCallback onEdit;
   final VoidCallback onOpenTagAssignment;
@@ -81,11 +84,11 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
         oldWidget.item?.content != widget.item?.content;
     final didOpen = !oldWidget.isOpen && widget.isOpen;
     if (changedContext) {
+      _formKey.currentState?.reset();
       _syncControllers();
       _showPreview = false;
       _isSaving = false;
       _saveFailed = false;
-      _formKey.currentState?.reset();
     }
     if (widget.isOpen && (changedContext || didOpen)) {
       _requestInitialFocus();
@@ -192,13 +195,6 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
                 : Colors.black.withValues(alpha: 0.07),
           ),
         ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.12),
-            blurRadius: 28,
-            offset: const Offset(0, -8),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
@@ -207,6 +203,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
           children: <Widget>[
             _DrawerHeader(
               mode: widget.mode,
+              canEdit: widget.canEdit,
               onEdit: widget.onEdit,
               onClose: widget.onClose,
               closeFocusNode: widget.closeFocusNode,
@@ -231,6 +228,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
                           'details-${widget.item?.id ?? 'missing'}',
                         ),
                         item: widget.item,
+                        canEdit: widget.canEdit,
                         tags: availableTags
                             .where(
                               (tag) => widget.assignedTagIds.contains(tag.id),
@@ -275,12 +273,14 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
 class _DrawerHeader extends StatelessWidget {
   const _DrawerHeader({
     required this.mode,
+    required this.canEdit,
     required this.onEdit,
     required this.onClose,
     required this.closeFocusNode,
   });
 
   final TodoEditorDrawerMode mode;
+  final bool canEdit;
   final VoidCallback onEdit;
   final VoidCallback onClose;
   final FocusNode closeFocusNode;
@@ -304,19 +304,12 @@ class _DrawerHeader extends StatelessWidget {
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-          if (mode == TodoEditorDrawerMode.details)
-            TextButton(
+          if (mode == TodoEditorDrawerMode.details && canEdit)
+            IconButton(
               key: const Key('todo-details-edit'),
               onPressed: onEdit,
-              style: TextButton.styleFrom(
-                minimumSize: const Size(0, 36),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                textStyle: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              child: Text(context.l10n.editTodoAction),
+              tooltip: context.l10n.editTodoAction,
+              icon: const Icon(Icons.edit_outlined, size: 19),
             ),
           IconButton(
             key: const Key('todo-drawer-close'),
@@ -659,28 +652,32 @@ class _EditorModeButton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(7),
-        child: AnimatedContainer(
-          duration: MediaQuery.disableAnimationsOf(context)
-              ? Duration.zero
-              : const Duration(milliseconds: 140),
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 9),
-          decoration: BoxDecoration(
-            color: selected
-                ? theme.colorScheme.surface.withValues(alpha: 0.92)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(7),
-          ),
-          child: Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
+      child: FloatickHoverMotion(
+        hoverScale: FloatickMotion.controlHoverScale,
+        pressedScale: FloatickMotion.controlPressedScale,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(7),
+          child: AnimatedContainer(
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 140),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 9),
+            decoration: BoxDecoration(
               color: selected
-                  ? theme.colorScheme.onSurface
-                  : theme.colorScheme.onSurface.withValues(alpha: 0.52),
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ? theme.colorScheme.surface.withValues(alpha: 0.92)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: selected
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.52),
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
             ),
           ),
         ),
@@ -690,10 +687,16 @@ class _EditorModeButton extends StatelessWidget {
 }
 
 class _TodoDetails extends StatelessWidget {
-  const _TodoDetails({required this.item, required this.tags, super.key});
+  const _TodoDetails({
+    required this.item,
+    required this.tags,
+    required this.canEdit,
+    super.key,
+  });
 
   final TodoItem? item;
   final List<TodoTag> tags;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -731,7 +734,7 @@ class _TodoDetails extends StatelessWidget {
           const SizedBox(height: 14),
           Expanded(
             child: item.content.trim().isEmpty
-                ? const _EmptyTodoContent()
+                ? _EmptyTodoContent(canEdit: canEdit)
                 : TodoMarkdownContent(
                     key: const Key('todo-details-markdown'),
                     content: item.content,
@@ -744,7 +747,9 @@ class _TodoDetails extends StatelessWidget {
 }
 
 class _EmptyTodoContent extends StatelessWidget {
-  const _EmptyTodoContent();
+  const _EmptyTodoContent({required this.canEdit});
+
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -769,7 +774,9 @@ class _EmptyTodoContent extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text(
-              context.l10n.noTodoContentMessage,
+              canEdit
+                  ? context.l10n.noTodoContentMessage
+                  : context.l10n.archivedTodoNoContentMessage,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: onSurface.withValues(alpha: 0.48),

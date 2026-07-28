@@ -170,7 +170,64 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('todo-details-tags')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('todo-details-edit')),
+        matching: find.byIcon(Icons.edit_outlined),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('todo-details-edit')),
+        matching: find.text('Edit'),
+      ),
+      findsNothing,
+    );
     expect(find.text('Work'), findsOneWidget);
+  });
+
+  testWidgets('archived details are read-only', (WidgetTester tester) async {
+    final closeFocusNode = FocusNode();
+    addTearDown(closeFocusNode.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 440,
+            height: 520,
+            child: TodoEditorDrawer(
+              mode: TodoEditorDrawerMode.details,
+              item: TodoItem(
+                id: 'archived',
+                title: 'Archived todo',
+                createdAt: DateTime.utc(2026, 7, 25),
+                archivedAt: DateTime.utc(2026, 7, 26),
+              ),
+              availableTags: const <TodoTag>[],
+              originalAssignedTagIds: const <String>[],
+              assignedTagIds: const <String>[],
+              isOpen: true,
+              canEdit: false,
+              onClose: () {},
+              onEdit: () {},
+              onOpenTagAssignment: () {},
+              onSave: (title, content, tagIds) async => true,
+              onSaved: () {},
+              closeFocusNode: closeFocusNode,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('todo-details-edit')), findsNothing);
+    expect(find.text('No additional notes were saved.'), findsOneWidget);
   });
 
   testWidgets('create drawer opens the shared tag assignment surface', (

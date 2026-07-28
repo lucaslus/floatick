@@ -62,6 +62,8 @@ git switch -c feature/short-description
 - 修改代码前先确认根因和影响范围。
 - 核心逻辑补单元测试；交互变更补 Widget 测试。
 - 优先运行与改动直接相关的测试。
+- 完整 UI 自动化使用 `tool/test/run_ui_tests.sh`，覆盖真实 macOS Flutter 引擎和
+  AppKit 原生边界；详细范围见 [TESTING.md](TESTING.md)。
 - 本地需要观察 UI 时运行：
 
 ```bash
@@ -81,8 +83,9 @@ PR 必须合入 `main`。PR CI 会执行：
 1. Dart 格式检查；
 2. `flutter analyze`；
 3. `flutter test`；
-4. macOS Release 构建；
-5. `arm64` 和 `x86_64` 双架构检查。
+4. macOS UI 自动化与 AppKit 原生边界测试；
+5. macOS Release 构建与首次启动烟测；
+6. `arm64` 和 `x86_64` 双架构检查。
 
 CI 通过后才能合并。普通开发不直接推送 `main`。
 
@@ -93,25 +96,26 @@ CI 通过后才能合并。普通开发不直接推送 `main`。
 从准备发布的 `main` 提交创建发布分支：
 
 ```bash
+VERSION=X.Y.Z
 git fetch origin
 git switch main
 git pull --ff-only
-git switch -c release/0.1.0
+git switch -c "release/$VERSION"
 ```
 
 `pubspec.yaml` 必须包含公开版本和递增的构建号：
 
 ```yaml
-version: 0.1.0+1
+version: X.Y.Z+N
 ```
 
 ### 2. 生成 Draft Release
 
 ```bash
-git push -u origin release/0.1.0
+git push -u origin "release/$VERSION"
 ```
 
-每次推送 `release/0.1.0` 都会重新运行候选工作流，生成：
+每次推送 `release/X.Y.Z` 都会重新运行候选工作流，生成：
 
 - Universal macOS DMG；
 - SHA-256 校验文件；
@@ -144,11 +148,12 @@ merge commit 合并。不要 squash 或 rebase 候选提交。
 ### 2. 标记经过测试的准确提交
 
 ```bash
+VERSION=X.Y.Z
 git fetch origin
-candidate_sha=$(git rev-parse origin/release/0.1.0)
+candidate_sha=$(git rev-parse "origin/release/$VERSION")
 git merge-base --is-ancestor "$candidate_sha" origin/main
-git tag -a v0.1.0 "$candidate_sha" -m "Floatick 0.1.0"
-git push origin v0.1.0
+git tag -a "v$VERSION" "$candidate_sha" -m "Floatick $VERSION"
+git push origin "v$VERSION"
 ```
 
 标签必须指向 Draft 对应的候选提交，不能指向另一个重新构建的提交。
@@ -185,8 +190,8 @@ https://lucaslushuo.github.io/floatick/appcast.xml
 ```
 
 - 首个正式版本发布前，该文件还不存在，候选包会显示“更新服务暂未就绪”。
-- 发布 `v0.1.0` 并批准 production 后，工作流会部署签名 appcast。
-- `v0.1.0` 需要用户手动下载安装一次。
+- 发布首个 `vX.Y.Z` 并批准 production 后，工作流会部署签名 appcast。
+- 首个带 Sparkle 的正式版本需要用户手动下载安装一次。
 - 从后续版本开始，旧版本会通过 Sparkle 发现、下载、验证并安装更新。
 
 Sparkle EdDSA 保护更新链路，但不能替代 Apple Developer ID 签名和公证。
@@ -196,7 +201,9 @@ Sparkle EdDSA 保护更新链路，但不能替代 Apple Developer ID 签名和�
 生产版本出现紧急问题时，从最新稳定标签创建补丁发布分支：
 
 ```bash
-git switch -c release/0.1.1 v0.1.0
+LATEST_TAG=$(git describe --tags --abbrev=0)
+NEXT_VERSION=X.Y.Z
+git switch -c "release/$NEXT_VERSION" "$LATEST_TAG"
 ```
 
 提高公开版本和构建号，然后继续使用同一套：

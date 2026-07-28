@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/ui/floatick_hover_motion.dart';
 import '../../domain/todo_tag.dart';
 import 'tag_palette.dart';
 
@@ -89,8 +90,9 @@ class FloatickTagChip extends StatelessWidget {
     return Semantics(
       button: true,
       label: tag.name,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+      child: FloatickHoverMotion(
+        hoverScale: FloatickMotion.chipHoverScale,
+        pressedScale: FloatickMotion.chipPressedScale,
         child: GestureDetector(onTap: onPressed, child: chip),
       ),
     );

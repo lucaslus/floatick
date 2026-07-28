@@ -110,14 +110,17 @@ sudo xcodebuild -runFirstLaunch
 ### 验证改动
 
 ```bash
-dart format --output=none --set-exit-if-changed lib test
+dart format --output=none --set-exit-if-changed lib test integration_test
 flutter analyze
 flutter test
+tool/test/run_ui_tests.sh
 flutter build macos --release
 ```
 
 Release 应用位于
 `build/macos/Build/Products/Release/Floatick.app`。
+完整自动化用户链路和仍需 Draft 人工验收的 macOS 系统边界见
+[测试指南](./docs/TESTING.md)。
 
 ## 项目结构
 
@@ -129,6 +132,7 @@ lib/
   l10n/         英文与简体中文资源
 macos/Runner/   AppKit 窗口外壳与 Sparkle 集成
 test/           Repository、ViewModel 和 Widget 测试
+integration_test/ 真实 macOS 引擎用户链路
 tool/           图标与发布工具
 ```
 

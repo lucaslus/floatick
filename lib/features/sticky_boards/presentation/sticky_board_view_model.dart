@@ -286,6 +286,31 @@ class StickyBoardViewModel extends ChangeNotifier {
     });
   }
 
+  Future<bool> removeTodoFromAllBoards(String todoId) {
+    return _enqueueMutation(() async {
+      var changed = false;
+      final updatedRelations = <String, Iterable<String>>{};
+      for (final entry in _workspace.boardTodoIds.entries) {
+        final remainingTodoIds = entry.value
+            .where((id) => id != todoId)
+            .toList(growable: false);
+        changed = changed || remainingTodoIds.length != entry.value.length;
+        if (remainingTodoIds.isNotEmpty) {
+          updatedRelations[entry.key] = remainingTodoIds;
+        }
+      }
+      if (!changed) {
+        return true;
+      }
+      return _save(
+        StickyBoardWorkspace(
+          boards: _workspace.boards,
+          boardTodoIds: updatedRelations,
+        ),
+      );
+    });
+  }
+
   Future<bool> setTodoMembership({
     required String boardId,
     required String todoId,

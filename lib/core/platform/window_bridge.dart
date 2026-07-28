@@ -22,9 +22,22 @@ abstract interface class WindowBridge {
 
   Future<WindowExpansionAnchor> preferredExpansionAnchor();
 
-  Future<void> setExpanded(bool expanded);
+  Future<void> setExpanded(bool expanded, {bool animated = true});
+
+  Future<void> setFloatingIconCount(int activeCount);
 
   Future<void> setPreferredLanguage(String? languageCode);
+
+  Future<void> setPreferredTheme(String themePreference);
+
+  Future<void> setAlwaysOnTop(bool alwaysOnTop);
+
+  Future<void> configureBorderlessSecondaryWindow(
+    int viewId, {
+    bool positionAdjacentToMainWindow = false,
+  });
+
+  Future<void> revealBorderlessSecondaryWindow(int viewId);
 }
 
 class MethodChannelWindowBridge implements WindowBridge {
@@ -49,13 +62,53 @@ class MethodChannelWindowBridge implements WindowBridge {
   }
 
   @override
-  Future<void> setExpanded(bool expanded) {
-    return _channel.invokeMethod<void>('setExpanded', expanded);
+  Future<void> setExpanded(bool expanded, {bool animated = true}) {
+    return _channel.invokeMethod<void>('setExpanded', <String, bool>{
+      'expanded': expanded,
+      'animated': animated,
+    });
+  }
+
+  @override
+  Future<void> setFloatingIconCount(int activeCount) {
+    return _channel.invokeMethod<void>('setFloatingIconCount', activeCount);
   }
 
   @override
   Future<void> setPreferredLanguage(String? languageCode) {
     return _channel.invokeMethod<void>('setPreferredLanguage', languageCode);
+  }
+
+  @override
+  Future<void> setPreferredTheme(String themePreference) {
+    return _channel.invokeMethod<void>('setPreferredTheme', themePreference);
+  }
+
+  @override
+  Future<void> setAlwaysOnTop(bool alwaysOnTop) {
+    return _channel.invokeMethod<void>('setAlwaysOnTop', alwaysOnTop);
+  }
+
+  @override
+  Future<void> configureBorderlessSecondaryWindow(
+    int viewId, {
+    bool positionAdjacentToMainWindow = false,
+  }) {
+    return _channel.invokeMethod<void>(
+      'configureBorderlessSecondaryWindow',
+      <String, Object>{
+        'viewId': viewId,
+        'positionAdjacentToMainWindow': positionAdjacentToMainWindow,
+      },
+    );
+  }
+
+  @override
+  Future<void> revealBorderlessSecondaryWindow(int viewId) {
+    return _channel.invokeMethod<void>(
+      'revealBorderlessSecondaryWindow',
+      viewId,
+    );
   }
 
   Future<void> _handleNativeMethod(MethodCall call) async {

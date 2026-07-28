@@ -1,10 +1,13 @@
 import 'package:floatick/app/floatick_app.dart';
 import 'package:floatick/core/platform/window_bridge.dart';
-import 'package:floatick/core/ui/floatick_brand_mark.dart';
+import 'package:floatick/core/storage/storage_failure.dart';
+import 'package:floatick/features/settings/data/login_item_repository.dart';
 import 'package:floatick/features/settings/data/settings_repository.dart';
 import 'package:floatick/features/settings/domain/app_settings.dart';
+import 'package:floatick/features/settings/domain/login_item_status.dart';
 import 'package:floatick/features/settings/presentation/settings_view_model.dart';
 import 'package:floatick/features/sticky_boards/data/sticky_board_repository.dart';
+import 'package:floatick/features/sticky_boards/domain/sticky_board.dart';
 import 'package:floatick/features/sticky_boards/domain/sticky_board_workspace.dart';
 import 'package:floatick/features/sticky_boards/presentation/sticky_board_view_model.dart';
 import 'package:floatick/features/sticky_boards/presentation/sticky_board_window_coordinator.dart';
@@ -12,8 +15,10 @@ import 'package:floatick/features/todos/data/tag_repository.dart';
 import 'package:floatick/features/todos/data/todo_repository.dart';
 import 'package:floatick/features/todos/domain/tag_workspace.dart';
 import 'package:floatick/features/todos/domain/todo_item.dart';
+import 'package:floatick/features/todos/domain/todo_tag.dart';
+import 'package:floatick/features/todos/presentation/todo_editor_drawer.dart';
+import 'package:floatick/features/todos/presentation/todo_panel.dart';
 import 'package:floatick/features/todos/presentation/todo_view_model.dart';
-import 'package:floatick/features/todos/presentation/widgets/floating_todo_icon.dart';
 import 'package:floatick/features/updates/data/update_repository.dart';
 import 'package:floatick/features/updates/domain/update_settings_snapshot.dart';
 import 'package:floatick/features/updates/presentation/update_view_model.dart';
@@ -41,8 +46,10 @@ void main() {
     );
     final windowBridge = _WidgetTestWindowBridge();
     final settingsRepository = _WidgetTestSettingsRepository();
+    final loginItemRepository = _WidgetTestLoginItemRepository();
     final settingsController = SettingsViewModel(
       settingsRepository: settingsRepository,
+      loginItemRepository: loginItemRepository,
     );
     final updateRepository = _WidgetTestUpdateRepository();
     final updateController = UpdateViewModel(
@@ -54,6 +61,7 @@ void main() {
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: controller,
+      windowBridge: windowBridge,
     );
     await controller.load();
     await settingsController.load();
@@ -71,15 +79,49 @@ void main() {
         locale: const Locale('zh'),
       ),
     );
-    expect(find.byKey(const ValueKey('floating-todo-icon')), findsOneWidget);
-    expect(find.byType(FloatickBrandMark), findsOneWidget);
-    expect(
-      tester.getSize(find.byKey(const ValueKey('floating-todo-icon'))),
-      const Size.square(FloatingTodoIcon.canvasDimension),
+    await tester.pump();
+    expect(windowBridge.floatingIconCounts, <int>[0]);
+    expect(windowBridge.preferredThemeValues, <String>['system']);
+    final tooltipMouse = await tester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
+    await tooltipMouse.addPointer(
+      location: tester.getCenter(find.byKey(const Key('collapse-button'))),
     );
 
     windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
     await tester.pumpAndSettle();
+    expect(windowBridge.expandedValues, <bool>[true]);
+    expect(windowBridge.expandedAnimatedValues, <bool>[true]);
+    expect(
+      tester
+          .widget<TooltipVisibility>(
+            find.byKey(const Key('panel-tooltip-visibility')),
+          )
+          .visible,
+      isFalse,
+    );
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('收起（Esc）'), findsNothing);
+
+    await tooltipMouse.moveTo(Offset.zero);
+    await tester.pump();
+    expect(
+      tester
+          .widget<TooltipVisibility>(
+            find.byKey(const Key('panel-tooltip-visibility')),
+          )
+          .visible,
+      isTrue,
+    );
+    await tooltipMouse.moveTo(
+      tester.getCenter(find.byKey(const Key('collapse-button'))),
+    );
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('收起（Esc）'), findsOneWidget);
+    await tooltipMouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
+    await tooltipMouse.removePointer();
 
     expect(windowBridge.expandedValues, <bool>[true]);
     expect(find.text('Floatick'), findsNothing);
@@ -88,30 +130,46 @@ void main() {
     expect(find.byKey(const Key('search-field')), findsOneWidget);
     expect(find.byKey(const Key('tag-filter-button')), findsOneWidget);
     expect(find.byKey(const Key('add-todo-button')), findsOneWidget);
+    expect(find.byKey(const Key('archive-scope-button')), findsOneWidget);
+    expect(find.text('待办  0'), findsNothing);
+    expect(find.text('归档  0'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('archive-scope-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('归档 · 0'), findsOneWidget);
+    expect(find.text('搜索归档'), findsOneWidget);
+    expect(find.byKey(const Key('add-todo-button')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('archive-scope-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('今天已经清空'), findsOneWidget);
+    expect(find.text('搜索待办'), findsOneWidget);
+    expect(find.byKey(const Key('add-todo-button')), findsOneWidget);
+
     final searchRect = tester.getRect(find.byKey(const Key('search-field')));
     final tagFilterRect = tester.getRect(
       find.byKey(const Key('tag-filter-button')),
     );
+    final newTodoRect = tester.getRect(
+      find.byKey(const Key('add-todo-button')),
+    );
     expect(tagFilterRect.left, greaterThan(searchRect.right));
+    expect(newTodoRect.left, greaterThan(tagFilterRect.right));
     expect((tagFilterRect.center.dy - searchRect.center.dy).abs(), lessThan(1));
+    expect((newTodoRect.center.dy - searchRect.center.dy).abs(), lessThan(1));
     expect(tagFilterRect.size, const Size.square(42));
+    expect(newTodoRect.height, 42);
+    expect(find.text('新建'), findsOneWidget);
     final panelSurface = tester.widget<DecoratedBox>(
       find.byKey(const Key('todo-panel-surface')),
     );
     final panelDecoration = panelSurface.decoration as BoxDecoration;
     expect(panelDecoration.boxShadow, isNull);
-    expect(
-      tester
-          .widget<AnimatedSlide>(find.byKey(const Key('settings-drawer-slide')))
-          .offset,
-      const Offset(1, 0),
-    );
-    expect(
-      tester
-          .widget<AnimatedSlide>(find.byKey(const Key('todo-drawer-slide')))
-          .offset,
-      const Offset(0, 1),
-    );
+    expect(find.byKey(const Key('settings-drawer-slide')), findsNothing);
+    expect(find.byKey(const Key('tag-drawer-slide')), findsNothing);
+    expect(find.byKey(const Key('sticky-board-drawer-slide')), findsNothing);
+    expect(find.byKey(const Key('todo-drawer-slide')), findsNothing);
+    expect(find.byKey(const Key('todo-context-scrim')), findsNothing);
 
     await tester.tap(find.byKey(const Key('settings-button')));
     await tester.pumpAndSettle();
@@ -120,6 +178,10 @@ void main() {
     expect(find.byType(Dialog), findsNothing);
     expect(find.text('设置'), findsOneWidget);
     expect(find.text('语言'), findsOneWidget);
+    expect(find.text('窗口'), findsOneWidget);
+    expect(find.text('始终置顶'), findsOneWidget);
+    expect(find.text('启动'), findsOneWidget);
+    expect(find.text('登录时打开'), findsOneWidget);
     expect(find.text('更新'), findsOneWidget);
     expect(find.text('v0.1.0'), findsOneWidget);
     expect(find.text('工作目录'), findsOneWidget);
@@ -146,6 +208,25 @@ void main() {
       tester.getSize(find.byKey(const Key('automatic-update-toggle'))),
       const Size(32, 18),
     );
+    expect(
+      tester.getSize(find.byKey(const Key('always-on-top-toggle'))),
+      const Size(32, 18),
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('open-at-login-toggle'))),
+      const Size(32, 18),
+    );
+    expect(settingsController.openAtLogin, isFalse);
+    await tester.tap(find.byKey(const Key('open-at-login-setting')));
+    await tester.pumpAndSettle();
+    expect(settingsController.openAtLogin, isTrue);
+    expect(loginItemRepository.setEnabledValues, <bool>[true]);
+    expect(windowBridge.alwaysOnTopValues, <bool>[true]);
+    await tester.tap(find.byKey(const Key('always-on-top-setting')));
+    await tester.pumpAndSettle();
+    expect(settingsController.alwaysOnTop, isFalse);
+    expect(settingsRepository.savedSettings.alwaysOnTop, isFalse);
+    expect(windowBridge.alwaysOnTopValues, <bool>[true, false]);
     expect(
       tester.getSize(find.byKey(const Key('update-settings-section'))).height,
       lessThan(105),
@@ -217,6 +298,11 @@ void main() {
       settingsRepository.savedSettings.themePreference,
       AppThemePreference.light,
     );
+    expect(windowBridge.preferredThemeValues, <String>[
+      'system',
+      'dark',
+      'light',
+    ]);
 
     await tester.tap(find.byKey(const Key('settings-close')));
     await tester.pumpAndSettle();
@@ -357,7 +443,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(windowBridge.expandedValues, <bool>[true, false]);
-    expect(find.byKey(const ValueKey('floating-todo-icon')), findsOneWidget);
+    expect(windowBridge.expandedAnimatedValues, <bool>[true, true]);
+    expect(
+      tester
+          .widget<TooltipVisibility>(
+            find.byKey(const Key('panel-tooltip-visibility')),
+          )
+          .visible,
+      isFalse,
+    );
   });
 
   testWidgets('tags can be created, assigned, and used as a filter', (
@@ -383,6 +477,7 @@ void main() {
     );
     final settingsController = SettingsViewModel(
       settingsRepository: _WidgetTestSettingsRepository(),
+      loginItemRepository: _WidgetTestLoginItemRepository(),
     );
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
@@ -390,11 +485,12 @@ void main() {
     final stickyBoardController = StickyBoardViewModel(
       repository: _WidgetTestStickyBoardRepository(),
     );
+    final windowBridge = _WidgetTestWindowBridge();
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: controller,
+      windowBridge: windowBridge,
     );
-    final windowBridge = _WidgetTestWindowBridge();
     await controller.load();
     await settingsController.load();
     await updateController.load();
@@ -459,6 +555,12 @@ void main() {
     expect(controller.tags.single.name, 'Work');
     expect(tagRepository.savedWorkspace.tags.single.name, 'Work');
     expect(find.byKey(const Key('managed-tag-tag-work')), findsOneWidget);
+    expect(
+      tester
+          .widget<ListView>(find.byKey(const Key('tag-management-list')))
+          .itemExtent,
+      44,
+    );
 
     await tester.tap(find.byKey(const Key('tag-management-close')));
     await tester.pumpAndSettle();
@@ -614,6 +716,11 @@ void main() {
           .icon,
       Icons.sell_rounded,
     );
+    await tester.tap(
+      find.byKey(const Key('tag-assignment-bottom-sheet-close')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-assignment-bottom-sheet')), findsNothing);
 
     await tester.tap(find.byKey(const Key('add-todo-button')));
     await tester.pumpAndSettle();
@@ -625,20 +732,67 @@ void main() {
     await tester.tap(find.byKey(const Key('save-todo-details')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('tag-filter-button')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('tag-filter-tag-work')));
+    expect(
+      await controller.create(
+        'Personal task',
+        tagIds: const <String>['tag-personal'],
+      ),
+      isNotNull,
+    );
+    expect(
+      await controller.createTag(name: 'Unused', colorValue: 0xFF20B8A8),
+      TagMutationResult.success,
+    );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('active-tag-filter')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tag-filter-button')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ListView>(find.byKey(const Key('tag-filter-list')))
+          .itemExtent,
+      44,
+    );
+    await tester.tap(find.byKey(const Key('tag-filter-tag-work')));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('tag-filter-tag-work')),
+        matching: find.byIcon(Icons.check_rounded),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('tag-filter-tag-work')),
+        matching: find.byType(AnimatedContainer),
+      ),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('tag-filter-drawer')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tag-filter-tag-personal')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-filter-drawer')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('tag-filter-count')),
+        matching: find.text('2'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('tag-filter-close')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('active-tag-filter')), findsNothing);
+    expect(find.byKey(const Key('tag-filter-count')), findsOneWidget);
     expect(find.text('Tagged task').hitTestable(), findsOneWidget);
+    expect(find.text('Personal task').hitTestable(), findsOneWidget);
     expect(find.text('Other task').hitTestable(), findsNothing);
     expect(tester.takeException(), isNull);
 
     await tester.tap(find.byKey(const Key('collapse-button')));
     await tester.pumpAndSettle();
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byKey(const ValueKey('floating-todo-icon')), findsOneWidget);
+    expect(windowBridge.expandedValues.last, isFalse);
     windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topLeft);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('tag-filter-button')));
@@ -647,6 +801,29 @@ void main() {
       tester.getTopRight(find.byKey(const Key('tag-filter-drawer'))).dx,
       tester.getTopRight(find.byKey(const Key('todo-panel-surface'))).dx,
     );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('tag-filter-count')),
+        matching: find.text('2'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('tag-filter-all')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-filter-count')), findsNothing);
+    await tester.tap(find.byKey(const Key('tag-filter-tag-3')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tag-filter-close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('clear-active-tag-filters')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('clear-active-tag-filters')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-filter-count')), findsNothing);
+    expect(find.text('Tagged task').hitTestable(), findsOneWidget);
+    expect(find.text('Personal task').hitTestable(), findsOneWidget);
+    expect(find.text('Other task').hitTestable(), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tag-filter-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('manage-tags-button')));
     await tester.pumpAndSettle();
 
@@ -659,7 +836,7 @@ void main() {
   testWidgets('sticky boards create virtual groups and reuse the todo editor', (
     WidgetTester tester,
   ) async {
-    tester.view.physicalSize = const Size(500, 760);
+    tester.view.physicalSize = const Size(440, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -671,19 +848,41 @@ void main() {
           title: 'Review the launch checklist',
           createdAt: DateTime.utc(2026, 7, 26, 9),
         ),
+        TodoItem(
+          id: 'content-only-todo',
+          title: 'Plan the next iteration',
+          content: 'Private launch phrase',
+          createdAt: DateTime.utc(2026, 7, 26, 8),
+        ),
       ];
+    final tagRepository = _WidgetTestTagRepository()
+      ..savedWorkspace = TagWorkspace(
+        tags: <TodoTag>[
+          TodoTag(
+            id: 'tag-focus',
+            name: 'Focus',
+            colorValue: 0xFF4C8FF5,
+            createdAt: DateTime.utc(2026, 7, 26, 7),
+          ),
+        ],
+        assignments: const <String, List<String>>{
+          'existing-todo': <String>['tag-focus'],
+        },
+      );
     var todoSequence = 0;
     final todoController = TodoViewModel(
       todoRepository: todoRepository,
-      tagRepository: _WidgetTestTagRepository(),
+      tagRepository: tagRepository,
       idGenerator: () => 'created-todo-${++todoSequence}',
     );
+    final stickyBoardRepository = _WidgetTestStickyBoardRepository();
     final stickyBoardController = StickyBoardViewModel(
-      repository: _WidgetTestStickyBoardRepository(),
+      repository: stickyBoardRepository,
       idGenerator: () => 'board-launch',
     );
     final settingsController = SettingsViewModel(
       settingsRepository: _WidgetTestSettingsRepository(),
+      loginItemRepository: _WidgetTestLoginItemRepository(),
     );
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
@@ -692,6 +891,8 @@ void main() {
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: todoController,
+      windowBridge: windowBridge,
+      windowLauncher: (_) async {},
     );
     await Future.wait<void>(<Future<void>>[
       todoController.load(),
@@ -735,16 +936,145 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('submit-sticky-board')));
     await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('sticky-board-thumbnail-grid')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('sticky-board-board-launch')), findsOneWidget);
+    expect(
+      find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+      findsOneWidget,
+    );
+    final pinButton = find.byKey(
+      const Key('toggle-sticky-board-pin-board-launch'),
+    );
+    expect(pinButton, findsOneWidget);
+    await tester.tap(pinButton);
+    await tester.pumpAndSettle();
+    expect(stickyBoardController.boardById('board-launch')?.isPinned, isTrue);
+    expect(
+      find.descendant(
+        of: pinButton,
+        matching: find.byIcon(Icons.push_pin_rounded),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(pinButton);
+    await tester.pumpAndSettle();
+    expect(stickyBoardController.boardById('board-launch')?.isPinned, isFalse);
+
+    final boardMouse = await tester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
+    addTearDown(boardMouse.removePointer);
+    await boardMouse.addPointer();
+    await boardMouse.moveTo(
+      tester.getCenter(
+        find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final boardRectBeforeConfirmation = tester.getRect(
+      find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+    );
+    await tester.tap(find.byKey(const Key('delete-sticky-board-board-launch')));
+    await tester.pumpAndSettle();
+
+    final deleteConfirmation = find.byKey(
+      const Key('sticky-board-delete-confirmation-board-launch'),
+    );
+    final cancelDeleteBoard = find.byKey(
+      const Key('cancel-delete-sticky-board-board-launch'),
+    );
+    final confirmDeleteBoard = find.byKey(
+      const Key('confirm-delete-sticky-board-board-launch'),
+    );
+    expect(deleteConfirmation, findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(cancelDeleteBoard, findsOneWidget);
+    expect(confirmDeleteBoard, findsOneWidget);
+    expect(
+      find.descendant(of: confirmDeleteBoard, matching: find.text('Confirm')),
+      findsOneWidget,
+    );
+    expect(find.text('Delete sticky board'), findsNothing);
+    expect(
+      tester.getRect(
+        find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+      ),
+      boardRectBeforeConfirmation,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(cancelDeleteBoard);
+    await tester.pumpAndSettle();
+    expect(deleteConfirmation, findsNothing);
+    expect(stickyBoardController.boardById('board-launch'), isNotNull);
+    await boardMouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('sticky-board-board-launch')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('sticky-board-detail-drawer')), findsOneWidget);
 
+    tester.widget<TodoPanel>(find.byType(TodoPanel)).onCollapse();
+    await tester.pumpAndSettle();
+    expect(windowBridge.expandedValues, <bool>[true, false]);
+    windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
+    await tester.pumpAndSettle();
+    expect(windowBridge.expandedValues, <bool>[true, false, true]);
+    expect(find.byKey(const Key('sticky-board-detail-drawer')), findsOneWidget);
+    expect(
+      tester
+          .widget<AnimatedSlide>(
+            find.byKey(const Key('sticky-board-drawer-slide')),
+          )
+          .offset,
+      Offset.zero,
+    );
+
     await tester.tap(find.byKey(const Key('sticky-board-add-existing')));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const Key('sticky-board-todo-picker-drawer')),
+      findsOneWidget,
+    );
+    final pickerTile = tester.widget<CheckboxListTile>(
+      find.byKey(const Key('sticky-board-picker-existing-todo')),
+    );
+    final pickerShape = pickerTile.shape as RoundedRectangleBorder;
+    expect(
+      pickerShape.borderRadius,
+      const BorderRadius.all(Radius.circular(11)),
+    );
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('sticky-board-picker-existing-todo')),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Material &&
+              widget.clipBehavior == Clip.antiAlias &&
+              widget.shape == pickerShape,
+        ),
+      ),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.byKey(const Key('sticky-board-todo-search')),
+      'Private launch phrase',
+    );
+    await tester.pump();
+    expect(
+      find.byKey(const Key('sticky-board-picker-content-only-todo')),
+      findsNothing,
+    );
+    await tester.enterText(
+      find.byKey(const Key('sticky-board-todo-search')),
+      'Focus',
+    );
+    await tester.pump();
+    expect(
+      find.byKey(const Key('sticky-board-picker-existing-todo')),
       findsOneWidget,
     );
     await tester.tap(
@@ -760,6 +1090,92 @@ void main() {
       find.byKey(const Key('sticky-board-todo-existing-todo')),
       findsOneWidget,
     );
+    final stickyBoardDetail = find.byKey(
+      const Key('sticky-board-detail-drawer'),
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(
+          const Key('sticky-board-managed-tag-existing-todo-tag-focus'),
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(
+          const Key('sticky-board-managed-time-existing-todo'),
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('toggle-todo-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('edit-todo-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('view-todo-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('archive-todo-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('assign-tags-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('remove-from-board-existing-todo')),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(
+          const Key('sticky-board-managed-open-details-existing-todo'),
+        ),
+      ),
+    );
+    await tester.pump(kDoubleTapMinTime);
+    await tester.tap(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(
+          const Key('sticky-board-managed-open-details-existing-todo'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sticky-board-todo-details')), findsOneWidget);
+    expect(find.byKey(const Key('sticky-board-details-edit')), findsNothing);
+    await tester.tap(find.byKey(const Key('sticky-board-details-back')));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('sticky-board-new-todo')));
     await tester.pumpAndSettle();
@@ -767,6 +1183,7 @@ void main() {
       find.byKey(const Key('todo-title-field')),
       'Share the release notes',
     );
+    stickyBoardRepository.failNextSave = true;
     await tester.pump();
     expect(
       tester
@@ -774,6 +1191,18 @@ void main() {
           .onPressed,
       isNotNull,
     );
+    await tester.tap(find.byKey(const Key('save-todo-details')));
+    await tester.pumpAndSettle();
+
+    expect(
+      todoController.items.where(
+        (item) => item.title == 'Share the release notes',
+      ),
+      hasLength(1),
+    );
+    expect(stickyBoardController.todoCountForBoard('board-launch'), 1);
+    expect(find.byKey(const Key('todo-title-field')), findsOneWidget);
+
     await tester.tap(find.byKey(const Key('save-todo-details')));
     await tester.pumpAndSettle();
 
@@ -787,7 +1216,160 @@ void main() {
       'created-todo-1',
     ]);
     expect(find.text('Share the release notes'), findsWidgets);
+
+    stickyBoardWindowCoordinator.requestMainWindow(
+      const StickyBoardMainWindowRequest(
+        boardId: 'board-launch',
+        destination: StickyBoardMainWindowDestination.todoEdit,
+        todoId: 'existing-todo',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Edit todo'), findsOneWidget);
+    expect(
+      tester.widget<TodoEditorDrawer>(find.byType(TodoEditorDrawer)).item?.id,
+      'existing-todo',
+    );
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('todo-title-field')))
+          .controller
+          ?.text,
+      'Review the launch checklist',
+    );
+    await tester.tap(find.byKey(const Key('todo-drawer-close')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Close Sticky Boards'));
+    await tester.pumpAndSettle();
+
+    tester.widget<TodoPanel>(find.byType(TodoPanel)).onCollapse();
+    await tester.pumpAndSettle();
+    windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<AnimatedSlide>(
+            find.byKey(const Key('sticky-board-drawer-slide')),
+          )
+          .offset,
+      isNot(Offset.zero),
+    );
+    expect(find.byKey(const Key('search-field')).hitTestable(), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('sticky-boards-button')));
+    await tester.pumpAndSettle();
+    await boardMouse.moveTo(
+      tester.getCenter(
+        find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('delete-sticky-board-board-launch')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('confirm-delete-sticky-board-board-launch')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(stickyBoardController.boardById('board-launch'), isNull);
+    expect(todoController.itemById('existing-todo'), isNotNull);
+    expect(todoController.itemById('created-todo-1'), isNotNull);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('permanent deletion waits for sticky board cleanup', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final archivedTodo = TodoItem(
+      id: 'archived-linked',
+      title: 'Archived linked todo',
+      createdAt: DateTime.utc(2026, 7, 26, 8),
+      archivedAt: DateTime.utc(2026, 7, 26, 9),
+    );
+    final todoRepository = _WidgetTestRepository()
+      ..savedItems = <TodoItem>[archivedTodo];
+    final boardRepository = _WidgetTestStickyBoardRepository()
+      ..savedWorkspace = StickyBoardWorkspace(
+        boards: <StickyBoard>[
+          StickyBoard(
+            id: 'board-linked',
+            name: 'Linked',
+            colorValue: 0xFF20B8A8,
+            createdAt: DateTime.utc(2026, 7, 26, 7),
+          ),
+        ],
+        boardTodoIds: const <String, List<String>>{
+          'board-linked': <String>['archived-linked'],
+        },
+      );
+    final todoController = TodoViewModel(
+      todoRepository: todoRepository,
+      tagRepository: _WidgetTestTagRepository(),
+    );
+    final boardController = StickyBoardViewModel(repository: boardRepository);
+    final settingsController = SettingsViewModel(
+      settingsRepository: _WidgetTestSettingsRepository(),
+      loginItemRepository: _WidgetTestLoginItemRepository(),
+    );
+    final updateController = UpdateViewModel(
+      updateRepository: _WidgetTestUpdateRepository(),
+    );
+    final windowBridge = _WidgetTestWindowBridge();
+    final coordinator = StickyBoardWindowCoordinator(
+      boardController: boardController,
+      todoController: todoController,
+      windowBridge: windowBridge,
+    );
+    await Future.wait<void>(<Future<void>>[
+      todoController.load(),
+      boardController.load(),
+      settingsController.load(),
+      updateController.load(),
+    ]);
+
+    await tester.pumpWidget(
+      FloatickApp(
+        controller: todoController,
+        settingsController: settingsController,
+        updateController: updateController,
+        stickyBoardController: boardController,
+        stickyBoardWindowCoordinator: coordinator,
+        windowBridge: windowBridge,
+        locale: const Locale('en'),
+      ),
+    );
+    windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('archive-scope-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Archive · 1'), findsOneWidget);
+    expect(find.text('Archive  1'), findsNothing);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer();
+    await mouse.moveTo(tester.getCenter(find.text('Archived linked todo')));
+    await tester.pumpAndSettle();
+
+    boardRepository.failNextSave = true;
+    await tester.tap(find.byKey(const Key('delete-todo-archived-linked')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('confirm-delete-todo-archived-linked')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(todoController.itemById('archived-linked'), archivedTodo);
+    expect(todoRepository.savedItems, <TodoItem>[archivedTodo]);
+    expect(boardController.todoIdsForBoard('board-linked'), <String>[
+      'archived-linked',
+    ]);
+    expect(find.text("Floatick couldn't save to .floatick."), findsOneWidget);
   });
 
   testWidgets('English locale translates the primary todo experience', (
@@ -804,6 +1386,7 @@ void main() {
     );
     final settingsController = SettingsViewModel(
       settingsRepository: _WidgetTestSettingsRepository(),
+      loginItemRepository: _WidgetTestLoginItemRepository(),
     );
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
@@ -811,11 +1394,12 @@ void main() {
     final stickyBoardController = StickyBoardViewModel(
       repository: _WidgetTestStickyBoardRepository(),
     );
+    final windowBridge = _WidgetTestWindowBridge();
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: controller,
+      windowBridge: windowBridge,
     );
-    final windowBridge = _WidgetTestWindowBridge();
     await controller.load();
     await settingsController.load();
     await updateController.load();
@@ -841,7 +1425,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const Key('add-todo-button')),
-        matching: find.text('Add todo'),
+        matching: find.text('New'),
       ),
       findsOneWidget,
     );
@@ -857,6 +1441,10 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('Language'), findsOneWidget);
+    expect(find.text('Window'), findsOneWidget);
+    expect(find.text('Keep above other apps'), findsOneWidget);
+    expect(find.text('Startup'), findsOneWidget);
+    expect(find.text('Open at login'), findsOneWidget);
     expect(find.text('Updates'), findsOneWidget);
     expect(find.text('v0.1.0'), findsOneWidget);
     expect(find.text('Automatic checks'), findsOneWidget);
@@ -880,6 +1468,7 @@ void main() {
     final settingsRepository = _WidgetTestSettingsRepository();
     final settingsController = SettingsViewModel(
       settingsRepository: settingsRepository,
+      loginItemRepository: _WidgetTestLoginItemRepository(),
     );
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
@@ -887,11 +1476,12 @@ void main() {
     final stickyBoardController = StickyBoardViewModel(
       repository: _WidgetTestStickyBoardRepository(),
     );
+    final windowBridge = _WidgetTestWindowBridge();
     final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
       boardController: stickyBoardController,
       todoController: controller,
+      windowBridge: windowBridge,
     );
-    final windowBridge = _WidgetTestWindowBridge();
     await controller.load();
     await settingsController.load();
     await updateController.load();
@@ -964,6 +1554,30 @@ class _WidgetTestSettingsRepository implements SettingsRepository {
   }
 }
 
+class _WidgetTestLoginItemRepository implements LoginItemRepository {
+  LoginItemStatus status = LoginItemStatus.disabled;
+  LoginItemStatus? nextStatus;
+  bool failNextUpdate = false;
+  final List<bool> setEnabledValues = <bool>[];
+
+  @override
+  Future<LoginItemStatus> loadStatus() async => status;
+
+  @override
+  Future<LoginItemStatus> setEnabled(bool enabled) async {
+    setEnabledValues.add(enabled);
+    if (failNextUpdate) {
+      failNextUpdate = false;
+      throw const LoginItemFailure(kind: LoginItemFailureKind.update);
+    }
+    status =
+        nextStatus ??
+        (enabled ? LoginItemStatus.enabled : LoginItemStatus.disabled);
+    nextStatus = null;
+    return status;
+  }
+}
+
 class _WidgetTestRepository implements TodoRepository {
   List<TodoItem> savedItems = <TodoItem>[];
 
@@ -998,6 +1612,7 @@ class _WidgetTestTagRepository implements TagRepository {
 
 class _WidgetTestStickyBoardRepository implements StickyBoardRepository {
   StickyBoardWorkspace savedWorkspace = StickyBoardWorkspace.empty();
+  bool failNextSave = false;
 
   @override
   String get storagePath => '/tmp/floatick-widget-test/sticky_boards.json';
@@ -1007,6 +1622,10 @@ class _WidgetTestStickyBoardRepository implements StickyBoardRepository {
 
   @override
   Future<void> save(StickyBoardWorkspace workspace) async {
+    if (failNextSave) {
+      failNextSave = false;
+      throw const StorageFailure(kind: StorageFailureKind.write);
+    }
     savedWorkspace = workspace;
   }
 }
@@ -1040,7 +1659,11 @@ class _WidgetTestUpdateRepository implements UpdateRepository {
 
 class _WidgetTestWindowBridge implements WindowBridge {
   final List<bool> expandedValues = <bool>[];
+  final List<bool> expandedAnimatedValues = <bool>[];
+  final List<int> floatingIconCounts = <int>[];
   final List<String?> preferredLanguageValues = <String?>[];
+  final List<String> preferredThemeValues = <String>[];
+  final List<bool> alwaysOnTopValues = <bool>[];
   ExpandRequestHandler? expandRequestHandler;
 
   @override
@@ -1054,12 +1677,37 @@ class _WidgetTestWindowBridge implements WindowBridge {
   }
 
   @override
-  Future<void> setExpanded(bool expanded) async {
+  Future<void> setExpanded(bool expanded, {bool animated = true}) async {
     expandedValues.add(expanded);
+    expandedAnimatedValues.add(animated);
+  }
+
+  @override
+  Future<void> setFloatingIconCount(int activeCount) async {
+    floatingIconCounts.add(activeCount);
   }
 
   @override
   Future<void> setPreferredLanguage(String? languageCode) async {
     preferredLanguageValues.add(languageCode);
   }
+
+  @override
+  Future<void> setPreferredTheme(String themePreference) async {
+    preferredThemeValues.add(themePreference);
+  }
+
+  @override
+  Future<void> setAlwaysOnTop(bool alwaysOnTop) async {
+    alwaysOnTopValues.add(alwaysOnTop);
+  }
+
+  @override
+  Future<void> configureBorderlessSecondaryWindow(
+    int viewId, {
+    bool positionAdjacentToMainWindow = false,
+  }) async {}
+
+  @override
+  Future<void> revealBorderlessSecondaryWindow(int viewId) async {}
 }

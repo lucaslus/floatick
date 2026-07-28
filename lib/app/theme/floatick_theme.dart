@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/ui/floatick_hover_motion.dart';
+
 abstract final class FloatickColors {
   static const teal = Color(0xFF0F8F83);
   static const tealBright = Color(0xFF22B8A7);
@@ -8,6 +10,7 @@ abstract final class FloatickColors {
   static const mutedInk = Color(0xFF657178);
   static const darkSurface = Color(0xFF182125);
   static const darkSurfaceElevated = Color(0xFF222D31);
+  static const lightSurface = Color(0xFFF9FBFA);
 }
 
 ThemeData buildFloatickTheme(Brightness brightness) {
@@ -19,7 +22,9 @@ ThemeData buildFloatickTheme(Brightness brightness) {
       ).copyWith(
         primary: isDark ? FloatickColors.tealBright : FloatickColors.teal,
         secondary: FloatickColors.orange,
-        surface: isDark ? FloatickColors.darkSurface : const Color(0xFFF9FBFA),
+        surface: isDark
+            ? FloatickColors.darkSurface
+            : FloatickColors.lightSurface,
         onSurface: isDark ? const Color(0xFFF1F5F3) : FloatickColors.ink,
       );
 
@@ -33,6 +38,51 @@ ThemeData buildFloatickTheme(Brightness brightness) {
     canvasColor: Colors.transparent,
     splashFactory: NoSplash.splashFactory,
     visualDensity: VisualDensity.standard,
+    iconButtonTheme: IconButtonThemeData(
+      style: ButtonStyle(
+        animationDuration: FloatickMotion.hoverDuration,
+        foregroundBuilder: FloatickMotion.iconButtonForegroundBuilder,
+        overlayColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+        foregroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return colorScheme.onSurface.withValues(alpha: 0.28);
+          }
+          if (states.contains(WidgetState.selected) ||
+              states.contains(WidgetState.pressed)) {
+            return colorScheme.primary;
+          }
+          if (states.contains(WidgetState.hovered) ||
+              states.contains(WidgetState.focused)) {
+            return colorScheme.onSurface.withValues(alpha: 0.92);
+          }
+          return colorScheme.onSurface.withValues(alpha: 0.62);
+        }),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: ButtonStyle(
+        animationDuration: FloatickMotion.hoverDuration,
+        foregroundBuilder: FloatickMotion.buttonForegroundBuilder,
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: ButtonStyle(
+        animationDuration: FloatickMotion.hoverDuration,
+        foregroundBuilder: FloatickMotion.buttonForegroundBuilder,
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: ButtonStyle(
+        animationDuration: FloatickMotion.hoverDuration,
+        foregroundBuilder: FloatickMotion.buttonForegroundBuilder,
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ButtonStyle(
+        animationDuration: FloatickMotion.hoverDuration,
+        foregroundBuilder: FloatickMotion.buttonForegroundBuilder,
+      ),
+    ),
     textSelectionTheme: TextSelectionThemeData(
       cursorColor: colorScheme.primary,
       selectionColor: colorScheme.primary.withValues(alpha: 0.22),

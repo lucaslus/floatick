@@ -4,12 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../updates/presentation/update_view_model.dart';
+import 'compact_settings_toggle.dart';
 
 const _updateRowHeight = 34.0;
 const _updateRowRadius = 8.0;
-const _compactToggleSize = Size(32, 18);
-const _compactToggleThumbSize = 14.0;
-const _interactionDuration = Duration(milliseconds: 140);
 
 class UpdateSettingsSection extends StatelessWidget {
   const UpdateSettingsSection({required this.viewModel, super.key});
@@ -74,7 +72,7 @@ class UpdateSettingsSection extends StatelessWidget {
                         ),
                       );
                     },
-              trailing: _CompactToggle(
+              trailing: CompactSettingsToggle(
                 key: const Key('automatic-update-toggle'),
                 value: viewModel.automaticallyChecksForUpdates,
                 enabled: !viewModel.isLoading && !viewModel.isSaving,
@@ -177,50 +175,6 @@ class _UpdateSettingRow extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CompactToggle extends StatelessWidget {
-  const _CompactToggle({required this.value, required this.enabled, super.key});
-
-  final bool value;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final activeTrack = colorScheme.primary;
-    final inactiveTrack = colorScheme.onSurface.withValues(alpha: 0.18);
-
-    return Opacity(
-      opacity: enabled ? 1 : 0.5,
-      child: SizedBox.fromSize(
-        size: _compactToggleSize,
-        child: AnimatedContainer(
-          duration: _interactionDuration,
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: value ? activeTrack : inactiveTrack,
-            borderRadius: BorderRadius.circular(_compactToggleSize.height / 2),
-          ),
-          child: AnimatedAlign(
-            duration: _interactionDuration,
-            curve: Curves.easeOutCubic,
-            alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: value
-                    ? colorScheme.onPrimary
-                    : colorScheme.surfaceContainerHighest,
-                shape: BoxShape.circle,
-              ),
-              child: const SizedBox.square(dimension: _compactToggleThumbSize),
             ),
           ),
         ),

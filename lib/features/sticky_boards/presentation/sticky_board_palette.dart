@@ -22,4 +22,15 @@ abstract final class StickyBoardPalette {
   ];
 
   static Color color(int value) => Color(value);
+
+  static Color surfaceColor({
+    required int value,
+    required Color baseColor,
+    required Brightness brightness,
+    bool hovered = false,
+  }) {
+    final isDark = brightness == Brightness.dark;
+    final alpha = isDark ? (hovered ? 0.34 : 0.27) : (hovered ? 0.25 : 0.20);
+    return Color.alphaBlend(color(value).withValues(alpha: alpha), baseColor);
+  }
 }

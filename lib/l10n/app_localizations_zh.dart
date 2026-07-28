@@ -36,6 +36,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get languageEnglishTooltip => 'English';
 
   @override
+  String get windowSectionTitle => '窗口';
+
+  @override
+  String get alwaysOnTopLabel => '始终置顶';
+
+  @override
+  String get startupSectionTitle => '启动';
+
+  @override
+  String get openAtLoginLabel => '登录时打开';
+
+  @override
+  String get openAtLoginLoadError => '暂时无法读取登录项设置。';
+
+  @override
+  String get openAtLoginUpdateError => '无法修改登录项设置。';
+
+  @override
+  String get openAtLoginApprovalRequired => '请前往“系统设置 → 通用 → 登录项”允许 Floatick。';
+
+  @override
+  String get openAtLoginUnsupported => '登录时打开需要 macOS 13 或更高版本。';
+
+  @override
   String get updatesSectionTitle => '更新';
 
   @override
@@ -274,9 +298,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keepStickyBoardAction => '保留便利板';
 
   @override
-  String get confirmDeleteStickyBoardAction => '删除便利板';
-
-  @override
   String get pinStickyBoardTooltip => '固定到桌面';
 
   @override
@@ -298,13 +319,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noTodosAvailableForBoardMessage => '暂无可添加的待办。';
 
   @override
+  String get emptyPinnedStickyBoardMessage => '这个便利板还没有待办。';
+
+  @override
   String get newTodoInStickyBoardAction => '新建待办';
 
   @override
   String get removeFromStickyBoardTooltip => '从便利板移除';
-
-  @override
-  String get openMainListTooltip => '打开主列表';
 
   @override
   String get stickyBoardDeleteKeepsTodosHint => '删除便利板不会删除其中的待办。';
@@ -358,7 +379,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cancelAction => '取消';
 
   @override
+  String get confirmAction => '确认';
+
+  @override
   String get createTodoAction => '添加待办';
+
+  @override
+  String get newTodoAction => '新建';
 
   @override
   String get saveChangesAction => '保存修改';
@@ -413,6 +440,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get archiveTooltip => '归档';
+
+  @override
+  String get deleteTodoPermanentlyTooltip => '永久删除';
+
+  @override
+  String get cancelDeleteTodoTooltip => '保留归档待办';
+
+  @override
+  String get confirmDeleteTodoTooltip => '永久删除这个待办';
+
+  @override
+  String get archivedTodoNoContentMessage => '没有保存更多说明。';
 
   @override
   String get noSearchResultsTitle => '没有匹配的结果';

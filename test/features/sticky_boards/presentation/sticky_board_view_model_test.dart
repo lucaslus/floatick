@@ -82,6 +82,30 @@ void main() {
       expect(controller.todoIdsForBoard('board-1'), <String>['todo-1']);
     },
   );
+
+  test('removing a deleted todo cleans every board relation', () async {
+    var idSequence = 0;
+    final repository = _MemoryStickyBoardRepository();
+    final controller = StickyBoardViewModel(
+      repository: repository,
+      idGenerator: () => 'board-${++idSequence}',
+    );
+    await controller.load();
+    await controller.createBoard(name: 'Work', colorValue: 0xFF20B8A8);
+    await controller.createBoard(name: 'Later', colorValue: 0xFF4C8FF5);
+    await controller.addTodo(boardId: 'board-1', todoId: 'todo-1');
+    await controller.addTodo(boardId: 'board-1', todoId: 'todo-2');
+    await controller.addTodo(boardId: 'board-2', todoId: 'todo-1');
+
+    expect(await controller.removeTodoFromAllBoards('todo-1'), isTrue);
+
+    expect(controller.todoIdsForBoard('board-1'), <String>['todo-2']);
+    expect(controller.todoIdsForBoard('board-2'), isEmpty);
+    expect(controller.boards.length, 2);
+    expect(repository.savedWorkspace.boardTodoIds, <String, List<String>>{
+      'board-1': <String>['todo-2'],
+    });
+  });
 }
 
 class _MemoryStickyBoardRepository implements StickyBoardRepository {

@@ -36,6 +36,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageEnglishTooltip => 'English';
 
   @override
+  String get windowSectionTitle => 'Window';
+
+  @override
+  String get alwaysOnTopLabel => 'Keep above other apps';
+
+  @override
+  String get startupSectionTitle => 'Startup';
+
+  @override
+  String get openAtLoginLabel => 'Open at login';
+
+  @override
+  String get openAtLoginLoadError => 'Couldn\'t read the login item setting.';
+
+  @override
+  String get openAtLoginUpdateError =>
+      'Couldn\'t change the login item setting.';
+
+  @override
+  String get openAtLoginApprovalRequired =>
+      'Allow Floatick in System Settings → General → Login Items.';
+
+  @override
+  String get openAtLoginUnsupported =>
+      'Open at login requires macOS 13 or later.';
+
+  @override
   String get updatesSectionTitle => 'Updates';
 
   @override
@@ -296,9 +323,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keepStickyBoardAction => 'Keep sticky board';
 
   @override
-  String get confirmDeleteStickyBoardAction => 'Delete sticky board';
-
-  @override
   String get pinStickyBoardTooltip => 'Pin to desktop';
 
   @override
@@ -321,13 +345,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'No todos are available to add.';
 
   @override
+  String get emptyPinnedStickyBoardMessage => 'No todos on this board.';
+
+  @override
   String get newTodoInStickyBoardAction => 'New todo';
 
   @override
   String get removeFromStickyBoardTooltip => 'Remove from sticky board';
-
-  @override
-  String get openMainListTooltip => 'Open main list';
 
   @override
   String get stickyBoardDeleteKeepsTodosHint =>
@@ -382,7 +406,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelAction => 'Cancel';
 
   @override
+  String get confirmAction => 'Confirm';
+
+  @override
   String get createTodoAction => 'Add todo';
+
+  @override
+  String get newTodoAction => 'New';
 
   @override
   String get saveChangesAction => 'Save changes';
@@ -438,6 +468,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get archiveTooltip => 'Archive';
+
+  @override
+  String get deleteTodoPermanentlyTooltip => 'Delete permanently';
+
+  @override
+  String get cancelDeleteTodoTooltip => 'Keep archived todo';
+
+  @override
+  String get confirmDeleteTodoTooltip => 'Permanently delete this todo';
+
+  @override
+  String get archivedTodoNoContentMessage => 'No additional notes were saved.';
 
   @override
   String get noSearchResultsTitle => 'No matching results';

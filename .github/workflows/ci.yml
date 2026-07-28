@@ -36,7 +36,7 @@ jobs:
         run: flutter pub get
 
       - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: dart format --output=none --set-exit-if-changed lib test integration_test
 
       - name: Analyze
         run: flutter analyze
@@ -44,8 +44,16 @@ jobs:
       - name: Test
         run: flutter test
 
+      - name: Run macOS UI automation
+        run: tool/test/run_ui_tests.sh
+
       - name: Build macOS release app
         run: flutter build macos --release
+
+      - name: Prepare unsigned test app
+        run: |
+          tool/release/prepare_unsigned_app.sh \
+            build/macos/Build/Products/Release/Floatick.app
 
       - name: Verify app architectures
         shell: bash
@@ -60,3 +68,8 @@ jobs:
             echo "Expected a universal app, found: $architectures" >&2
             exit 1
           fi
+
+      - name: Smoke-test release app
+        run: |
+          tool/release/smoke_test_app.sh \
+            build/macos/Build/Products/Release/Floatick.app

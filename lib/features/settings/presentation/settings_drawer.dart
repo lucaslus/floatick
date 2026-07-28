@@ -6,7 +6,9 @@ import '../../../l10n/l10n.dart';
 import '../../../l10n/storage_failure_localizations.dart';
 import '../../updates/presentation/update_view_model.dart';
 import '../domain/app_settings.dart';
+import '../domain/login_item_status.dart';
 import 'settings_view_model.dart';
+import 'widgets/compact_settings_toggle.dart';
 import 'widgets/update_settings_section.dart';
 
 class SettingsDrawer extends StatelessWidget {
@@ -80,6 +82,34 @@ class SettingsDrawer extends StatelessWidget {
                       const SizedBox(height: 12),
                       _LanguagePreferencePicker(viewModel: viewModel),
                       const SizedBox(height: 28),
+                      Text(
+                        context.l10n.windowSectionTitle,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _AlwaysOnTopSetting(viewModel: viewModel),
+                      const SizedBox(height: 24),
+                      Text(
+                        context.l10n.startupSectionTitle,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _OpenAtLoginSetting(viewModel: viewModel),
+                      if (viewModel.loginItemError != null) ...[
+                        const SizedBox(height: 8),
+                        _SettingsError(
+                          message: _messageForLoginItemFailure(
+                            context,
+                            viewModel.loginItemError!,
+                          ),
+                          onDismiss: viewModel.dismissLoginItemError,
+                        ),
+                      ],
+                      const SizedBox(height: 28),
                       UpdateSettingsSection(viewModel: updateViewModel),
                       const SizedBox(height: 28),
                       Text(
@@ -122,6 +152,137 @@ class SettingsDrawer extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AlwaysOnTopSetting extends StatelessWidget {
+  const _AlwaysOnTopSetting({required this.viewModel});
+
+  final SettingsViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = !viewModel.isSaving;
+    return _SettingsToggleRow(
+      settingKey: const Key('always-on-top-setting'),
+      toggleKey: const Key('always-on-top-toggle'),
+      label: context.l10n.alwaysOnTopLabel,
+      value: viewModel.alwaysOnTop,
+      enabled: enabled,
+      onTap: enabled
+          ? () {
+              unawaited(viewModel.setAlwaysOnTop(!viewModel.alwaysOnTop));
+            }
+          : null,
+    );
+  }
+}
+
+class _OpenAtLoginSetting extends StatelessWidget {
+  const _OpenAtLoginSetting({required this.viewModel});
+
+  final SettingsViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = viewModel.canChangeOpenAtLogin;
+    return _SettingsToggleRow(
+      settingKey: const Key('open-at-login-setting'),
+      toggleKey: const Key('open-at-login-toggle'),
+      label: context.l10n.openAtLoginLabel,
+      value: viewModel.openAtLogin,
+      enabled: enabled,
+      onTap: enabled
+          ? () {
+              unawaited(viewModel.setOpenAtLogin(!viewModel.openAtLogin));
+            }
+          : null,
+    );
+  }
+}
+
+class _SettingsToggleRow extends StatelessWidget {
+  const _SettingsToggleRow({
+    required this.settingKey,
+    required this.toggleKey,
+    required this.label,
+    required this.value,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final Key settingKey;
+  final Key toggleKey;
+  final String label;
+  final bool value;
+  final bool enabled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      label: label,
+      toggled: value,
+      enabled: enabled,
+      child: ExcludeSemantics(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: settingKey,
+            borderRadius: BorderRadius.circular(8),
+            hoverColor: theme.colorScheme.primary.withValues(alpha: 0.06),
+            highlightColor: theme.colorScheme.primary.withValues(alpha: 0.10),
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 34),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: enabled
+                              ? null
+                              : theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.38,
+                                ),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    CompactSettingsToggle(
+                      key: toggleKey,
+                      value: value,
+                      enabled: enabled,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _messageForLoginItemFailure(
+  BuildContext context,
+  LoginItemFailure failure,
+) {
+  return switch (failure.kind) {
+    LoginItemFailureKind.load ||
+    LoginItemFailureKind.invalidResponse => context.l10n.openAtLoginLoadError,
+    LoginItemFailureKind.update => context.l10n.openAtLoginUpdateError,
+    LoginItemFailureKind.requiresApproval =>
+      context.l10n.openAtLoginApprovalRequired,
+    LoginItemFailureKind.unsupported => context.l10n.openAtLoginUnsupported,
+  };
 }
 
 class _SettingsHeader extends StatelessWidget {

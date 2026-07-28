@@ -152,6 +152,54 @@ abstract class AppLocalizations {
   /// **'English'**
   String get languageEnglishTooltip;
 
+  /// No description provided for @windowSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get windowSectionTitle;
+
+  /// No description provided for @alwaysOnTopLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep above other apps'**
+  String get alwaysOnTopLabel;
+
+  /// No description provided for @startupSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Startup'**
+  String get startupSectionTitle;
+
+  /// No description provided for @openAtLoginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Open at login'**
+  String get openAtLoginLabel;
+
+  /// No description provided for @openAtLoginLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the login item setting.'**
+  String get openAtLoginLoadError;
+
+  /// No description provided for @openAtLoginUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t change the login item setting.'**
+  String get openAtLoginUpdateError;
+
+  /// No description provided for @openAtLoginApprovalRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Floatick in System Settings → General → Login Items.'**
+  String get openAtLoginApprovalRequired;
+
+  /// No description provided for @openAtLoginUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Open at login requires macOS 13 or later.'**
+  String get openAtLoginUnsupported;
+
   /// No description provided for @updatesSectionTitle.
   ///
   /// In en, this message translates to:
@@ -590,12 +638,6 @@ abstract class AppLocalizations {
   /// **'Keep sticky board'**
   String get keepStickyBoardAction;
 
-  /// No description provided for @confirmDeleteStickyBoardAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete sticky board'**
-  String get confirmDeleteStickyBoardAction;
-
   /// No description provided for @pinStickyBoardTooltip.
   ///
   /// In en, this message translates to:
@@ -638,6 +680,12 @@ abstract class AppLocalizations {
   /// **'No todos are available to add.'**
   String get noTodosAvailableForBoardMessage;
 
+  /// No description provided for @emptyPinnedStickyBoardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No todos on this board.'**
+  String get emptyPinnedStickyBoardMessage;
+
   /// No description provided for @newTodoInStickyBoardAction.
   ///
   /// In en, this message translates to:
@@ -649,12 +697,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove from sticky board'**
   String get removeFromStickyBoardTooltip;
-
-  /// No description provided for @openMainListTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Open main list'**
-  String get openMainListTooltip;
 
   /// No description provided for @stickyBoardDeleteKeepsTodosHint.
   ///
@@ -758,11 +800,23 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancelAction;
 
+  /// No description provided for @confirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirmAction;
+
   /// No description provided for @createTodoAction.
   ///
   /// In en, this message translates to:
   /// **'Add todo'**
   String get createTodoAction;
+
+  /// No description provided for @newTodoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newTodoAction;
 
   /// No description provided for @saveChangesAction.
   ///
@@ -871,6 +925,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Archive'**
   String get archiveTooltip;
+
+  /// No description provided for @deleteTodoPermanentlyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get deleteTodoPermanentlyTooltip;
+
+  /// No description provided for @cancelDeleteTodoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep archived todo'**
+  String get cancelDeleteTodoTooltip;
+
+  /// No description provided for @confirmDeleteTodoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete this todo'**
+  String get confirmDeleteTodoTooltip;
+
+  /// No description provided for @archivedTodoNoContentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No additional notes were saved.'**
+  String get archivedTodoNoContentMessage;
 
   /// No description provided for @noSearchResultsTitle.
   ///

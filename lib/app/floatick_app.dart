@@ -1,15 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/platform/window_bridge.dart';
+import '../core/ui/floatick_surface_metrics.dart';
 import '../features/settings/domain/app_settings.dart';
 import '../features/settings/presentation/settings_view_model.dart';
 import '../features/sticky_boards/presentation/sticky_board_view_model.dart';
 import '../features/sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import '../features/todos/presentation/todo_panel.dart';
 import '../features/todos/presentation/todo_view_model.dart';
-import '../features/todos/presentation/widgets/floating_todo_icon.dart';
 import '../features/updates/presentation/update_view_model.dart';
 import '../l10n/app_localizations.dart';
 import 'theme/floatick_theme.dart';
@@ -94,27 +95,40 @@ class _FloatickShell extends StatefulWidget {
 }
 
 class _FloatickShellState extends State<_FloatickShell> {
-  static const _motionDuration = Duration(milliseconds: 220);
+  static const _expandedPanelSize = Size(440, 700);
 
   bool _isExpanded = false;
   bool _isChangingWindow = false;
+  bool _isPanelPrepared = false;
+  bool _panelTooltipsEnabled = false;
   bool _hasSyncedPreferredLanguage = false;
+  bool _hasSyncedPreferredTheme = false;
+  bool _hasSyncedAlwaysOnTop = false;
   String? _lastSyncedLanguageCode;
+  AppThemePreference? _lastSyncedThemePreference;
+  bool? _lastSyncedAlwaysOnTop;
+  int? _lastSyncedFloatingIconCount;
   WindowExpansionAnchor _expansionAnchor = WindowExpansionAnchor.topRight;
-  String? _requestedStickyBoardId;
+  StickyBoardMainWindowRequest? _stickyBoardRequest;
   int _stickyBoardRequestSerial = 0;
+  Future<void>? _rendererWarmUpFuture;
+  Future<void>? _panelPreparationFuture;
 
   @override
   void initState() {
     super.initState();
     widget.windowBridge.setExpandRequestHandler(_handleNativeExpandRequest);
+    widget.controller.addListener(_handleTodoStateChanged);
     widget.settingsController.addListener(_handleSettingsChanged);
     widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
       _handleStickyBoardWindowRequest,
     );
     unawaited(_syncPreferredLanguage());
+    unawaited(_syncPreferredTheme());
+    unawaited(_syncAlwaysOnTop());
+    unawaited(_syncFloatingIconCount());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
+      unawaited(_preparePanelAndRestorePinnedBoards());
     });
   }
 
@@ -125,11 +139,20 @@ class _FloatickShellState extends State<_FloatickShell> {
       oldWidget.windowBridge.setExpandRequestHandler(null);
       widget.windowBridge.setExpandRequestHandler(_handleNativeExpandRequest);
       _hasSyncedPreferredLanguage = false;
+      _hasSyncedPreferredTheme = false;
+      _hasSyncedAlwaysOnTop = false;
+      _lastSyncedFloatingIconCount = null;
+    }
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_handleTodoStateChanged);
+      widget.controller.addListener(_handleTodoStateChanged);
+      _lastSyncedFloatingIconCount = null;
     }
     if (oldWidget.settingsController != widget.settingsController) {
       oldWidget.settingsController.removeListener(_handleSettingsChanged);
       widget.settingsController.addListener(_handleSettingsChanged);
       _hasSyncedPreferredLanguage = false;
+      _hasSyncedAlwaysOnTop = false;
     }
     if (oldWidget.stickyBoardWindowCoordinator !=
         widget.stickyBoardWindowCoordinator) {
@@ -141,19 +164,29 @@ class _FloatickShellState extends State<_FloatickShell> {
     if (!_hasSyncedPreferredLanguage) {
       unawaited(_syncPreferredLanguage());
     }
+    if (!_hasSyncedPreferredTheme) {
+      unawaited(_syncPreferredTheme());
+    }
+    if (!_hasSyncedAlwaysOnTop) {
+      unawaited(_syncAlwaysOnTop());
+    }
+    if (_lastSyncedFloatingIconCount == null) {
+      unawaited(_syncFloatingIconCount());
+    }
   }
 
   @override
   void dispose() {
     widget.windowBridge.setExpandRequestHandler(null);
+    widget.controller.removeListener(_handleTodoStateChanged);
     widget.settingsController.removeListener(_handleSettingsChanged);
     widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
     super.dispose();
   }
 
-  void _handleStickyBoardWindowRequest(String boardId) {
+  void _handleStickyBoardWindowRequest(StickyBoardMainWindowRequest request) {
     setState(() {
-      _requestedStickyBoardId = boardId;
+      _stickyBoardRequest = request;
       _stickyBoardRequestSerial += 1;
     });
     unawaited(_setExpanded(true));
@@ -161,6 +194,46 @@ class _FloatickShellState extends State<_FloatickShell> {
 
   void _handleSettingsChanged() {
     unawaited(_syncPreferredLanguage());
+    unawaited(_syncPreferredTheme());
+    unawaited(_syncAlwaysOnTop());
+  }
+
+  void _handleTodoStateChanged() {
+    unawaited(_syncFloatingIconCount());
+  }
+
+  void _startRendererWarmUp() {
+    _rendererWarmUpFuture ??= _warmUpRenderer();
+  }
+
+  Future<void> _warmUpRenderer() async {
+    try {
+      await const _FloatickShaderWarmUp().execute();
+    } on Object catch (error, stackTrace) {
+      debugPrint('Floatick could not warm up the renderer: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> _preparePanelAndRestorePinnedBoards() async {
+    await _ensurePanelPrepared();
+    if (!mounted) {
+      return;
+    }
+    await widget.stickyBoardWindowCoordinator.restorePinnedBoards();
+  }
+
+  Future<void> _ensurePanelPrepared() {
+    return _panelPreparationFuture ??= _preparePanel();
+  }
+
+  Future<void> _preparePanel() async {
+    if (!_isPanelPrepared && mounted) {
+      setState(() => _isPanelPrepared = true);
+      await WidgetsBinding.instance.endOfFrame;
+    }
+    _startRendererWarmUp();
+    await _rendererWarmUpFuture;
   }
 
   Future<void> _syncPreferredLanguage() async {
@@ -187,52 +260,150 @@ class _FloatickShellState extends State<_FloatickShell> {
     }
   }
 
+  Future<void> _syncAlwaysOnTop() async {
+    final alwaysOnTop = widget.settingsController.alwaysOnTop;
+    if (_hasSyncedAlwaysOnTop && alwaysOnTop == _lastSyncedAlwaysOnTop) {
+      return;
+    }
+
+    _hasSyncedAlwaysOnTop = true;
+    _lastSyncedAlwaysOnTop = alwaysOnTop;
+    try {
+      await widget.windowBridge.setAlwaysOnTop(alwaysOnTop);
+    } on Object catch (error, stackTrace) {
+      if (_lastSyncedAlwaysOnTop == alwaysOnTop) {
+        _hasSyncedAlwaysOnTop = false;
+      }
+      debugPrint('Floatick could not update the window level: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> _syncPreferredTheme() async {
+    final themePreference = widget.settingsController.themePreference;
+    if (_hasSyncedPreferredTheme &&
+        themePreference == _lastSyncedThemePreference) {
+      return;
+    }
+
+    _hasSyncedPreferredTheme = true;
+    _lastSyncedThemePreference = themePreference;
+    try {
+      await widget.windowBridge.setPreferredTheme(themePreference.storageValue);
+    } on Object catch (error, stackTrace) {
+      if (_lastSyncedThemePreference == themePreference) {
+        _hasSyncedPreferredTheme = false;
+      }
+      debugPrint('Floatick could not update the native appearance: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> _syncFloatingIconCount() async {
+    final activeCount = widget.controller.activeCount;
+    if (_lastSyncedFloatingIconCount == activeCount) {
+      return;
+    }
+    _lastSyncedFloatingIconCount = activeCount;
+    try {
+      await widget.windowBridge.setFloatingIconCount(activeCount);
+    } on Object catch (error, stackTrace) {
+      if (_lastSyncedFloatingIconCount == activeCount) {
+        _lastSyncedFloatingIconCount = null;
+      }
+      debugPrint('Floatick could not update the floating icon count: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   void _handleNativeExpandRequest(WindowExpansionAnchor expansionAnchor) {
     unawaited(_setExpanded(true, requestedAnchor: expansionAnchor));
+  }
+
+  void _enablePanelTooltips() {
+    if (!_isExpanded || _panelTooltipsEnabled) {
+      return;
+    }
+    setState(() => _panelTooltipsEnabled = true);
+  }
+
+  KeyEventResult _handlePanelKeyEvent(FocusNode _, KeyEvent event) {
+    if (event is KeyDownEvent) {
+      _enablePanelTooltips();
+    }
+    return KeyEventResult.ignored;
   }
 
   Future<void> _setExpanded(
     bool expanded, {
     WindowExpansionAnchor? requestedAnchor,
   }) async {
-    if (_isChangingWindow || _isExpanded == expanded) {
+    if (_isChangingWindow) {
+      return;
+    }
+    if (_isExpanded == expanded) {
+      if (expanded) {
+        unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
+        try {
+          await widget.windowBridge.setExpanded(true, animated: false);
+        } on Object catch (error, stackTrace) {
+          debugPrint('Floatick could not focus the native window: $error');
+          debugPrintStack(stackTrace: stackTrace);
+        }
+      }
       return;
     }
 
     final reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final motionDuration = reduceMotion ? Duration.zero : _motionDuration;
-    setState(() => _isChangingWindow = true);
+    final previousExpanded = _isExpanded;
+    setState(() {
+      _isChangingWindow = true;
+      _panelTooltipsEnabled = false;
+    });
 
     try {
       if (expanded) {
+        await _ensurePanelPrepared();
+        if (!mounted) {
+          return;
+        }
+        unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
         final expansionAnchor =
             requestedAnchor ??
             await widget.windowBridge.preferredExpansionAnchor();
         if (!mounted) {
           return;
         }
-        setState(() => _expansionAnchor = expansionAnchor);
+        setState(() {
+          _expansionAnchor = expansionAnchor;
+          _isExpanded = true;
+        });
         await WidgetsBinding.instance.endOfFrame;
-        await widget.windowBridge.setExpanded(true);
-        await WidgetsBinding.instance.endOfFrame;
+        await widget.windowBridge.setExpanded(true, animated: !reduceMotion);
+      } else {
+        await widget.windowBridge.setExpanded(false, animated: !reduceMotion);
         if (!mounted) {
           return;
         }
-        setState(() => _isExpanded = true);
-      } else {
         setState(() => _isExpanded = false);
-        await WidgetsBinding.instance.endOfFrame;
-        if (motionDuration > Duration.zero) {
-          await Future<void>.delayed(motionDuration);
-        }
-        await widget.windowBridge.setExpanded(false);
       }
     } on Object catch (error, stackTrace) {
       debugPrint('Floatick could not change the native window: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (mounted) {
-        setState(() => _isExpanded = !expanded);
+        try {
+          await widget.windowBridge.setExpanded(
+            previousExpanded,
+            animated: false,
+          );
+        } on Object catch (restoreError, restoreStackTrace) {
+          debugPrint(
+            'Floatick could not restore the native window state: $restoreError',
+          );
+          debugPrintStack(stackTrace: restoreStackTrace);
+        }
+        setState(() => _isExpanded = previousExpanded);
       }
     } finally {
       if (mounted) {
@@ -243,69 +414,121 @@ class _FloatickShellState extends State<_FloatickShell> {
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final transitionDuration = reduceMotion ? Duration.zero : _motionDuration;
-    final expansionAlignment = switch (_expansionAnchor) {
-      WindowExpansionAnchor.topLeft => Alignment.topLeft,
-      WindowExpansionAnchor.topRight => Alignment.topRight,
-      WindowExpansionAnchor.bottomLeft => Alignment.bottomLeft,
-      WindowExpansionAnchor.bottomRight => Alignment.bottomRight,
-    };
-
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SizedBox.expand(
-        child: AnimatedSwitcher(
-          duration: transitionDuration,
-          reverseDuration: transitionDuration,
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) {
-            final curvedAnimation = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-              reverseCurve: Curves.easeInCubic,
-            );
-            final isPanel = child.key == const ValueKey('todo-panel');
-            final scaleAnimation = Tween<double>(
-              begin: isPanel ? 0.80 : 0.92,
-              end: 1,
-            ).animate(curvedAnimation);
-            return FadeTransition(
-              opacity: curvedAnimation,
-              child: ScaleTransition(
-                scale: scaleAnimation,
-                alignment: expansionAlignment,
-                child: child,
-              ),
-            );
-          },
-          child: _isExpanded
-              ? TodoPanel(
-                  key: const ValueKey('todo-panel'),
-                  controller: widget.controller,
-                  settingsController: widget.settingsController,
-                  updateController: widget.updateController,
-                  stickyBoardController: widget.stickyBoardController,
-                  stickyBoardWindowCoordinator:
-                      widget.stickyBoardWindowCoordinator,
-                  windowBridge: widget.windowBridge,
-                  expansionAnchor: _expansionAnchor,
-                  requestedStickyBoardId: _requestedStickyBoardId,
-                  stickyBoardRequestSerial: _stickyBoardRequestSerial,
-                  onCollapse: () => unawaited(_setExpanded(false)),
-                )
-              : Align(
-                  key: const ValueKey('collapsed-icon-alignment'),
-                  alignment: expansionAlignment,
-                  child: FloatingTodoIcon(
-                    key: const ValueKey('floating-todo-icon'),
-                    activeCount: widget.controller.activeCount,
-                    onOpen: () => unawaited(_setExpanded(true)),
+      body: SizedBox.fromSize(
+        size: _expandedPanelSize,
+        child: _isPanelPrepared
+            ? IgnorePointer(
+                ignoring: !_isExpanded || _isChangingWindow,
+                child: TickerMode(
+                  enabled: _isExpanded,
+                  child: RepaintBoundary(
+                    key: const ValueKey('todo-panel'),
+                    child: Focus(
+                      canRequestFocus: false,
+                      onKeyEvent: _handlePanelKeyEvent,
+                      child: Listener(
+                        behavior: HitTestBehavior.translucent,
+                        onPointerHover: (event) {
+                          if (event.delta.distanceSquared > 0) {
+                            _enablePanelTooltips();
+                          }
+                        },
+                        onPointerDown: (_) => _enablePanelTooltips(),
+                        child: TooltipVisibility(
+                          key: const Key('panel-tooltip-visibility'),
+                          visible: _panelTooltipsEnabled,
+                          child: TodoPanel(
+                            controller: widget.controller,
+                            settingsController: widget.settingsController,
+                            updateController: widget.updateController,
+                            stickyBoardController: widget.stickyBoardController,
+                            stickyBoardWindowCoordinator:
+                                widget.stickyBoardWindowCoordinator,
+                            windowBridge: widget.windowBridge,
+                            expansionAnchor: _expansionAnchor,
+                            stickyBoardRequest: _stickyBoardRequest,
+                            stickyBoardRequestSerial: _stickyBoardRequestSerial,
+                            onCollapse: () => unawaited(_setExpanded(false)),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-        ),
+              )
+            : const SizedBox.shrink(),
       ),
     );
+  }
+}
+
+class _FloatickShaderWarmUp extends ShaderWarmUp {
+  const _FloatickShaderWarmUp();
+
+  @override
+  Size get size => const Size.square(120);
+
+  @override
+  Future<void> warmUpOnCanvas(Canvas canvas) {
+    final panelBounds = Rect.fromLTWH(
+      FloatickSurfaceMetrics.windowInset,
+      FloatickSurfaceMetrics.windowInset,
+      size.width - (FloatickSurfaceMetrics.windowInset * 2),
+      size.height - (FloatickSurfaceMetrics.windowInset * 2),
+    );
+    final panelShape = RRect.fromRectAndRadius(
+      panelBounds,
+      const Radius.circular(FloatickSurfaceMetrics.panelRadius),
+    );
+    final gradientPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[Color(0xFF24383C), Color(0xFF172326)],
+      ).createShader(panelBounds);
+
+    canvas.save();
+    canvas.translate(size.width / 2, size.height / 2);
+    canvas.scale(0.95);
+    canvas.translate(-size.width / 2, -size.height / 2);
+    canvas.drawRRect(panelShape, gradientPaint);
+    canvas.restore();
+
+    canvas.drawCircle(
+      const Offset(34, 34),
+      16,
+      Paint()..color = const Color(0xFF20BFB2),
+    );
+
+    final checkPaint = Paint()
+      ..color = const Color(0xFF2CCCBD)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final checkPath = Path()
+      ..moveTo(22, 34)
+      ..lineTo(31, 43)
+      ..lineTo(48, 25);
+    canvas.drawPath(checkPath, checkPaint);
+
+    final textPainter = TextPainter(
+      text: const TextSpan(
+        text: 'Floatick 0123456789 待办归档',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout(maxWidth: 100);
+    textPainter.paint(canvas, const Offset(10, 78));
+    textPainter.dispose();
+
+    return Future<void>.value();
   }
 }

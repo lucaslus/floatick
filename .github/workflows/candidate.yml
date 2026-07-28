@@ -92,6 +92,11 @@ jobs:
             --build-name "$APP_VERSION" \
             --build-number "$APP_BUILD_NUMBER"
 
+      - name: Prepare unsigned candidate app
+        run: |
+          tool/release/prepare_unsigned_app.sh \
+            "build/macos/Build/Products/Release/$PRODUCT_NAME.app"
+
       - name: Verify app architectures
         shell: bash
         run: |
@@ -105,6 +110,11 @@ jobs:
             echo "Expected a universal app, found: $architectures" >&2
             exit 1
           fi
+
+      - name: Smoke-test candidate app
+        run: |
+          tool/release/smoke_test_app.sh \
+            "build/macos/Build/Products/Release/$PRODUCT_NAME.app"
 
       - name: Create candidate package
         id: package
