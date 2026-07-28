@@ -30,7 +30,7 @@
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
 		F10A00012F21000100F10A01 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10A00022F21000100F10A01 /* UpdateService.swift */; };
 		F10A00032F21000100F10A01 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = F10A00042F21000100F10A01 /* Sparkle */; };
-		F10A00052F21000100F10A01 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10A00062F21000100F10A01 /* LoginItemService.swift */; };
+		F10A00072F21000100F10A01 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10A00062F21000100F10A01 /* LoginItemService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -364,9 +364,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 				files = (
-					33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */,
-					F10A00012F21000100F10A01 /* UpdateService.swift in Sources */,
-					F10A00052F21000100F10A01 /* LoginItemService.swift in Sources */,
+				33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */,
+				F10A00012F21000100F10A01 /* UpdateService.swift in Sources */,
+				F10A00072F21000100F10A01 /* LoginItemService.swift in Sources */,
 				33CC10F12044A3C60003C045 /* AppDelegate.swift in Sources */,
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,
 			);
