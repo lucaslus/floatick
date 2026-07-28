@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/ui/floatick_hover_motion.dart';
 import '../../../l10n/l10n.dart';
 import '../domain/todo_item.dart';
 import '../domain/todo_tag.dart';
@@ -651,28 +652,32 @@ class _EditorModeButton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(7),
-        child: AnimatedContainer(
-          duration: MediaQuery.disableAnimationsOf(context)
-              ? Duration.zero
-              : const Duration(milliseconds: 140),
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 9),
-          decoration: BoxDecoration(
-            color: selected
-                ? theme.colorScheme.surface.withValues(alpha: 0.92)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(7),
-          ),
-          child: Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
+      child: FloatickHoverMotion(
+        hoverScale: FloatickMotion.controlHoverScale,
+        pressedScale: FloatickMotion.controlPressedScale,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(7),
+          child: AnimatedContainer(
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 140),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 9),
+            decoration: BoxDecoration(
               color: selected
-                  ? theme.colorScheme.onSurface
-                  : theme.colorScheme.onSurface.withValues(alpha: 0.52),
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ? theme.colorScheme.surface.withValues(alpha: 0.92)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: selected
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.52),
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
             ),
           ),
         ),

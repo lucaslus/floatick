@@ -52,6 +52,8 @@ final class MainFlutterWindow: NSWindow {
   private var updateService: UpdateService?
   private var appliedAlwaysOnTop: Bool?
   private var preferredAppearance = PreferredAppearance.system
+  private var secondaryWindowKeyObserver: NSObjectProtocol?
+  private let configuredSecondaryWindows = NSHashTable<NSWindow>.weakObjects()
 
   override var canBecomeKey: Bool { true }
   override var canBecomeMain: Bool { true }
@@ -104,13 +106,14 @@ final class MainFlutterWindow: NSWindow {
     configureWindow()
     contentViewController = flutterViewController
     flutterContentView = flutterViewController.view
-    installFrostedBackground(
+    configureRoundedFlutterSurface(
       in: flutterViewController,
       cornerRadius: 26
     )
     RegisterGeneratedPlugins(registry: flutterViewController)
     configureWindowChannel(for: flutterViewController)
     configureUpdateService(for: flutterViewController)
+    observeInitialSecondaryWindowPresentation()
 
     let origin = restoredCollapsedOrigin() ?? defaultCollapsedOrigin()
     collapsedOrigin = clampedOrigin(
@@ -300,6 +303,34 @@ final class MainFlutterWindow: NSWindow {
           return
         }
         result(nil)
+      case "revealBorderlessSecondaryWindow":
+        guard
+          let viewIdentifier = (call.arguments as? NSNumber)?.int64Value
+        else {
+          result(
+            FlutterError(
+              code: "invalid_argument",
+              message:
+                "revealBorderlessSecondaryWindow expects a view ID.",
+              details: nil
+            )
+          )
+          return
+        }
+        guard self.revealBorderlessSecondaryWindow(
+          viewIdentifier: viewIdentifier
+        ) else {
+          result(
+            FlutterError(
+              code: "window_unavailable",
+              message:
+                "The configured secondary Flutter window could not be found.",
+              details: viewIdentifier
+            )
+          )
+          return
+        }
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -326,20 +357,15 @@ final class MainFlutterWindow: NSWindow {
       return false
     }
 
-    flutterViewController.backgroundColor = .clear
-    installFrostedBackground(
-      in: flutterViewController,
-      cornerRadius: 22
+    targetWindow.alphaValue = 0
+    configureTransparentRoundedWindow(
+      targetWindow,
+      flutterViewController: flutterViewController
     )
     let existingFrame = targetWindow.frame
     targetWindow.styleMask = [.borderless, .resizable]
-    targetWindow.setFrame(existingFrame, display: true)
-    targetWindow.backgroundColor = .clear
-    targetWindow.isOpaque = false
-    targetWindow.hasShadow = false
+    targetWindow.setFrame(existingFrame, display: false)
     targetWindow.preservesContentDuringLiveResize = true
-    targetWindow.contentView?.wantsLayer = true
-    targetWindow.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
     targetWindow.contentView?.layerContentsRedrawPolicy = .onSetNeedsDisplay
     targetWindow.contentView?.layerContentsPlacement = .scaleAxesIndependently
     targetWindow.appearance = preferredAppearance.nativeAppearance
@@ -354,7 +380,79 @@ final class MainFlutterWindow: NSWindow {
         self.activateAndFocusFlutterContent()
       }
     }
+    configuredSecondaryWindows.add(targetWindow)
     return true
+  }
+
+  private func revealBorderlessSecondaryWindow(
+    viewIdentifier: Int64
+  ) -> Bool {
+    guard
+      let targetWindow = NSApp.windows.first(where: { window in
+        guard
+          window !== self,
+          let controller = self.flutterViewController(in: window)
+        else {
+          return false
+        }
+        return controller.viewIdentifier == viewIdentifier
+      }),
+      configuredSecondaryWindows.contains(targetWindow)
+    else {
+      return false
+    }
+
+    targetWindow.displayIfNeeded()
+    targetWindow.alphaValue = 1
+    targetWindow.orderFrontRegardless()
+    return true
+  }
+
+  private func observeInitialSecondaryWindowPresentation() {
+    secondaryWindowKeyObserver = NotificationCenter.default.addObserver(
+      forName: NSWindow.didBecomeKeyNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] notification in
+      guard
+        let self,
+        let targetWindow = notification.object as? NSWindow,
+        targetWindow !== self,
+        !self.configuredSecondaryWindows.contains(targetWindow),
+        let flutterViewController = self.flutterViewController(
+          in: targetWindow
+        )
+      else {
+        return
+      }
+
+      // multiview_desktop orders a new NSWindow on screen before Dart can
+      // apply its WindowOptions. Keep that initial native surface invisible;
+      // the coordinator reveals it only after configuration, positioning and
+      // Flutter's first completed frame.
+      targetWindow.alphaValue = 0
+      self.configureTransparentRoundedWindow(
+        targetWindow,
+        flutterViewController: flutterViewController
+      )
+    }
+  }
+
+  private func configureTransparentRoundedWindow(
+    _ targetWindow: NSWindow,
+    flutterViewController: FlutterViewController
+  ) {
+    targetWindow.backgroundColor = .clear
+    targetWindow.isOpaque = false
+    targetWindow.hasShadow = false
+    targetWindow.invalidateShadow()
+    targetWindow.contentView?.wantsLayer = true
+    targetWindow.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
+    targetWindow.contentView?.layer?.isOpaque = false
+    configureRoundedFlutterSurface(
+      in: flutterViewController,
+      cornerRadius: 22
+    )
   }
 
   private func positionSecondaryWindowAdjacentToMainWindow(
@@ -428,33 +526,17 @@ final class MainFlutterWindow: NSWindow {
     return nil
   }
 
-  private func installFrostedBackground(
+  private func configureRoundedFlutterSurface(
     in flutterViewController: FlutterViewController,
     cornerRadius: CGFloat
   ) {
     let rootView = flutterViewController.view
     rootView.wantsLayer = true
     rootView.layer?.backgroundColor = NSColor.clear.cgColor
+    rootView.layer?.isOpaque = false
     rootView.layer?.cornerRadius = cornerRadius
+    rootView.layer?.cornerCurve = .continuous
     rootView.layer?.masksToBounds = true
-
-    let effectIdentifier = NSUserInterfaceItemIdentifier(
-      "floatick.frosted-background"
-    )
-    if rootView.subviews.contains(where: {
-      $0.identifier == effectIdentifier
-    }) {
-      return
-    }
-
-    let effectView = NSVisualEffectView(frame: rootView.bounds)
-    effectView.identifier = effectIdentifier
-    effectView.autoresizingMask = [.width, .height]
-    effectView.blendingMode = .behindWindow
-    effectView.material = .underWindowBackground
-    effectView.state = .active
-    effectView.isEmphasized = true
-    rootView.addSubview(effectView, positioned: .below, relativeTo: nil)
   }
 
   private func setAlwaysOnTop(_ alwaysOnTop: Bool) {

@@ -602,12 +602,6 @@ abstract class AppLocalizations {
   /// **'Keep sticky board'**
   String get keepStickyBoardAction;
 
-  /// No description provided for @confirmDeleteStickyBoardAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete sticky board'**
-  String get confirmDeleteStickyBoardAction;
-
   /// No description provided for @pinStickyBoardTooltip.
   ///
   /// In en, this message translates to:
@@ -769,6 +763,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancelAction;
+
+  /// No description provided for @confirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirmAction;
 
   /// No description provided for @createTodoAction.
   ///

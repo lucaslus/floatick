@@ -302,9 +302,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keepStickyBoardAction => 'Keep sticky board';
 
   @override
-  String get confirmDeleteStickyBoardAction => 'Delete sticky board';
-
-  @override
   String get pinStickyBoardTooltip => 'Pin to desktop';
 
   @override
@@ -386,6 +383,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancelAction => 'Cancel';
+
+  @override
+  String get confirmAction => 'Confirm';
 
   @override
   String get createTodoAction => 'Add todo';

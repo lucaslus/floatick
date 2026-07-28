@@ -34,6 +34,22 @@ void main() {
     });
   });
 
+  test('reveals a configured secondary window', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call);
+          return null;
+        });
+    final bridge = MethodChannelWindowBridge();
+
+    await bridge.revealBorderlessSecondaryWindow(42);
+
+    expect(calls, hasLength(1));
+    expect(calls.single.method, 'revealBorderlessSecondaryWindow');
+    expect(calls.single.arguments, 42);
+  });
+
   test('coordinates the fixed main window and native floating icon', () async {
     final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

@@ -11,14 +11,12 @@ class StickyBoardTodoDetails extends StatelessWidget {
     required this.item,
     required this.tags,
     required this.onBack,
-    required this.onEdit,
     super.key,
   });
 
   final TodoItem item;
   final List<TodoTag> tags;
   final VoidCallback onBack;
-  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +45,6 @@ class StickyBoardTodoDetails extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-              IconButton(
-                key: const Key('sticky-board-details-edit'),
-                tooltip: context.l10n.editTooltip,
-                onPressed: onEdit,
-                icon: const Icon(Icons.edit_outlined, size: 18),
               ),
             ],
           ),

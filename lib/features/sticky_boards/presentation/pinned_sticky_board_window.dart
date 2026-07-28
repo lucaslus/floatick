@@ -4,14 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:multiview_desktop/multiview_desktop.dart';
 
 import '../../../app/theme/floatick_theme.dart';
+import '../../../core/ui/floatick_hover_motion.dart';
 import '../../../l10n/l10n.dart';
 import '../../todos/domain/todo_item.dart';
 import '../../todos/presentation/todo_view_model.dart';
-import '../../todos/presentation/widgets/todo_list_row.dart';
 import '../domain/sticky_board.dart';
 import 'sticky_board_frame_save_scheduler.dart';
+import 'sticky_board_palette.dart';
 import 'sticky_board_view_model.dart';
 import 'sticky_board_window_coordinator.dart';
+import 'widgets/sticky_board_read_only_todo_row.dart';
 import 'widgets/sticky_board_todo_details.dart';
 
 class PinnedStickyBoardWindow extends StatefulWidget {
@@ -155,19 +157,6 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
     }
   }
 
-  void _openMain({
-    required StickyBoardMainWindowDestination destination,
-    String? todoId,
-  }) {
-    widget.coordinator.requestMainWindow(
-      StickyBoardMainWindowRequest(
-        boardId: widget.boardId,
-        destination: destination,
-        todoId: todoId,
-      ),
-    );
-  }
-
   void _showTodoDetails(String todoId) {
     setState(() => _detailsTodoId = todoId);
   }
@@ -187,66 +176,71 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
       });
       return const SizedBox.shrink();
     }
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final boardColor = StickyBoardPalette.color(board.colorValue);
+    final surfaceColor = StickyBoardPalette.surfaceColor(
+      value: board.colorValue,
+      baseColor: isDark
+          ? FloatickColors.darkSurface
+          : FloatickColors.lightSurface,
+      brightness: theme.brightness,
+    );
 
     final detailsItem = _detailsTodoId == null
         ? null
         : widget.todoController.itemById(_detailsTodoId!);
 
+    const borderRadius = BorderRadius.all(Radius.circular(22));
     return Material(
       type: MaterialType.transparency,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: isDark
-              ? FloatickColors.darkGlassSurface
-              : FloatickColors.lightGlassSurface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.12)
-                : Colors.white.withValues(alpha: 0.90),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        clipBehavior: Clip.antiAlias,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: boardColor.withValues(alpha: isDark ? 0.44 : 0.34),
+            ),
           ),
-        ),
-        child: Column(
-          children: <Widget>[
-            _PinnedHeader(board: board, onUnpin: () => unawaited(_unpin())),
-            Divider(
-              height: 1,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.08),
-            ),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: MediaQuery.disableAnimationsOf(context)
-                    ? Duration.zero
-                    : const Duration(milliseconds: 150),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                child: detailsItem == null
-                    ? _buildTodoList(board)
-                    : StickyBoardTodoDetails(
-                        key: ValueKey<String>(
-                          'sticky-board-details-${detailsItem.id}',
-                        ),
-                        item: detailsItem,
-                        tags: widget.todoController.tags
-                            .where(
-                              (tag) => widget.todoController
-                                  .tagIdsForTodo(detailsItem.id)
-                                  .contains(tag.id),
-                            )
-                            .toList(growable: false),
-                        onBack: _closeTodoDetails,
-                        onEdit: () => _openMain(
-                          destination:
-                              StickyBoardMainWindowDestination.todoEdit,
-                          todoId: detailsItem.id,
-                        ),
-                      ),
+          child: Column(
+            children: <Widget>[
+              _PinnedHeader(board: board, onUnpin: () => unawaited(_unpin())),
+              Divider(
+                height: 1,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.08),
               ),
-            ),
-          ],
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 150),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: detailsItem == null
+                      ? _buildTodoList(board)
+                      : StickyBoardTodoDetails(
+                          key: ValueKey<String>(
+                            'sticky-board-details-${detailsItem.id}',
+                          ),
+                          item: detailsItem,
+                          tags: widget.todoController.tags
+                              .where(
+                                (tag) => widget.todoController
+                                    .tagIdsForTodo(detailsItem.id)
+                                    .contains(tag.id),
+                              )
+                              .toList(growable: false),
+                          onBack: _closeTodoDetails,
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -281,27 +275,12 @@ class _PinnedStickyBoardWindowState extends State<PinnedStickyBoardWindow>
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return TodoListRow(
+        return StickyBoardReadOnlyTodoRow(
           key: ValueKey<String>('pinned-sticky-board-todo-${item.id}'),
           item: item,
-          archivedScope: false,
-          onToggle: () =>
+          onToggleCompletion: () =>
               unawaited(widget.todoController.toggleCompletion(item.id)),
           onOpenDetails: () => _showTodoDetails(item.id),
-          onEdit: () => _openMain(
-            destination: StickyBoardMainWindowDestination.todoEdit,
-            todoId: item.id,
-          ),
-          onArchive: () => unawaited(widget.todoController.archive(item.id)),
-          onRestore: () => unawaited(widget.todoController.restore(item.id)),
-          tags: widget.todoController.tags,
-          assignedTagIds: widget.todoController.tagIdsForTodo(item.id),
-          onOpenTagAssignment: () => _openMain(
-            destination: StickyBoardMainWindowDestination.todoEdit,
-            todoId: item.id,
-          ),
-          showArchiveAction: false,
-          compact: true,
         );
       },
     );
@@ -321,15 +300,6 @@ class _PinnedHeader extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 9, 8, 9),
         child: Row(
           children: <Widget>[
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: Color(board.colorValue),
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 9),
             Expanded(
               child: Text(
                 board.name,
@@ -340,14 +310,23 @@ class _PinnedHeader extends StatelessWidget {
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
-            IconButton(
-              key: const Key('pinned-sticky-board-unpin'),
-              tooltip: context.l10n.unpinStickyBoardTooltip,
-              onPressed: onUnpin,
-              icon: Icon(
-                Icons.push_pin_rounded,
-                size: 17,
-                color: Theme.of(context).colorScheme.primary,
+            FloatickHoverMotion(
+              hoverScale: FloatickMotion.emphasisHoverScale,
+              pressedScale: FloatickMotion.emphasisPressedScale,
+              hoverTurns: FloatickMotion.emphasisHoverTurns,
+              child: IconButton(
+                key: const Key('pinned-sticky-board-unpin'),
+                tooltip: context.l10n.unpinStickyBoardTooltip,
+                onPressed: onUnpin,
+                style: const ButtonStyle(
+                  foregroundBuilder:
+                      FloatickMotion.passthroughForegroundBuilder,
+                ),
+                icon: Icon(
+                  Icons.push_pin_rounded,
+                  size: 17,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ),
           ],

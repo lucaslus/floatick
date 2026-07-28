@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../app/theme/floatick_theme.dart';
+import '../../../core/ui/floatick_hover_motion.dart';
 import '../../../core/platform/window_bridge.dart';
 import '../../../core/ui/floatick_brand_mark.dart';
 import '../../../core/ui/floatick_surface_metrics.dart';
@@ -408,11 +409,6 @@ class _TodoPanelState extends State<TodoPanel> {
     _showDrawer(_TodoPanelDrawerMode.tagManagement);
   }
 
-  void _openTagManagementFromStickyBoard() {
-    _tagManagementReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
-    _showDrawer(_TodoPanelDrawerMode.tagManagement);
-  }
-
   void _toggleTodoEditorTag(String tagId) {
     if (widget.controller.tagById(tagId) == null) {
       return;
@@ -709,9 +705,7 @@ class _TodoPanelState extends State<TodoPanel> {
     final isTodoDrawerVisible = isTodoDrawerOpen || isTodoContextOverlayOpen;
     final isStickyBoardContextVisible =
         (_todoDrawerReturnMode == _TodoPanelDrawerMode.stickyBoardDetail &&
-            (isTodoDrawerOpen || isTodoContextOverlayOpen)) ||
-        (isTagManagementOpen &&
-            _tagManagementReturnMode == _TodoPanelDrawerMode.stickyBoardDetail);
+        (isTodoDrawerOpen || isTodoContextOverlayOpen));
     final isStickyBoardDrawerVisible =
         isStickyBoardDrawerOpen || isStickyBoardContextVisible;
     final visibleTagDrawerMode = isTagDrawerOpen
@@ -788,8 +782,8 @@ class _TodoPanelState extends State<TodoPanel> {
                   key: const Key('todo-panel-surface'),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? FloatickColors.darkGlassSurface
-                        : FloatickColors.lightGlassSurface,
+                        ? FloatickColors.darkSurface
+                        : FloatickColors.lightSurface,
                     borderRadius: BorderRadius.circular(
                       FloatickSurfaceMetrics.panelRadius,
                     ),
@@ -1114,10 +1108,6 @@ class _TodoPanelState extends State<TodoPanel> {
                                             onCreateTodo: () => _openTodoCreate(
                                               stickyBoardId: board.id,
                                             ),
-                                            onOpenDetails: _openTodoDetails,
-                                            onEditTodo: _openTodoEdit,
-                                            onOpenTagManagement:
-                                                _openTagManagementFromStickyBoard,
                                             closeFocusNode:
                                                 _stickyBoardCloseFocusNode,
                                           );
@@ -1125,6 +1115,7 @@ class _TodoPanelState extends State<TodoPanel> {
                                         return StickyBoardManagementDrawer(
                                           controller:
                                               widget.stickyBoardController,
+                                          todoController: widget.controller,
                                           isOpen: isStickyBoardManagementOpen,
                                           borderOnLeft: !tagDrawerOnLeft,
                                           onClose: _closeActiveDrawer,
@@ -1490,8 +1481,9 @@ class _ScopeButton extends StatelessWidget {
       child: Semantics(
         button: true,
         selected: selected,
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
+        child: FloatickHoverMotion(
+          hoverScale: FloatickMotion.controlHoverScale,
+          pressedScale: FloatickMotion.controlPressedScale,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: onPressed,

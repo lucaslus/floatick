@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/floatick_theme.dart';
 import '../../../../core/ui/floatick_brand_mark.dart';
+import '../../../../core/ui/floatick_hover_motion.dart';
 import '../../../../l10n/l10n.dart';
 
 class FloatingTodoIcon extends StatelessWidget {
@@ -24,7 +25,7 @@ class FloatingTodoIcon extends StatelessWidget {
         button: true,
         label: context.l10n.openApp,
         hint: context.l10n.openAppHint,
-        child: MouseRegion(
+        child: FloatickHoverMotion(
           cursor: SystemMouseCursors.grab,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,

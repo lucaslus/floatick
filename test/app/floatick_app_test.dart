@@ -797,7 +797,7 @@ void main() {
   testWidgets('sticky boards create virtual groups and reuse the todo editor', (
     WidgetTester tester,
   ) async {
-    tester.view.physicalSize = const Size(500, 760);
+    tester.view.physicalSize = const Size(440, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -896,7 +896,15 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('submit-sticky-board')));
     await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('sticky-board-thumbnail-grid')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('sticky-board-board-launch')), findsOneWidget);
+    expect(
+      find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+      findsOneWidget,
+    );
     final pinButton = find.byKey(
       const Key('toggle-sticky-board-pin-board-launch'),
     );
@@ -914,6 +922,56 @@ void main() {
     await tester.tap(pinButton);
     await tester.pumpAndSettle();
     expect(stickyBoardController.boardById('board-launch')?.isPinned, isFalse);
+
+    final boardMouse = await tester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
+    addTearDown(boardMouse.removePointer);
+    await boardMouse.addPointer();
+    await boardMouse.moveTo(
+      tester.getCenter(
+        find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final boardRectBeforeConfirmation = tester.getRect(
+      find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+    );
+    await tester.tap(find.byKey(const Key('delete-sticky-board-board-launch')));
+    await tester.pumpAndSettle();
+
+    final deleteConfirmation = find.byKey(
+      const Key('sticky-board-delete-confirmation-board-launch'),
+    );
+    final cancelDeleteBoard = find.byKey(
+      const Key('cancel-delete-sticky-board-board-launch'),
+    );
+    final confirmDeleteBoard = find.byKey(
+      const Key('confirm-delete-sticky-board-board-launch'),
+    );
+    expect(deleteConfirmation, findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(cancelDeleteBoard, findsOneWidget);
+    expect(confirmDeleteBoard, findsOneWidget);
+    expect(
+      find.descendant(of: confirmDeleteBoard, matching: find.text('Confirm')),
+      findsOneWidget,
+    );
+    expect(find.text('Delete sticky board'), findsNothing);
+    expect(
+      tester.getRect(
+        find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+      ),
+      boardRectBeforeConfirmation,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(cancelDeleteBoard);
+    await tester.pumpAndSettle();
+    expect(deleteConfirmation, findsNothing);
+    expect(stickyBoardController.boardById('board-launch'), isNotNull);
+    await boardMouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('sticky-board-board-launch')));
     await tester.pumpAndSettle();
@@ -992,6 +1050,92 @@ void main() {
       find.byKey(const Key('sticky-board-todo-existing-todo')),
       findsOneWidget,
     );
+    final stickyBoardDetail = find.byKey(
+      const Key('sticky-board-detail-drawer'),
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(
+          const Key('sticky-board-managed-tag-existing-todo-tag-focus'),
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(
+          const Key('sticky-board-managed-time-existing-todo'),
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('toggle-todo-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('edit-todo-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('view-todo-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('archive-todo-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('assign-tags-existing-todo')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(const Key('remove-from-board-existing-todo')),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(
+          const Key('sticky-board-managed-open-details-existing-todo'),
+        ),
+      ),
+    );
+    await tester.pump(kDoubleTapMinTime);
+    await tester.tap(
+      find.descendant(
+        of: stickyBoardDetail,
+        matching: find.byKey(
+          const Key('sticky-board-managed-open-details-existing-todo'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sticky-board-todo-details')), findsOneWidget);
+    expect(find.byKey(const Key('sticky-board-details-edit')), findsNothing);
+    await tester.tap(find.byKey(const Key('sticky-board-details-back')));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('sticky-board-new-todo')));
     await tester.pumpAndSettle();
@@ -1071,6 +1215,25 @@ void main() {
       isNot(Offset.zero),
     );
     expect(find.byKey(const Key('search-field')).hitTestable(), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('sticky-boards-button')));
+    await tester.pumpAndSettle();
+    await boardMouse.moveTo(
+      tester.getCenter(
+        find.byKey(const Key('sticky-board-thumbnail-board-launch')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('delete-sticky-board-board-launch')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('confirm-delete-sticky-board-board-launch')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(stickyBoardController.boardById('board-launch'), isNull);
+    expect(todoController.itemById('existing-todo'), isNotNull);
+    expect(todoController.itemById('created-todo-1'), isNotNull);
     expect(tester.takeException(), isNull);
   });
 
@@ -1473,4 +1636,7 @@ class _WidgetTestWindowBridge implements WindowBridge {
     int viewId, {
     bool positionAdjacentToMainWindow = false,
   }) async {}
+
+  @override
+  Future<void> revealBorderlessSecondaryWindow(int viewId) async {}
 }

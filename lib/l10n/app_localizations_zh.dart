@@ -280,9 +280,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keepStickyBoardAction => '保留便利板';
 
   @override
-  String get confirmDeleteStickyBoardAction => '删除便利板';
-
-  @override
   String get pinStickyBoardTooltip => '固定到桌面';
 
   @override
@@ -362,6 +359,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cancelAction => '取消';
+
+  @override
+  String get confirmAction => '确认';
 
   @override
   String get createTodoAction => '添加待办';

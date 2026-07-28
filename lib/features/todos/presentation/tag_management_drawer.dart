@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/ui/floatick_hover_motion.dart';
 import '../../../l10n/l10n.dart';
 import '../domain/todo_tag.dart';
 import 'todo_view_model.dart';
@@ -443,8 +444,10 @@ class _ColorButton extends StatelessWidget {
       button: true,
       selected: selected,
       label: context.l10n.tagColorSemanticsLabel,
-      child: MouseRegion(
-        cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      child: FloatickHoverMotion(
+        enabled: enabled,
+        hoverScale: FloatickMotion.swatchHoverScale,
+        pressedScale: FloatickMotion.swatchPressedScale,
         child: GestureDetector(
           onTap: enabled ? onPressed : null,
           child: AnimatedContainer(

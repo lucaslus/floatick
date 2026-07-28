@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/ui/floatick_hover_motion.dart';
 import '../../../../l10n/l10n.dart';
 import '../../domain/todo_item.dart';
 import '../../domain/todo_tag.dart';
@@ -146,8 +147,7 @@ class _TodoListRowState extends State<TodoListRow> {
                         child: Semantics(
                           button: true,
                           checked: item.isCompleted,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.click,
+                          child: FloatickHoverMotion(
                             child: GestureDetector(
                               key: ValueKey<String>(
                                 'toggle-todo-${widget.item.id}',

@@ -36,6 +36,8 @@ abstract interface class WindowBridge {
     int viewId, {
     bool positionAdjacentToMainWindow = false,
   });
+
+  Future<void> revealBorderlessSecondaryWindow(int viewId);
 }
 
 class MethodChannelWindowBridge implements WindowBridge {
@@ -98,6 +100,14 @@ class MethodChannelWindowBridge implements WindowBridge {
         'viewId': viewId,
         'positionAdjacentToMainWindow': positionAdjacentToMainWindow,
       },
+    );
+  }
+
+  @override
+  Future<void> revealBorderlessSecondaryWindow(int viewId) {
+    return _channel.invokeMethod<void>(
+      'revealBorderlessSecondaryWindow',
+      viewId,
     );
   }
 

@@ -256,6 +256,11 @@ class StickyBoardWindowCoordinator {
     if (frame != null && !shouldPositionAdjacent) {
       await window.setPosition(Offset(frame.left, frame.top));
     }
+    // The native window remains fully transparent while it is configured and
+    // positioned. Waiting for Flutter's first completed frame prevents the
+    // default AppKit window surface from flashing before the board is ready.
+    await WidgetsBinding.instance.endOfFrame;
+    await windowBridge.revealBorderlessSecondaryWindow(viewId);
   }
 
   Future<void> _enqueueBoardWindowOperation(

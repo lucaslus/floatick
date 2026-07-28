@@ -6,11 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('shows todo content locally and exposes edit separately', (
+  testWidgets('shows todo content locally without edit actions', (
     tester,
   ) async {
     var backCount = 0;
-    var editCount = 0;
     final item = TodoItem(
       id: 'todo-1',
       title: 'Prepare release',
@@ -36,7 +35,6 @@ void main() {
               item: item,
               tags: <TodoTag>[tag],
               onBack: () => backCount += 1,
-              onEdit: () => editCount += 1,
             ),
           ),
         ),
@@ -48,11 +46,10 @@ void main() {
     expect(find.text('Checklist'), findsOneWidget);
     expect(find.text('Verify the DMG'), findsOneWidget);
     expect(find.text('Release'), findsOneWidget);
+    expect(find.byKey(const Key('sticky-board-details-edit')), findsNothing);
 
     await tester.tap(find.byKey(const Key('sticky-board-details-back')));
-    await tester.tap(find.byKey(const Key('sticky-board-details-edit')));
 
     expect(backCount, 1);
-    expect(editCount, 1);
   });
 }

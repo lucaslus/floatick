@@ -214,6 +214,9 @@ class _MemoryWindowBridge implements WindowBridge {
   }) async {}
 
   @override
+  Future<void> revealBorderlessSecondaryWindow(int viewId) async {}
+
+  @override
   Future<WindowExpansionAnchor> preferredExpansionAnchor() async {
     return WindowExpansionAnchor.topRight;
   }
