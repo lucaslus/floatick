@@ -117,14 +117,17 @@ sudo xcodebuild -runFirstLaunch
 ### Verify a change
 
 ```bash
-dart format --output=none --set-exit-if-changed lib test
+dart format --output=none --set-exit-if-changed lib test integration_test
 flutter analyze
 flutter test
+tool/test/run_ui_tests.sh
 flutter build macos --release
 ```
 
 The release app is written to
 `build/macos/Build/Products/Release/Floatick.app`.
+See the [testing guide](./docs/TESTING.md) for the automated user journeys and
+the macOS system boundaries that remain in Draft acceptance.
 
 ## Project structure
 
@@ -136,6 +139,7 @@ lib/
   l10n/         English and Simplified Chinese resources
 macos/Runner/   AppKit window shell and Sparkle integration
 test/           Repository, ViewModel, and widget tests
+integration_test/ Real-engine macOS user journeys
 tool/           Icon and release tooling
 ```
 

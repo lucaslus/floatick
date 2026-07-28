@@ -812,6 +812,12 @@ abstract class AppLocalizations {
   /// **'Add todo'**
   String get createTodoAction;
 
+  /// No description provided for @newTodoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newTodoAction;
+
   /// No description provided for @saveChangesAction.
   ///
   /// In en, this message translates to:

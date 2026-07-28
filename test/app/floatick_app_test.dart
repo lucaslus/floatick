@@ -130,13 +130,36 @@ void main() {
     expect(find.byKey(const Key('search-field')), findsOneWidget);
     expect(find.byKey(const Key('tag-filter-button')), findsOneWidget);
     expect(find.byKey(const Key('add-todo-button')), findsOneWidget);
+    expect(find.byKey(const Key('archive-scope-button')), findsOneWidget);
+    expect(find.text('待办  0'), findsNothing);
+    expect(find.text('归档  0'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('archive-scope-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('归档 · 0'), findsOneWidget);
+    expect(find.text('搜索归档'), findsOneWidget);
+    expect(find.byKey(const Key('add-todo-button')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('archive-scope-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('今天已经清空'), findsOneWidget);
+    expect(find.text('搜索待办'), findsOneWidget);
+    expect(find.byKey(const Key('add-todo-button')), findsOneWidget);
+
     final searchRect = tester.getRect(find.byKey(const Key('search-field')));
     final tagFilterRect = tester.getRect(
       find.byKey(const Key('tag-filter-button')),
     );
+    final newTodoRect = tester.getRect(
+      find.byKey(const Key('add-todo-button')),
+    );
     expect(tagFilterRect.left, greaterThan(searchRect.right));
+    expect(newTodoRect.left, greaterThan(tagFilterRect.right));
     expect((tagFilterRect.center.dy - searchRect.center.dy).abs(), lessThan(1));
+    expect((newTodoRect.center.dy - searchRect.center.dy).abs(), lessThan(1));
     expect(tagFilterRect.size, const Size.square(42));
+    expect(newTodoRect.height, 42);
+    expect(find.text('新建'), findsOneWidget);
     final panelSurface = tester.widget<DecoratedBox>(
       find.byKey(const Key('todo-panel-surface')),
     );
@@ -1322,8 +1345,10 @@ void main() {
     );
     windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Archive  1'));
+    await tester.tap(find.byKey(const Key('archive-scope-button')));
     await tester.pumpAndSettle();
+    expect(find.text('Archive · 1'), findsOneWidget);
+    expect(find.text('Archive  1'), findsNothing);
 
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     addTearDown(mouse.removePointer);
@@ -1400,7 +1425,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const Key('add-todo-button')),
-        matching: find.text('Add todo'),
+        matching: find.text('New'),
       ),
       findsOneWidget,
     );

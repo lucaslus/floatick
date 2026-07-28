@@ -1175,7 +1175,7 @@ private enum NativeCopy {
   }
 }
 
-private final class CollapsedDragOverlayView: NSView {
+final class CollapsedDragOverlayView: NSView {
   private static let dragThreshold: CGFloat = 4
 
   var onClick: (() -> Void)?

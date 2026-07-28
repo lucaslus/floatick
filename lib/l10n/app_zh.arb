@@ -119,6 +119,7 @@
   "cancelAction": "取消",
   "confirmAction": "确认",
   "createTodoAction": "添加待办",
+  "newTodoAction": "新建",
   "saveChangesAction": "保存修改",
   "saveTodoFailedMessage": "无法保存这个待办。",
   "todoNotFoundMessage": "这个待办已不存在。",

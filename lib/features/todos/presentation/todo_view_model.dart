@@ -5,6 +5,7 @@ import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/storage/storage_failure.dart';
+import '../data/first_run_workspace_seeder.dart';
 import '../data/tag_repository.dart';
 import '../data/todo_repository.dart';
 import '../domain/tag_workspace.dart';
@@ -32,19 +33,24 @@ class TodoViewModel extends ChangeNotifier {
     TodoClock? clock,
     TodoIdGenerator? idGenerator,
     TagIdGenerator? tagIdGenerator,
+    FirstRunWorkspaceSeeder? firstRunWorkspaceSeeder,
   }) : _repository = todoRepository,
        // The public named parameter cannot use the private field's identifier.
        // ignore: prefer_initializing_formals
        _tagRepository = tagRepository,
        _clock = clock ?? DateTime.now,
        _idGenerator = idGenerator ?? _generateUuidV4,
-       _tagIdGenerator = tagIdGenerator ?? _generateUuidV4;
+       _tagIdGenerator = tagIdGenerator ?? _generateUuidV4,
+       // The public named parameter cannot use the private field's identifier.
+       // ignore: prefer_initializing_formals
+       _firstRunWorkspaceSeeder = firstRunWorkspaceSeeder;
 
   final TodoRepository _repository;
   final TagRepository _tagRepository;
   final TodoClock _clock;
   final TodoIdGenerator _idGenerator;
   final TagIdGenerator _tagIdGenerator;
+  final FirstRunWorkspaceSeeder? _firstRunWorkspaceSeeder;
 
   List<TodoItem> _items = <TodoItem>[];
   TagWorkspace _tagWorkspace = TagWorkspace.empty();
@@ -143,6 +149,12 @@ class TodoViewModel extends ChangeNotifier {
     notifyListeners();
 
     StorageFailure? loadError;
+    try {
+      await _firstRunWorkspaceSeeder?.seedIfNeeded();
+    } on StorageFailure catch (error) {
+      loadError = error;
+    }
+
     try {
       _items = await _repository.load();
     } on StorageFailure catch (error) {

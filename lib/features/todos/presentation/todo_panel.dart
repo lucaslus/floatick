@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../app/theme/floatick_theme.dart';
-import '../../../core/ui/floatick_hover_motion.dart';
 import '../../../core/platform/window_bridge.dart';
 import '../../../core/ui/floatick_brand_mark.dart';
 import '../../../core/ui/floatick_surface_metrics.dart';
@@ -141,6 +140,14 @@ class _TodoPanelState extends State<TodoPanel> {
 
   void _openSettings() {
     _showDrawer(_TodoPanelDrawerMode.settings);
+  }
+
+  void _toggleArchiveScope() {
+    setState(() {
+      _scope = _scope == TodoListScope.active
+          ? TodoListScope.archived
+          : TodoListScope.active;
+    });
   }
 
   void _handleRequestedStickyBoard() {
@@ -816,7 +823,11 @@ class _TodoPanelState extends State<TodoPanel> {
                               return Column(
                                 children: <Widget>[
                                   _PanelHeader(
+                                    scope: _scope,
                                     activeCount: widget.controller.activeCount,
+                                    archivedCount:
+                                        widget.controller.archivedCount,
+                                    onToggleArchive: _toggleArchiveScope,
                                     onOpenStickyBoards: _openStickyBoards,
                                     onOpenSettings: _openSettings,
                                     onCollapse: widget.onCollapse,
@@ -830,18 +841,6 @@ class _TodoPanelState extends State<TodoPanel> {
                                     ),
                                     child: Column(
                                       children: <Widget>[
-                                        _ScopePicker(
-                                          scope: _scope,
-                                          activeCount:
-                                              widget.controller.activeCount,
-                                          archivedCount:
-                                              widget.controller.archivedCount,
-                                          reduceMotion: reduceMotion,
-                                          onChanged: (scope) {
-                                            setState(() => _scope = scope);
-                                          },
-                                        ),
-                                        const SizedBox(height: 12),
                                         Row(
                                           children: <Widget>[
                                             Expanded(
@@ -898,33 +897,34 @@ class _TodoPanelState extends State<TodoPanel> {
                                                       .length,
                                               onPressed: _openTagFilter,
                                             ),
+                                            if (_scope ==
+                                                TodoListScope.active) ...[
+                                              const SizedBox(width: 9),
+                                              SizedBox(
+                                                height: 42,
+                                                child: FilledButton.tonalIcon(
+                                                  key: const Key(
+                                                    'add-todo-button',
+                                                  ),
+                                                  onPressed: _openTodoCreate,
+                                                  style: FilledButton.styleFrom(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                        ),
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.add_rounded,
+                                                    size: 18,
+                                                  ),
+                                                  label: Text(
+                                                    context.l10n.newTodoAction,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ],
                                         ),
-                                        if (_scope == TodoListScope.active) ...[
-                                          const SizedBox(height: 10),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            height: 42,
-                                            child: FilledButton.tonalIcon(
-                                              key: const Key('add-todo-button'),
-                                              onPressed: _openTodoCreate,
-                                              style: FilledButton.styleFrom(
-                                                alignment: Alignment.centerLeft,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 14,
-                                                    ),
-                                              ),
-                                              icon: const Icon(
-                                                Icons.add_rounded,
-                                                size: 18,
-                                              ),
-                                              label: Text(
-                                                context.l10n.createTodoAction,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
                                       ],
                                     ),
                                   ),
@@ -1344,13 +1344,19 @@ class _TodoPanelState extends State<TodoPanel> {
 
 class _PanelHeader extends StatelessWidget {
   const _PanelHeader({
+    required this.scope,
     required this.activeCount,
+    required this.archivedCount,
+    required this.onToggleArchive,
     required this.onOpenStickyBoards,
     required this.onOpenSettings,
     required this.onCollapse,
   });
 
+  final TodoListScope scope;
   final int activeCount;
+  final int archivedCount;
+  final VoidCallback onToggleArchive;
   final VoidCallback onOpenStickyBoards;
   final VoidCallback onOpenSettings;
   final VoidCallback onCollapse;
@@ -1359,6 +1365,11 @@ class _PanelHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     final localizations = context.l10n;
+    final statusText = scope == TodoListScope.archived
+        ? '${localizations.archiveScopeLabel} · $archivedCount'
+        : activeCount == 0
+        ? localizations.allClearToday
+        : localizations.activeTodoCount(activeCount);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 18, 12, 16),
       child: Row(
@@ -1367,12 +1378,29 @@ class _PanelHeader extends StatelessWidget {
           const SizedBox(width: 11),
           Expanded(
             child: Text(
-              activeCount == 0
-                  ? localizations.allClearToday
-                  : localizations.activeTodoCount(activeCount),
+              statusText,
               style: TextStyle(
                 color: onSurface.withValues(alpha: 0.53),
                 fontSize: 12,
+              ),
+            ),
+          ),
+          Semantics(
+            selected: scope == TodoListScope.archived,
+            child: IconButton(
+              key: const Key('archive-scope-button'),
+              tooltip: scope == TodoListScope.archived
+                  ? localizations.activeScopeLabel
+                  : localizations.archiveScopeLabel,
+              onPressed: onToggleArchive,
+              color: scope == TodoListScope.archived
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+              icon: Icon(
+                scope == TodoListScope.archived
+                    ? Icons.archive_rounded
+                    : Icons.archive_outlined,
+                size: 19,
               ),
             ),
           ),
@@ -1406,124 +1434,6 @@ class _MiniMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const FloatickBrandMark(key: ValueKey('panel-brand-mark'), size: 38);
-  }
-}
-
-class _ScopePicker extends StatelessWidget {
-  const _ScopePicker({
-    required this.scope,
-    required this.activeCount,
-    required this.archivedCount,
-    required this.reduceMotion,
-    required this.onChanged,
-  });
-
-  final TodoListScope scope;
-  final int activeCount;
-  final int archivedCount;
-  final bool reduceMotion;
-  final ValueChanged<TodoListScope> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: 38,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.055)
-            : Colors.black.withValues(alpha: 0.045),
-        borderRadius: BorderRadius.circular(11),
-      ),
-      child: Row(
-        children: <Widget>[
-          _ScopeButton(
-            label: context.l10n.activeScopeLabel,
-            count: activeCount,
-            selected: scope == TodoListScope.active,
-            reduceMotion: reduceMotion,
-            onPressed: () => onChanged(TodoListScope.active),
-          ),
-          _ScopeButton(
-            label: context.l10n.archiveScopeLabel,
-            count: archivedCount,
-            selected: scope == TodoListScope.archived,
-            reduceMotion: reduceMotion,
-            onPressed: () => onChanged(TodoListScope.archived),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ScopeButton extends StatelessWidget {
-  const _ScopeButton({
-    required this.label,
-    required this.count,
-    required this.selected,
-    required this.reduceMotion,
-    required this.onPressed,
-  });
-
-  final String label;
-  final int count;
-  final bool selected;
-  final bool reduceMotion;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final onSurface = Theme.of(context).colorScheme.onSurface;
-    return Expanded(
-      child: Semantics(
-        button: true,
-        selected: selected,
-        child: FloatickHoverMotion(
-          hoverScale: FloatickMotion.controlHoverScale,
-          pressedScale: FloatickMotion.controlPressedScale,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onPressed,
-            child: AnimatedContainer(
-              duration: reduceMotion
-                  ? Duration.zero
-                  : const Duration(milliseconds: 180),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected
-                    ? (isDark
-                          ? Colors.white.withValues(alpha: 0.10)
-                          : Colors.white)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: selected && !isDark
-                    ? <BoxShadow>[
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.07),
-                          blurRadius: 6,
-                          offset: const Offset(0, 1),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Text(
-                '$label  $count',
-                style: TextStyle(
-                  color: selected
-                      ? onSurface
-                      : onSurface.withValues(alpha: 0.55),
-                  fontSize: 12.5,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 

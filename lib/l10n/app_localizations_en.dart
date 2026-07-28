@@ -412,6 +412,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createTodoAction => 'Add todo';
 
   @override
+  String get newTodoAction => 'New';
+
+  @override
   String get saveChangesAction => 'Save changes';
 
   @override

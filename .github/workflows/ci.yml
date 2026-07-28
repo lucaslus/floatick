@@ -36,13 +36,16 @@ jobs:
         run: flutter pub get
 
       - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: dart format --output=none --set-exit-if-changed lib test integration_test
 
       - name: Analyze
         run: flutter analyze
 
       - name: Test
         run: flutter test
+
+      - name: Run macOS UI automation
+        run: tool/test/run_ui_tests.sh
 
       - name: Build macOS release app
         run: flutter build macos --release

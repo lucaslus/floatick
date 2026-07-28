@@ -385,6 +385,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get createTodoAction => '添加待办';
 
   @override
+  String get newTodoAction => '新建';
+
+  @override
   String get saveChangesAction => '保存修改';
 
   @override

@@ -62,6 +62,8 @@ git switch -c feature/short-description
 - 修改代码前先确认根因和影响范围。
 - 核心逻辑补单元测试；交互变更补 Widget 测试。
 - 优先运行与改动直接相关的测试。
+- 完整 UI 自动化使用 `tool/test/run_ui_tests.sh`，覆盖真实 macOS Flutter 引擎和
+  AppKit 原生边界；详细范围见 [TESTING.md](TESTING.md)。
 - 本地需要观察 UI 时运行：
 
 ```bash
@@ -81,8 +83,9 @@ PR 必须合入 `main`。PR CI 会执行：
 1. Dart 格式检查；
 2. `flutter analyze`；
 3. `flutter test`；
-4. macOS Release 构建；
-5. `arm64` 和 `x86_64` 双架构检查。
+4. macOS UI 自动化与 AppKit 原生边界测试；
+5. macOS Release 构建与首次启动烟测；
+6. `arm64` 和 `x86_64` 双架构检查。
 
 CI 通过后才能合并。普通开发不直接推送 `main`。
 

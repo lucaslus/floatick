@@ -17,6 +17,11 @@ if [[ ! -d "$app_path" || "$app_path" != *.app ]]; then
   exit 66
 fi
 
+if ! command -v ruby >/dev/null 2>&1; then
+  echo "Ruby is required to validate the first-run JSON workspace." >&2
+  exit 69
+fi
+
 readonly info_plist="$app_path/Contents/Info.plist"
 if [[ ! -f "$info_plist" ]]; then
   echo "App Info.plist is missing: $info_plist" >&2
@@ -35,6 +40,11 @@ fi
 
 log_path=$(mktemp "${TMPDIR:-/tmp}/floatick-smoke.XXXXXX")
 readonly log_path
+test_home=$(mktemp -d "${TMPDIR:-/tmp}/floatick-smoke-home.XXXXXX")
+readonly test_home
+readonly workspace_path="$test_home/.floatick"
+readonly todos_path="$workspace_path/todos.json"
+readonly tags_path="$workspace_path/tags.json"
 app_pid=
 
 cleanup() {
@@ -43,10 +53,11 @@ cleanup() {
     wait "$app_pid" >/dev/null 2>&1 || true
   fi
   rm -f "$log_path"
+  rm -rf "$test_home"
 }
 trap cleanup EXIT
 
-"$executable_path" >"$log_path" 2>&1 &
+HOME="$test_home" "$executable_path" >"$log_path" 2>&1 &
 app_pid=$!
 
 sleep "$startup_seconds"
@@ -62,4 +73,16 @@ if ! kill -0 "$app_pid" >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "App remained running for the ${startup_seconds}s startup smoke test."
+for workspace_file in "$todos_path" "$tags_path"; do
+  if [[ ! -s "$workspace_file" ]]; then
+    echo "First-run workspace file was not created: $workspace_file" >&2
+    exit 1
+  fi
+
+  if ! ruby -rjson -e 'JSON.parse(File.read(ARGV.fetch(0)))' "$workspace_file"; then
+    echo "First-run workspace file is not valid JSON: $workspace_file" >&2
+    exit 1
+  fi
+done
+
+echo "App remained running and created a valid isolated first-run workspace."

@@ -168,6 +168,7 @@
   "cancelAction": "Cancel",
   "confirmAction": "Confirm",
   "createTodoAction": "Add todo",
+  "newTodoAction": "New",
   "saveChangesAction": "Save changes",
   "saveTodoFailedMessage": "Couldn't save this todo.",
   "todoNotFoundMessage": "This todo no longer exists.",
