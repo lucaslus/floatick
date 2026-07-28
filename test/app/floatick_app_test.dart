@@ -1,8 +1,10 @@
 import 'package:floatick/app/floatick_app.dart';
 import 'package:floatick/core/platform/window_bridge.dart';
 import 'package:floatick/core/storage/storage_failure.dart';
+import 'package:floatick/features/settings/data/login_item_repository.dart';
 import 'package:floatick/features/settings/data/settings_repository.dart';
 import 'package:floatick/features/settings/domain/app_settings.dart';
+import 'package:floatick/features/settings/domain/login_item_status.dart';
 import 'package:floatick/features/settings/presentation/settings_view_model.dart';
 import 'package:floatick/features/sticky_boards/data/sticky_board_repository.dart';
 import 'package:floatick/features/sticky_boards/domain/sticky_board.dart';
@@ -44,8 +46,10 @@ void main() {
     );
     final windowBridge = _WidgetTestWindowBridge();
     final settingsRepository = _WidgetTestSettingsRepository();
+    final loginItemRepository = _WidgetTestLoginItemRepository();
     final settingsController = SettingsViewModel(
       settingsRepository: settingsRepository,
+      loginItemRepository: loginItemRepository,
     );
     final updateRepository = _WidgetTestUpdateRepository();
     final updateController = UpdateViewModel(
@@ -153,6 +157,8 @@ void main() {
     expect(find.text('语言'), findsOneWidget);
     expect(find.text('窗口'), findsOneWidget);
     expect(find.text('始终置顶'), findsOneWidget);
+    expect(find.text('启动'), findsOneWidget);
+    expect(find.text('登录时打开'), findsOneWidget);
     expect(find.text('更新'), findsOneWidget);
     expect(find.text('v0.1.0'), findsOneWidget);
     expect(find.text('工作目录'), findsOneWidget);
@@ -183,6 +189,15 @@ void main() {
       tester.getSize(find.byKey(const Key('always-on-top-toggle'))),
       const Size(32, 18),
     );
+    expect(
+      tester.getSize(find.byKey(const Key('open-at-login-toggle'))),
+      const Size(32, 18),
+    );
+    expect(settingsController.openAtLogin, isFalse);
+    await tester.tap(find.byKey(const Key('open-at-login-setting')));
+    await tester.pumpAndSettle();
+    expect(settingsController.openAtLogin, isTrue);
+    expect(loginItemRepository.setEnabledValues, <bool>[true]);
     expect(windowBridge.alwaysOnTopValues, <bool>[true]);
     await tester.tap(find.byKey(const Key('always-on-top-setting')));
     await tester.pumpAndSettle();
@@ -439,6 +454,7 @@ void main() {
     );
     final settingsController = SettingsViewModel(
       settingsRepository: _WidgetTestSettingsRepository(),
+      loginItemRepository: _WidgetTestLoginItemRepository(),
     );
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
@@ -843,6 +859,7 @@ void main() {
     );
     final settingsController = SettingsViewModel(
       settingsRepository: _WidgetTestSettingsRepository(),
+      loginItemRepository: _WidgetTestLoginItemRepository(),
     );
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
@@ -1274,6 +1291,7 @@ void main() {
     final boardController = StickyBoardViewModel(repository: boardRepository);
     final settingsController = SettingsViewModel(
       settingsRepository: _WidgetTestSettingsRepository(),
+      loginItemRepository: _WidgetTestLoginItemRepository(),
     );
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
@@ -1343,6 +1361,7 @@ void main() {
     );
     final settingsController = SettingsViewModel(
       settingsRepository: _WidgetTestSettingsRepository(),
+      loginItemRepository: _WidgetTestLoginItemRepository(),
     );
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
@@ -1399,6 +1418,8 @@ void main() {
     expect(find.text('Language'), findsOneWidget);
     expect(find.text('Window'), findsOneWidget);
     expect(find.text('Keep above other apps'), findsOneWidget);
+    expect(find.text('Startup'), findsOneWidget);
+    expect(find.text('Open at login'), findsOneWidget);
     expect(find.text('Updates'), findsOneWidget);
     expect(find.text('v0.1.0'), findsOneWidget);
     expect(find.text('Automatic checks'), findsOneWidget);
@@ -1422,6 +1443,7 @@ void main() {
     final settingsRepository = _WidgetTestSettingsRepository();
     final settingsController = SettingsViewModel(
       settingsRepository: settingsRepository,
+      loginItemRepository: _WidgetTestLoginItemRepository(),
     );
     final updateController = UpdateViewModel(
       updateRepository: _WidgetTestUpdateRepository(),
@@ -1504,6 +1526,30 @@ class _WidgetTestSettingsRepository implements SettingsRepository {
   @override
   Future<void> save(AppSettings settings) async {
     savedSettings = settings;
+  }
+}
+
+class _WidgetTestLoginItemRepository implements LoginItemRepository {
+  LoginItemStatus status = LoginItemStatus.disabled;
+  LoginItemStatus? nextStatus;
+  bool failNextUpdate = false;
+  final List<bool> setEnabledValues = <bool>[];
+
+  @override
+  Future<LoginItemStatus> loadStatus() async => status;
+
+  @override
+  Future<LoginItemStatus> setEnabled(bool enabled) async {
+    setEnabledValues.add(enabled);
+    if (failNextUpdate) {
+      failNextUpdate = false;
+      throw const LoginItemFailure(kind: LoginItemFailureKind.update);
+    }
+    status =
+        nextStatus ??
+        (enabled ? LoginItemStatus.enabled : LoginItemStatus.disabled);
+    nextStatus = null;
+    return status;
   }
 }
 

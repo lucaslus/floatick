@@ -164,6 +164,42 @@ abstract class AppLocalizations {
   /// **'Keep above other apps'**
   String get alwaysOnTopLabel;
 
+  /// No description provided for @startupSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Startup'**
+  String get startupSectionTitle;
+
+  /// No description provided for @openAtLoginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Open at login'**
+  String get openAtLoginLabel;
+
+  /// No description provided for @openAtLoginLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the login item setting.'**
+  String get openAtLoginLoadError;
+
+  /// No description provided for @openAtLoginUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t change the login item setting.'**
+  String get openAtLoginUpdateError;
+
+  /// No description provided for @openAtLoginApprovalRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Floatick in System Settings → General → Login Items.'**
+  String get openAtLoginApprovalRequired;
+
+  /// No description provided for @openAtLoginUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Open at login requires macOS 13 or later.'**
+  String get openAtLoginUnsupported;
+
   /// No description provided for @updatesSectionTitle.
   ///
   /// In en, this message translates to:

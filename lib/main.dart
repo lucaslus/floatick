@@ -3,6 +3,7 @@ import 'package:multiview_desktop/multiview_desktop.dart';
 
 import 'app/floatick_app.dart';
 import 'core/platform/window_bridge.dart';
+import 'features/settings/data/login_item_repository.dart';
 import 'features/settings/data/settings_repository.dart';
 import 'features/settings/presentation/settings_view_model.dart';
 import 'features/sticky_boards/data/sticky_board_repository.dart';
@@ -23,6 +24,7 @@ Future<void> main() async {
   );
   final settingsController = SettingsViewModel(
     settingsRepository: LocalSettingsRepository(),
+    loginItemRepository: MethodChannelLoginItemRepository(),
   );
   final updateController = UpdateViewModel(
     updateRepository: MethodChannelUpdateRepository(),

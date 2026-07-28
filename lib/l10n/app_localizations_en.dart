@@ -42,6 +42,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alwaysOnTopLabel => 'Keep above other apps';
 
   @override
+  String get startupSectionTitle => 'Startup';
+
+  @override
+  String get openAtLoginLabel => 'Open at login';
+
+  @override
+  String get openAtLoginLoadError => 'Couldn\'t read the login item setting.';
+
+  @override
+  String get openAtLoginUpdateError =>
+      'Couldn\'t change the login item setting.';
+
+  @override
+  String get openAtLoginApprovalRequired =>
+      'Allow Floatick in System Settings → General → Login Items.';
+
+  @override
+  String get openAtLoginUnsupported =>
+      'Open at login requires macOS 13 or later.';
+
+  @override
   String get updatesSectionTitle => 'Updates';
 
   @override

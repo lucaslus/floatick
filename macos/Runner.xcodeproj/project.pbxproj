@@ -30,6 +30,7 @@
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
 		F10A00012F21000100F10A01 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10A00022F21000100F10A01 /* UpdateService.swift */; };
 		F10A00032F21000100F10A01 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = F10A00042F21000100F10A01 /* Sparkle */; };
+		F10A00052F21000100F10A01 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10A00062F21000100F10A01 /* LoginItemService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +84,7 @@
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		F10A00022F21000100F10A01 /* UpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateService.swift; sourceTree = "<group>"; };
+		F10A00062F21000100F10A01 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -173,6 +175,7 @@
 				33CC10F02044A3C60003C045 /* AppDelegate.swift */,
 				33CC11122044BFA00003C045 /* MainFlutterWindow.swift */,
 				F10A00022F21000100F10A01 /* UpdateService.swift */,
+				F10A00062F21000100F10A01 /* LoginItemService.swift */,
 				33E51913231747F40026EE4D /* DebugProfile.entitlements */,
 				33E51914231749380026EE4D /* Release.entitlements */,
 				33CC11242044D66E0003C045 /* Resources */,
@@ -363,6 +366,7 @@
 				files = (
 					33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */,
 					F10A00012F21000100F10A01 /* UpdateService.swift in Sources */,
+					F10A00052F21000100F10A01 /* LoginItemService.swift in Sources */,
 				33CC10F12044A3C60003C045 /* AppDelegate.swift in Sources */,
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,
 			);

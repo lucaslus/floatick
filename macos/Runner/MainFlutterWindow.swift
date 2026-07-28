@@ -50,6 +50,7 @@ final class MainFlutterWindow: NSWindow {
   private weak var flutterContentView: NSView?
   private var windowChannel: FlutterMethodChannel?
   private var updateService: UpdateService?
+  private var loginItemService: LoginItemService?
   private var appliedAlwaysOnTop: Bool?
   private var preferredAppearance = PreferredAppearance.system
   private var secondaryWindowKeyObserver: NSObjectProtocol?
@@ -113,6 +114,7 @@ final class MainFlutterWindow: NSWindow {
     RegisterGeneratedPlugins(registry: flutterViewController)
     configureWindowChannel(for: flutterViewController)
     configureUpdateService(for: flutterViewController)
+    configureLoginItemService(for: flutterViewController)
     observeInitialSecondaryWindowPresentation()
 
     let origin = restoredCollapsedOrigin() ?? defaultCollapsedOrigin()
@@ -583,6 +585,16 @@ final class MainFlutterWindow: NSWindow {
       binaryMessenger: flutterViewController.engine.binaryMessenger
     )
     self.updateService = updateService
+  }
+
+  private func configureLoginItemService(
+    for flutterViewController: FlutterViewController
+  ) {
+    let loginItemService = LoginItemService()
+    loginItemService.configure(
+      binaryMessenger: flutterViewController.engine.binaryMessenger
+    )
+    self.loginItemService = loginItemService
   }
 
   private func configureCollapsedIconWindow() {

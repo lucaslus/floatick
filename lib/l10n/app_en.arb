@@ -11,6 +11,12 @@
   "languageEnglishTooltip": "English",
   "windowSectionTitle": "Window",
   "alwaysOnTopLabel": "Keep above other apps",
+  "startupSectionTitle": "Startup",
+  "openAtLoginLabel": "Open at login",
+  "openAtLoginLoadError": "Couldn't read the login item setting.",
+  "openAtLoginUpdateError": "Couldn't change the login item setting.",
+  "openAtLoginApprovalRequired": "Allow Floatick in System Settings → General → Login Items.",
+  "openAtLoginUnsupported": "Open at login requires macOS 13 or later.",
   "updatesSectionTitle": "Updates",
   "currentVersionLabel": "v{version}",
   "@currentVersionLabel": {

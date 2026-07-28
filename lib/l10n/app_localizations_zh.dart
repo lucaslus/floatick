@@ -42,6 +42,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alwaysOnTopLabel => '始终置顶';
 
   @override
+  String get startupSectionTitle => '启动';
+
+  @override
+  String get openAtLoginLabel => '登录时打开';
+
+  @override
+  String get openAtLoginLoadError => '暂时无法读取登录项设置。';
+
+  @override
+  String get openAtLoginUpdateError => '无法修改登录项设置。';
+
+  @override
+  String get openAtLoginApprovalRequired => '请前往“系统设置 → 通用 → 登录项”允许 Floatick。';
+
+  @override
+  String get openAtLoginUnsupported => '登录时打开需要 macOS 13 或更高版本。';
+
+  @override
   String get updatesSectionTitle => '更新';
 
   @override
