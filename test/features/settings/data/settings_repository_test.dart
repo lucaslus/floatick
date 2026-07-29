@@ -34,6 +34,7 @@ void main() {
       expect(settings.themePreference, AppThemePreference.system);
       expect(settings.languagePreference, AppLanguagePreference.system);
       expect(settings.alwaysOnTop, isTrue);
+      expect(settings.collapseWhenClickingOutside, isTrue);
       expect(await repository.rootDirectory.exists(), isTrue);
     },
   );
@@ -43,6 +44,7 @@ void main() {
       themePreference: AppThemePreference.light,
       languagePreference: AppLanguagePreference.simplifiedChinese,
       alwaysOnTop: false,
+      collapseWhenClickingOutside: false,
     );
 
     await repository.save(settings);
@@ -51,10 +53,11 @@ void main() {
 
     expect(loadedSettings, settings);
     expect(json, <String, Object?>{
-      'version': 3,
+      'version': 4,
       'theme': 'light',
       'language': 'zh',
       'alwaysOnTop': false,
+      'collapseWhenClickingOutside': false,
     });
   });
 
@@ -81,6 +84,20 @@ void main() {
 
     expect(settings.languagePreference, AppLanguagePreference.english);
     expect(settings.alwaysOnTop, isTrue);
+    expect(settings.collapseWhenClickingOutside, isTrue);
+  });
+
+  test('version 3 settings default to collapsing on outside clicks', () async {
+    await repository.rootDirectory.create(recursive: true);
+    await File(repository.storagePath).writeAsString(
+      '{"version": 3, "theme": "system", "language": "en",'
+      '"alwaysOnTop": false}',
+    );
+
+    final settings = await repository.load();
+
+    expect(settings.alwaysOnTop, isFalse);
+    expect(settings.collapseWhenClickingOutside, isTrue);
   });
 
   test('damaged storage is reported and left unchanged', () async {
@@ -142,4 +159,28 @@ void main() {
     );
     expect(await file.readAsString(), damagedContent);
   });
+
+  test(
+    'invalid outside-click setting is reported and left unchanged',
+    () async {
+      await repository.rootDirectory.create(recursive: true);
+      final file = File(repository.storagePath);
+      const damagedContent =
+          '{"version": 4, "theme": "system", "language": "en",'
+          '"alwaysOnTop": true, "collapseWhenClickingOutside": "yes"}';
+      await file.writeAsString(damagedContent);
+
+      await expectLater(
+        repository.load(),
+        throwsA(
+          isA<StorageFailure>().having(
+            (error) => error.kind,
+            'kind',
+            StorageFailureKind.invalidData,
+          ),
+        ),
+      );
+      expect(await file.readAsString(), damagedContent);
+    },
+  );
 }

@@ -42,6 +42,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alwaysOnTopLabel => '始终置顶';
 
   @override
+  String get collapseWhenClickingOutsideLabel => '点击外部时收起';
+
+  @override
   String get startupSectionTitle => '启动';
 
   @override
@@ -412,6 +415,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewTodoDetailsTooltip => '查看详情';
 
   @override
+  String get copyTodoAsMarkdownTooltip => '复制为 Markdown';
+
+  @override
+  String get todoCopiedAsMarkdownMessage => '已复制为 Markdown';
+
+  @override
+  String get todoCopyFailedMessage => '无法复制这个待办。';
+
+  @override
+  String get moreTodoActionsTooltip => '更多操作';
+
+  @override
+  String get todoActionsSheetTitle => '操作';
+
+  @override
   String get dismissErrorTooltip => '关闭错误提示';
 
   @override
@@ -443,6 +461,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deleteTodoPermanentlyTooltip => '永久删除';
+
+  @override
+  String get deleteTodoConfirmationTitle => '删除这个待办？';
+
+  @override
+  String get deleteTodoConfirmationMessage => '此操作无法撤销。';
+
+  @override
+  String get deleteTodoAction => '删除';
 
   @override
   String get cancelDeleteTodoTooltip => '保留归档待办';

@@ -42,6 +42,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alwaysOnTopLabel => 'Keep above other apps';
 
   @override
+  String get collapseWhenClickingOutsideLabel =>
+      'Collapse when clicking outside';
+
+  @override
   String get startupSectionTitle => 'Startup';
 
   @override
@@ -440,6 +444,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewTodoDetailsTooltip => 'View details';
 
   @override
+  String get copyTodoAsMarkdownTooltip => 'Copy as Markdown';
+
+  @override
+  String get todoCopiedAsMarkdownMessage => 'Copied as Markdown';
+
+  @override
+  String get todoCopyFailedMessage => 'Couldn\'t copy this todo.';
+
+  @override
+  String get moreTodoActionsTooltip => 'More actions';
+
+  @override
+  String get todoActionsSheetTitle => 'Actions';
+
+  @override
   String get dismissErrorTooltip => 'Dismiss error';
 
   @override
@@ -471,6 +490,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteTodoPermanentlyTooltip => 'Delete permanently';
+
+  @override
+  String get deleteTodoConfirmationTitle => 'Delete this todo?';
+
+  @override
+  String get deleteTodoConfirmationMessage => 'This action cannot be undone.';
+
+  @override
+  String get deleteTodoAction => 'Delete';
 
   @override
   String get cancelDeleteTodoTooltip => 'Keep archived todo';

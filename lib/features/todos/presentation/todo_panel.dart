@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter/services.dart';
 
 import '../../../app/theme/floatick_theme.dart';
@@ -29,6 +30,8 @@ const double _stickyBoardDrawerWidth = 336;
 const double _todoDrawerHeight = 520;
 const Duration _drawerSlideDuration = Duration(milliseconds: 220);
 const Duration _drawerScrimDuration = Duration(milliseconds: 160);
+const Duration _scrollHoverResumeDelay = Duration(milliseconds: 120);
+const double _todoListCacheExtentViewportFraction = 0.75;
 
 enum TodoListScope { active, archived }
 
@@ -1480,7 +1483,7 @@ class _ErrorBanner extends StatelessWidget {
   }
 }
 
-class _TodoList extends StatelessWidget {
+class _TodoList extends StatefulWidget {
   const _TodoList({
     required this.controller,
     required this.scope,
@@ -1504,8 +1507,19 @@ class _TodoList extends StatelessWidget {
   final ValueChanged<String> onDeleteTodo;
 
   @override
+  State<_TodoList> createState() => _TodoListState();
+}
+
+class _TodoListState extends State<_TodoList> {
+  List<TodoItem>? _cachedItems;
+  List<_ListEntry> _cachedEntries = const <_ListEntry>[];
+  Locale? _cachedLocale;
+  DateTime? _cachedToday;
+  bool? _cachedArchived;
+
+  @override
   Widget build(BuildContext context) {
-    if (controller.isLoading) {
+    if (widget.controller.isLoading) {
       return const Center(
         child: SizedBox.square(
           dimension: 22,
@@ -1517,58 +1531,41 @@ class _TodoList extends StatelessWidget {
     final entries = _buildEntries(context);
     if (entries.isEmpty) {
       return _EmptyList(
-        scope: scope,
-        hasQuery: query.isNotEmpty || selectedTagIds.isNotEmpty,
-        onClearTagFilters: selectedTagIds.isEmpty ? null : onClearTagFilters,
+        scope: widget.scope,
+        hasQuery: widget.query.isNotEmpty || widget.selectedTagIds.isNotEmpty,
+        onClearTagFilters: widget.selectedTagIds.isEmpty
+            ? null
+            : widget.onClearTagFilters,
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        return switch (entry) {
-          _DateEntry() => _DateDivider(label: entry.label),
-          _ItemEntry() => TodoListRow(
-            key: ValueKey<String>(entry.item.id),
-            item: entry.item,
-            archivedScope: scope == TodoListScope.archived,
-            onToggle: () =>
-                unawaited(controller.toggleCompletion(entry.item.id)),
-            onOpenDetails: () => onOpenDetails(entry.item.id),
-            onEdit: scope == TodoListScope.archived
-                ? null
-                : () => onEditTodo(entry.item.id),
-            onArchive: () => unawaited(controller.archive(entry.item.id)),
-            onRestore: () => unawaited(controller.restore(entry.item.id)),
-            tags: controller.tags,
-            assignedTagIds: controller.tagIdsForTodo(entry.item.id),
-            onToggleTag: scope == TodoListScope.archived
-                ? null
-                : (tagId) => controller.toggleTagForTodo(
-                    todoId: entry.item.id,
-                    tagId: tagId,
-                  ),
-            onOpenTagManagement: scope == TodoListScope.archived
-                ? null
-                : onOpenTagManagement,
-            onDeletePermanently: scope == TodoListScope.archived
-                ? () => onDeleteTodo(entry.item.id)
-                : null,
-          ),
-        };
-      },
+    return _ScrollableTodoEntries(
+      entries: entries,
+      controller: widget.controller,
+      scope: widget.scope,
+      onOpenTagManagement: widget.onOpenTagManagement,
+      onOpenDetails: widget.onOpenDetails,
+      onEditTodo: widget.onEditTodo,
+      onDeleteTodo: widget.onDeleteTodo,
     );
   }
 
   List<_ListEntry> _buildEntries(BuildContext context) {
-    final archived = scope == TodoListScope.archived;
-    final items = controller.itemsForView(
+    final archived = widget.scope == TodoListScope.archived;
+    final items = widget.controller.itemsForView(
       archived: archived,
-      query: query,
-      selectedTagIds: selectedTagIds,
+      query: widget.query,
+      selectedTagIds: widget.selectedTagIds,
     );
+    final locale = Localizations.localeOf(context);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (identical(items, _cachedItems) &&
+        locale == _cachedLocale &&
+        today == _cachedToday &&
+        archived == _cachedArchived) {
+      return _cachedEntries;
+    }
 
     DateTime relevantDate(TodoItem item) {
       if (archived) {
@@ -1588,7 +1585,119 @@ class _TodoList extends StatelessWidget {
       }
       entries.add(_ItemEntry(item));
     }
-    return entries;
+    _cachedItems = items;
+    _cachedEntries = List<_ListEntry>.unmodifiable(entries);
+    _cachedLocale = locale;
+    _cachedToday = today;
+    _cachedArchived = archived;
+    return _cachedEntries;
+  }
+}
+
+class _ScrollableTodoEntries extends StatefulWidget {
+  const _ScrollableTodoEntries({
+    required this.entries,
+    required this.controller,
+    required this.scope,
+    required this.onOpenTagManagement,
+    required this.onOpenDetails,
+    required this.onEditTodo,
+    required this.onDeleteTodo,
+  });
+
+  final List<_ListEntry> entries;
+  final TodoViewModel controller;
+  final TodoListScope scope;
+  final VoidCallback onOpenTagManagement;
+  final ValueChanged<String> onOpenDetails;
+  final ValueChanged<String> onEditTodo;
+  final ValueChanged<String> onDeleteTodo;
+
+  @override
+  State<_ScrollableTodoEntries> createState() => _ScrollableTodoEntriesState();
+}
+
+class _ScrollableTodoEntriesState extends State<_ScrollableTodoEntries> {
+  Timer? _hoverResumeTimer;
+  bool _isScrolling = false;
+
+  @override
+  void dispose() {
+    _hoverResumeTimer?.cancel();
+    super.dispose();
+  }
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollStartNotification ||
+        notification is ScrollUpdateNotification ||
+        notification is OverscrollNotification) {
+      _hoverResumeTimer?.cancel();
+      if (!_isScrolling) {
+        setState(() => _isScrolling = true);
+      }
+    }
+    if (notification is ScrollUpdateNotification ||
+        notification is OverscrollNotification ||
+        notification is ScrollEndNotification) {
+      _scheduleHoverResume();
+    }
+    return false;
+  }
+
+  void _scheduleHoverResume() {
+    _hoverResumeTimer?.cancel();
+    _hoverResumeTimer = Timer(_scrollHoverResumeDelay, () {
+      if (mounted && _isScrolling) {
+        setState(() => _isScrolling = false);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final archived = widget.scope == TodoListScope.archived;
+    return NotificationListener<ScrollNotification>(
+      onNotification: _handleScrollNotification,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
+        scrollCacheExtent: const ScrollCacheExtent.viewport(
+          _todoListCacheExtentViewportFraction,
+        ),
+        itemCount: widget.entries.length,
+        itemBuilder: (context, index) {
+          final entry = widget.entries[index];
+          return switch (entry) {
+            _DateEntry() => _DateDivider(label: entry.label),
+            _ItemEntry() => TodoListRow(
+              key: ValueKey<String>(entry.item.id),
+              item: entry.item,
+              archivedScope: archived,
+              hoverEnabled: !_isScrolling,
+              onToggle: () =>
+                  unawaited(widget.controller.toggleCompletion(entry.item.id)),
+              onOpenDetails: () => widget.onOpenDetails(entry.item.id),
+              onEdit: archived ? null : () => widget.onEditTodo(entry.item.id),
+              onArchive: () =>
+                  unawaited(widget.controller.archive(entry.item.id)),
+              onRestore: () =>
+                  unawaited(widget.controller.restore(entry.item.id)),
+              tags: widget.controller.tags,
+              assignedTagIds: widget.controller.tagIdsForTodo(entry.item.id),
+              onToggleTag: archived
+                  ? null
+                  : (tagId) => widget.controller.toggleTagForTodo(
+                      todoId: entry.item.id,
+                      tagId: tagId,
+                    ),
+              onOpenTagManagement: archived ? null : widget.onOpenTagManagement,
+              onDeletePermanently: archived
+                  ? () => widget.onDeleteTodo(entry.item.id)
+                  : null,
+            ),
+          };
+        },
+      ),
+    );
   }
 }
 

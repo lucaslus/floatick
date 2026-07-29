@@ -52,7 +52,19 @@ class TodoViewModel extends ChangeNotifier {
   final TagIdGenerator _tagIdGenerator;
   final FirstRunWorkspaceSeeder? _firstRunWorkspaceSeeder;
 
-  List<TodoItem> _items = <TodoItem>[];
+  List<TodoItem> _items = const <TodoItem>[];
+  Map<String, TodoItem> _itemsById = const <String, TodoItem>{};
+  List<TodoItem> _activeViewItems = const <TodoItem>[];
+  List<TodoItem> _archivedViewItems = const <TodoItem>[];
+  Map<String, String> _normalizedTitlesByTodoId = const <String, String>{};
+  Map<String, List<String>> _normalizedTagNamesByTodoId =
+      const <String, List<String>>{};
+  int _activeCount = 0;
+  int _archivedCount = 0;
+  bool? _cachedViewArchived;
+  String? _cachedViewQuery;
+  Set<String> _cachedViewTagIds = const <String>{};
+  List<TodoItem>? _cachedViewItems;
   TagWorkspace _tagWorkspace = TagWorkspace.empty();
   Map<String, int> _tagUsageCounts = const <String, int>{};
   StorageFailure? _error;
@@ -60,26 +72,17 @@ class TodoViewModel extends ChangeNotifier {
   Future<void> _mutationQueue = Future<void>.value();
   Future<void> _tagMutationQueue = Future<void>.value();
 
-  List<TodoItem> get items => List<TodoItem>.unmodifiable(_items);
+  List<TodoItem> get items => _items;
   List<TodoTag> get tags => _tagWorkspace.tags;
   StorageFailure? get error => _error;
   bool get isLoading => _isLoading;
   String get storageDirectoryPath => File(_repository.storagePath).parent.path;
 
-  int get activeCount {
-    return _items.where((item) => !item.isArchived && !item.isCompleted).length;
-  }
+  int get activeCount => _activeCount;
 
-  int get archivedCount => _items.where((item) => item.isArchived).length;
+  int get archivedCount => _archivedCount;
 
-  TodoItem? itemById(String id) {
-    for (final item in _items) {
-      if (item.id == id) {
-        return item;
-      }
-    }
-    return null;
-  }
+  TodoItem? itemById(String id) => _itemsById[id];
 
   TodoTag? tagById(String id) {
     for (final tag in _tagWorkspace.tags) {
@@ -115,32 +118,33 @@ class TodoViewModel extends ChangeNotifier {
     Set<String> selectedTagIds = const <String>{},
   }) {
     final normalizedQuery = query.trim().toLowerCase();
-    final visibleItems = _items.where((item) {
-      final matchesScope = archived ? item.isArchived : !item.isArchived;
+    if (_cachedViewItems != null &&
+        _cachedViewArchived == archived &&
+        _cachedViewQuery == normalizedQuery &&
+        setEquals(_cachedViewTagIds, selectedTagIds)) {
+      return _cachedViewItems!;
+    }
+
+    final sourceItems = archived ? _archivedViewItems : _activeViewItems;
+    final visibleItems = sourceItems.where((item) {
       final assignedTagIds = tagIdsForTodo(item.id);
       final matchesTag =
           selectedTagIds.isEmpty || selectedTagIds.any(assignedTagIds.contains);
-      final assignedTagNames = _tagWorkspace.tags
-          .where((tag) => assignedTagIds.contains(tag.id))
-          .map((tag) => tag.name.toLowerCase());
       final matchesQuery =
           normalizedQuery.isEmpty ||
-          item.title.toLowerCase().contains(normalizedQuery) ||
-          assignedTagNames.any((name) => name.contains(normalizedQuery));
-      return matchesScope && matchesTag && matchesQuery;
+          (_normalizedTitlesByTodoId[item.id] ?? '').contains(
+            normalizedQuery,
+          ) ||
+          (_normalizedTagNamesByTodoId[item.id] ?? const <String>[]).any(
+            (name) => name.contains(normalizedQuery),
+          );
+      return matchesTag && matchesQuery;
     }).toList();
-
-    DateTime relevantDate(TodoItem item) {
-      if (archived) {
-        return item.archivedAt ?? item.createdAt;
-      }
-      return item.createdAt;
-    }
-
-    visibleItems.sort((left, right) {
-      return relevantDate(right).compareTo(relevantDate(left));
-    });
-    return List<TodoItem>.unmodifiable(visibleItems);
+    _cachedViewArchived = archived;
+    _cachedViewQuery = normalizedQuery;
+    _cachedViewTagIds = Set<String>.unmodifiable(selectedTagIds);
+    _cachedViewItems = List<TodoItem>.unmodifiable(visibleItems);
+    return _cachedViewItems!;
   }
 
   Future<void> load() async {
@@ -156,7 +160,7 @@ class TodoViewModel extends ChangeNotifier {
     }
 
     try {
-      _items = await _repository.load();
+      _setItems(await _repository.load());
     } on StorageFailure catch (error) {
       loadError = error;
     }
@@ -521,7 +525,7 @@ class TodoViewModel extends ChangeNotifier {
 
     try {
       await _repository.save(updatedItems);
-      _items = updatedItems;
+      _setItems(updatedItems);
       _error = null;
     } on StorageFailure catch (error) {
       _error = error;
@@ -594,7 +598,7 @@ class TodoViewModel extends ChangeNotifier {
       if (tagsChanged) {
         await _tagRepository.save(updatedWorkspace);
       }
-      _items = updatedItems;
+      _setItems(updatedItems);
       _setTagWorkspace(updatedWorkspace);
       _error = null;
       notifyListeners();
@@ -606,13 +610,13 @@ class TodoViewModel extends ChangeNotifier {
         } on StorageFailure {
           try {
             await _tagRepository.save(updatedWorkspace);
-            _items = updatedItems;
+            _setItems(updatedItems);
             _setTagWorkspace(updatedWorkspace);
             _error = null;
             notifyListeners();
             return true;
           } on StorageFailure catch (recoveryError) {
-            _items = updatedItems;
+            _setItems(updatedItems);
             _error = recoveryError;
             notifyListeners();
             return false;
@@ -664,6 +668,58 @@ class TodoViewModel extends ChangeNotifier {
     }
     _tagWorkspace = workspace;
     _tagUsageCounts = Map<String, int>.unmodifiable(usageCounts);
+    final normalizedTagNamesById = <String, String>{
+      for (final tag in workspace.tags) tag.id: tag.name.toLowerCase(),
+    };
+    _normalizedTagNamesByTodoId =
+        Map<String, List<String>>.unmodifiable(<String, List<String>>{
+          for (final assignment in workspace.assignments.entries)
+            assignment.key: List<String>.unmodifiable(
+              assignment.value
+                  .map((tagId) => normalizedTagNamesById[tagId])
+                  .whereType<String>(),
+            ),
+        });
+    _invalidateViewCache();
+  }
+
+  void _setItems(Iterable<TodoItem> items) {
+    final immutableItems = List<TodoItem>.unmodifiable(items);
+    final itemsById = <String, TodoItem>{};
+    for (final item in immutableItems) {
+      itemsById.putIfAbsent(item.id, () => item);
+    }
+
+    final activeViewItems =
+        immutableItems.where((item) => !item.isArchived).toList(growable: false)
+          ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    final archivedViewItems =
+        immutableItems.where((item) => item.isArchived).toList(growable: false)
+          ..sort((left, right) {
+            final leftDate = left.archivedAt ?? left.createdAt;
+            final rightDate = right.archivedAt ?? right.createdAt;
+            return rightDate.compareTo(leftDate);
+          });
+
+    _items = immutableItems;
+    _itemsById = Map<String, TodoItem>.unmodifiable(itemsById);
+    _activeViewItems = List<TodoItem>.unmodifiable(activeViewItems);
+    _archivedViewItems = List<TodoItem>.unmodifiable(archivedViewItems);
+    _normalizedTitlesByTodoId = Map<String, String>.unmodifiable(
+      <String, String>{
+        for (final item in immutableItems) item.id: item.title.toLowerCase(),
+      },
+    );
+    _activeCount = activeViewItems.where((item) => !item.isCompleted).length;
+    _archivedCount = archivedViewItems.length;
+    _invalidateViewCache();
+  }
+
+  void _invalidateViewCache() {
+    _cachedViewArchived = null;
+    _cachedViewQuery = null;
+    _cachedViewTagIds = const <String>{};
+    _cachedViewItems = null;
   }
 
   static bool _sameTagName(String left, String right) {

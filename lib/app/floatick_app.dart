@@ -99,6 +99,7 @@ class _FloatickShellState extends State<_FloatickShell> {
 
   bool _isExpanded = false;
   bool _isChangingWindow = false;
+  bool _collapseAfterWindowChange = false;
   bool _isPanelPrepared = false;
   bool _panelTooltipsEnabled = false;
   bool _hasSyncedPreferredLanguage = false;
@@ -118,6 +119,7 @@ class _FloatickShellState extends State<_FloatickShell> {
   void initState() {
     super.initState();
     widget.windowBridge.setExpandRequestHandler(_handleNativeExpandRequest);
+    widget.windowBridge.setCollapseRequestHandler(_handleNativeCollapseRequest);
     widget.controller.addListener(_handleTodoStateChanged);
     widget.settingsController.addListener(_handleSettingsChanged);
     widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
@@ -137,7 +139,11 @@ class _FloatickShellState extends State<_FloatickShell> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.windowBridge != widget.windowBridge) {
       oldWidget.windowBridge.setExpandRequestHandler(null);
+      oldWidget.windowBridge.setCollapseRequestHandler(null);
       widget.windowBridge.setExpandRequestHandler(_handleNativeExpandRequest);
+      widget.windowBridge.setCollapseRequestHandler(
+        _handleNativeCollapseRequest,
+      );
       _hasSyncedPreferredLanguage = false;
       _hasSyncedPreferredTheme = false;
       _hasSyncedAlwaysOnTop = false;
@@ -178,6 +184,7 @@ class _FloatickShellState extends State<_FloatickShell> {
   @override
   void dispose() {
     widget.windowBridge.setExpandRequestHandler(null);
+    widget.windowBridge.setCollapseRequestHandler(null);
     widget.controller.removeListener(_handleTodoStateChanged);
     widget.settingsController.removeListener(_handleSettingsChanged);
     widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
@@ -193,6 +200,9 @@ class _FloatickShellState extends State<_FloatickShell> {
   }
 
   void _handleSettingsChanged() {
+    if (!widget.settingsController.collapseWhenClickingOutside) {
+      _collapseAfterWindowChange = false;
+    }
     unawaited(_syncPreferredLanguage());
     unawaited(_syncPreferredTheme());
     unawaited(_syncAlwaysOnTop());
@@ -227,13 +237,12 @@ class _FloatickShellState extends State<_FloatickShell> {
     return _panelPreparationFuture ??= _preparePanel();
   }
 
-  Future<void> _preparePanel() async {
+  Future<void> _preparePanel() {
     if (!_isPanelPrepared && mounted) {
       setState(() => _isPanelPrepared = true);
-      await WidgetsBinding.instance.endOfFrame;
     }
     _startRendererWarmUp();
-    await _rendererWarmUpFuture;
+    return Future<void>.value();
   }
 
   Future<void> _syncPreferredLanguage() async {
@@ -318,6 +327,18 @@ class _FloatickShellState extends State<_FloatickShell> {
 
   void _handleNativeExpandRequest(WindowExpansionAnchor expansionAnchor) {
     unawaited(_setExpanded(true, requestedAnchor: expansionAnchor));
+  }
+
+  void _handleNativeCollapseRequest() {
+    if (!_isExpanded ||
+        !widget.settingsController.collapseWhenClickingOutside) {
+      return;
+    }
+    if (_isChangingWindow) {
+      _collapseAfterWindowChange = true;
+      return;
+    }
+    unawaited(_setExpanded(false));
   }
 
   void _enablePanelTooltips() {
@@ -407,7 +428,15 @@ class _FloatickShellState extends State<_FloatickShell> {
       }
     } finally {
       if (mounted) {
+        final shouldCollapseAfterWindowChange =
+            _collapseAfterWindowChange &&
+            _isExpanded &&
+            widget.settingsController.collapseWhenClickingOutside;
+        _collapseAfterWindowChange = false;
         setState(() => _isChangingWindow = false);
+        if (shouldCollapseAfterWindowChange) {
+          unawaited(_setExpanded(false));
+        }
       }
     }
   }

@@ -90,6 +90,8 @@ class SettingsDrawer extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       _AlwaysOnTopSetting(viewModel: viewModel),
+                      const SizedBox(height: 2),
+                      _CollapseWhenClickingOutsideSetting(viewModel: viewModel),
                       const SizedBox(height: 24),
                       Text(
                         context.l10n.startupSectionTitle,
@@ -194,6 +196,33 @@ class _OpenAtLoginSetting extends StatelessWidget {
       onTap: enabled
           ? () {
               unawaited(viewModel.setOpenAtLogin(!viewModel.openAtLogin));
+            }
+          : null,
+    );
+  }
+}
+
+class _CollapseWhenClickingOutsideSetting extends StatelessWidget {
+  const _CollapseWhenClickingOutsideSetting({required this.viewModel});
+
+  final SettingsViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = !viewModel.isSaving;
+    return _SettingsToggleRow(
+      settingKey: const Key('collapse-when-clicking-outside-setting'),
+      toggleKey: const Key('collapse-when-clicking-outside-toggle'),
+      label: context.l10n.collapseWhenClickingOutsideLabel,
+      value: viewModel.collapseWhenClickingOutside,
+      enabled: enabled,
+      onTap: enabled
+          ? () {
+              unawaited(
+                viewModel.setCollapseWhenClickingOutside(
+                  !viewModel.collapseWhenClickingOutside,
+                ),
+              );
             }
           : null,
     );

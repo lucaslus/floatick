@@ -76,7 +76,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(harness.todoController.itemById('ui-todo-1')?.isCompleted, isTrue);
 
-      await tester.tap(find.byKey(const Key('archive-todo-ui-todo-1')));
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer();
+      await mouse.moveTo(
+        tester.getCenter(find.byKey(const Key('todo-title-ui-todo-1'))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('more-todo-ui-todo-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('todo-action-archive-ui-todo-1')));
       await tester.pumpAndSettle();
       expect(harness.todoController.itemById('ui-todo-1')?.isArchived, isTrue);
       await tester.tap(find.byKey(const Key('archive-scope-button')));
@@ -87,7 +96,13 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.byKey(const Key('restore-todo-ui-todo-1')));
+      await mouse.moveTo(
+        tester.getCenter(find.byKey(const Key('todo-title-ui-todo-1'))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('more-todo-ui-todo-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('todo-action-restore-ui-todo-1')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('archive-scope-button')));
       await tester.pumpAndSettle();
@@ -440,6 +455,12 @@ class _UiTestWindowBridge implements WindowBridge {
   void setExpandRequestHandler(ExpandRequestHandler? handler) {
     expandRequestHandler = handler;
   }
+
+  @override
+  void setCollapseRequestHandler(CollapseRequestHandler? handler) {}
+
+  @override
+  Future<void> synchronizeCollapsedState() async {}
 
   @override
   Future<WindowExpansionAnchor> preferredExpansionAnchor() async {
