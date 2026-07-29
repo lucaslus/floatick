@@ -16,6 +16,11 @@ class AppDelegate: FlutterAppDelegate {
     _ sender: NSApplication,
     hasVisibleWindows flag: Bool
   ) -> Bool {
+    if let mainWindow = sender.windows.first(where: { $0 is MainFlutterWindow })
+      as? MainFlutterWindow
+    {
+      return mainWindow.handleApplicationReopen()
+    }
     if MultiviewDesktopPlugin.applicationShouldHandleReopen(
       sender,
       hasVisibleWindows: flag

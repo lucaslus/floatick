@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../todos/domain/todo_item.dart';
 import '../../../todos/domain/todo_tag.dart';
+import '../../../todos/presentation/todo_clipboard_controller.dart';
 import '../../../todos/presentation/widgets/floatick_tag_chip.dart';
+import '../../../todos/presentation/widgets/todo_copy_button.dart';
 import '../../../todos/presentation/widgets/todo_markdown.dart';
 
-class StickyBoardTodoDetails extends StatelessWidget {
+class StickyBoardTodoDetails extends StatefulWidget {
   const StickyBoardTodoDetails({
     required this.item,
     required this.tags,
@@ -19,9 +21,33 @@ class StickyBoardTodoDetails extends StatelessWidget {
   final VoidCallback onBack;
 
   @override
+  State<StickyBoardTodoDetails> createState() => _StickyBoardTodoDetailsState();
+}
+
+class _StickyBoardTodoDetailsState extends State<StickyBoardTodoDetails> {
+  final _copyController = TodoClipboardController();
+
+  @override
+  void didUpdateWidget(covariant StickyBoardTodoDetails oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.id != widget.item.id ||
+        oldWidget.item.title != widget.item.title ||
+        oldWidget.item.content != widget.item.content) {
+      _copyController.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _copyController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
+    final item = widget.item;
 
     return Column(
       key: const Key('sticky-board-todo-details'),
@@ -34,7 +60,7 @@ class StickyBoardTodoDetails extends StatelessWidget {
               IconButton(
                 key: const Key('sticky-board-details-back'),
                 tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                onPressed: onBack,
+                onPressed: widget.onBack,
                 icon: const Icon(Icons.arrow_back_rounded, size: 18),
               ),
               const SizedBox(width: 2),
@@ -45,6 +71,13 @@ class StickyBoardTodoDetails extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),
+              TodoCopyButton(
+                key: const Key('sticky-board-details-copy'),
+                item: item,
+                controller: _copyController,
+                dimension: 40,
+                iconSize: 18,
               ),
             ],
           ),
@@ -60,7 +93,7 @@ class StickyBoardTodoDetails extends StatelessWidget {
             ),
           ),
         ),
-        if (tags.isNotEmpty)
+        if (widget.tags.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 10, 18, 2),
             child: Wrap(
@@ -68,7 +101,7 @@ class StickyBoardTodoDetails extends StatelessWidget {
               spacing: 6,
               runSpacing: 5,
               children: <Widget>[
-                for (final tag in tags)
+                for (final tag in widget.tags)
                   FloatickTagChip(
                     key: ValueKey<String>('sticky-board-details-tag-${tag.id}'),
                     tag: tag,

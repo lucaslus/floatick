@@ -41,21 +41,26 @@ class AppSettings {
     this.themePreference = AppThemePreference.system,
     this.languagePreference = AppLanguagePreference.system,
     this.alwaysOnTop = true,
+    this.collapseWhenClickingOutside = true,
   });
 
   final AppThemePreference themePreference;
   final AppLanguagePreference languagePreference;
   final bool alwaysOnTop;
+  final bool collapseWhenClickingOutside;
 
   AppSettings copyWith({
     AppThemePreference? themePreference,
     AppLanguagePreference? languagePreference,
     bool? alwaysOnTop,
+    bool? collapseWhenClickingOutside,
   }) {
     return AppSettings(
       themePreference: themePreference ?? this.themePreference,
       languagePreference: languagePreference ?? this.languagePreference,
       alwaysOnTop: alwaysOnTop ?? this.alwaysOnTop,
+      collapseWhenClickingOutside:
+          collapseWhenClickingOutside ?? this.collapseWhenClickingOutside,
     );
   }
 
@@ -75,6 +80,14 @@ class AppSettings {
       throw const FormatException('Settings alwaysOnTop must be a Boolean.');
     }
 
+    final rawCollapseWhenClickingOutside = json['collapseWhenClickingOutside'];
+    if (rawCollapseWhenClickingOutside != null &&
+        rawCollapseWhenClickingOutside is! bool) {
+      throw const FormatException(
+        'Settings collapseWhenClickingOutside must be a Boolean.',
+      );
+    }
+
     return AppSettings(
       themePreference: rawTheme == null
           ? AppThemePreference.system
@@ -83,15 +96,17 @@ class AppSettings {
           ? AppLanguagePreference.system
           : AppLanguagePreference.fromStorageValue(rawLanguage),
       alwaysOnTop: rawAlwaysOnTop ?? true,
+      collapseWhenClickingOutside: rawCollapseWhenClickingOutside ?? true,
     );
   }
 
   Map<String, Object?> toJson() {
     return <String, Object?>{
-      'version': 3,
+      'version': 4,
       'theme': themePreference.storageValue,
       'language': languagePreference.storageValue,
       'alwaysOnTop': alwaysOnTop,
+      'collapseWhenClickingOutside': collapseWhenClickingOutside,
     };
   }
 
@@ -100,10 +115,15 @@ class AppSettings {
     return other is AppSettings &&
         themePreference == other.themePreference &&
         languagePreference == other.languagePreference &&
-        alwaysOnTop == other.alwaysOnTop;
+        alwaysOnTop == other.alwaysOnTop &&
+        collapseWhenClickingOutside == other.collapseWhenClickingOutside;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(themePreference, languagePreference, alwaysOnTop);
+  int get hashCode => Object.hash(
+    themePreference,
+    languagePreference,
+    alwaysOnTop,
+    collapseWhenClickingOutside,
+  );
 }

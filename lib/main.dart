@@ -21,6 +21,14 @@ import 'features/updates/presentation/update_view_model.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  final windowBridge = MethodChannelWindowBridge();
+  try {
+    await windowBridge.synchronizeCollapsedState();
+  } on Object catch (error, stackTrace) {
+    debugPrint('Floatick could not synchronize the native window: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
+
   final todoRepository = LocalTodoRepository();
   final tagRepository = LocalTagRepository();
   final controller = TodoViewModel(
@@ -48,7 +56,6 @@ Future<void> main() async {
     updateController.load(),
     stickyBoardController.load(),
   ]);
-  final windowBridge = MethodChannelWindowBridge();
   final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
     boardController: stickyBoardController,
     todoController: controller,

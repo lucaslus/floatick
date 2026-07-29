@@ -27,6 +27,7 @@ class SettingsViewModel extends ChangeNotifier {
   AppThemePreference get themePreference => _settings.themePreference;
   AppLanguagePreference get languagePreference => _settings.languagePreference;
   bool get alwaysOnTop => _settings.alwaysOnTop;
+  bool get collapseWhenClickingOutside => _settings.collapseWhenClickingOutside;
   LoginItemStatus get loginItemStatus => _loginItemStatus;
   bool get openAtLogin => _loginItemStatus == LoginItemStatus.enabled;
   bool get canChangeOpenAtLogin =>
@@ -96,6 +97,14 @@ class SettingsViewModel extends ChangeNotifier {
     }
 
     await _save(_settings.copyWith(alwaysOnTop: alwaysOnTop));
+  }
+
+  Future<void> setCollapseWhenClickingOutside(bool enabled) async {
+    if (_isSaving || enabled == _settings.collapseWhenClickingOutside) {
+      return;
+    }
+
+    await _save(_settings.copyWith(collapseWhenClickingOutside: enabled));
   }
 
   Future<void> setOpenAtLogin(bool enabled) async {

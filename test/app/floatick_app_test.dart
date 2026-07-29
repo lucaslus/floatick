@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:floatick/app/floatick_app.dart';
 import 'package:floatick/core/platform/window_bridge.dart';
 import 'package:floatick/core/storage/storage_failure.dart';
@@ -180,6 +182,7 @@ void main() {
     expect(find.text('语言'), findsOneWidget);
     expect(find.text('窗口'), findsOneWidget);
     expect(find.text('始终置顶'), findsOneWidget);
+    expect(find.text('点击外部时收起'), findsOneWidget);
     expect(find.text('启动'), findsOneWidget);
     expect(find.text('登录时打开'), findsOneWidget);
     expect(find.text('更新'), findsOneWidget);
@@ -213,6 +216,12 @@ void main() {
       const Size(32, 18),
     );
     expect(
+      tester.getSize(
+        find.byKey(const Key('collapse-when-clicking-outside-toggle')),
+      ),
+      const Size(32, 18),
+    );
+    expect(
       tester.getSize(find.byKey(const Key('open-at-login-toggle'))),
       const Size(32, 18),
     );
@@ -227,6 +236,16 @@ void main() {
     expect(settingsController.alwaysOnTop, isFalse);
     expect(settingsRepository.savedSettings.alwaysOnTop, isFalse);
     expect(windowBridge.alwaysOnTopValues, <bool>[true, false]);
+    expect(settingsController.collapseWhenClickingOutside, isTrue);
+    await tester.tap(
+      find.byKey(const Key('collapse-when-clicking-outside-setting')),
+    );
+    await tester.pumpAndSettle();
+    expect(settingsController.collapseWhenClickingOutside, isFalse);
+    expect(
+      settingsRepository.savedSettings.collapseWhenClickingOutside,
+      isFalse,
+    );
     expect(
       tester.getSize(find.byKey(const Key('update-settings-section'))).height,
       lessThan(105),
@@ -371,7 +390,16 @@ void main() {
       const Offset(0, 1),
     );
 
-    await tester.tap(find.byKey(const Key('view-todo-new-todo')));
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(
+      tester.getCenter(find.text('Design the floating icon').hitTestable()),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('more-todo-new-todo')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('todo-action-view-new-todo')));
     await tester.pumpAndSettle();
     expect(find.text('详情'), findsOneWidget);
     expect(find.byKey(const Key('todo-details-title')), findsOneWidget);
@@ -409,9 +437,6 @@ void main() {
     await tester.tap(find.byKey(const Key('todo-drawer-close')));
     await tester.pumpAndSettle();
 
-    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-    await mouse.addPointer(location: Offset.zero);
-    addTearDown(mouse.removePointer);
     await mouse.moveTo(
       tester.getCenter(find.text('Polish the Floatick icon').hitTestable()),
     );
@@ -424,9 +449,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
-    final editButton = find.byKey(const Key('edit-todo-new-todo'));
-    expect(editButton, findsOneWidget);
-    await tester.tap(editButton);
+    final moreButton = find.byKey(const Key('more-todo-new-todo'));
+    expect(moreButton, findsOneWidget);
+    await tester.tap(moreButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('todo-action-edit-new-todo')));
     await tester.pumpAndSettle();
     expect(find.text('编辑待办'), findsOneWidget);
     await tester.enterText(
@@ -439,7 +466,12 @@ void main() {
     expect(find.text('Polish the Floatick icon').hitTestable(), findsOneWidget);
     expect(windowBridge.expandedValues, <bool>[true]);
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    windowBridge.collapseRequestHandler?.call();
+    await tester.pumpAndSettle();
+    expect(windowBridge.expandedValues, <bool>[true]);
+
+    await settingsController.setCollapseWhenClickingOutside(true);
+    windowBridge.collapseRequestHandler?.call();
     await tester.pumpAndSettle();
 
     expect(windowBridge.expandedValues, <bool>[true, false]);
@@ -452,6 +484,19 @@ void main() {
           .visible,
       isFalse,
     );
+
+    final expansionBarrier = Completer<void>();
+    windowBridge.setExpandedBarrier = expansionBarrier.future;
+    windowBridge.expandRequestHandler?.call(WindowExpansionAnchor.topRight);
+    await tester.pump();
+    await tester.pump();
+    expect(windowBridge.expandedValues.last, isTrue);
+
+    windowBridge.collapseRequestHandler?.call();
+    expansionBarrier.complete();
+    await tester.pumpAndSettle();
+
+    expect(windowBridge.expandedValues, <bool>[true, false, true, false]);
   });
 
   testWidgets('tags can be created, assigned, and used as a filter', (
@@ -681,16 +726,6 @@ void main() {
       'tag-personal',
     ]);
     expect(find.text('Tagged task').hitTestable(), findsOneWidget);
-    expect(
-      (tester
-                  .widget<IconButton>(
-                    find.byKey(const Key('assign-tags-todo-1')),
-                  )
-                  .icon
-              as Icon)
-          .icon,
-      Icons.sell_rounded,
-    );
     await tester.tap(find.byKey(const Key('assign-tags-todo-1')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('assign-todo-1-tag-work')));
@@ -705,16 +740,6 @@ void main() {
     expect(
       tester.getSize(find.byKey(const Key('todo-tag-todo-1-tag-work'))).height,
       17,
-    );
-    expect(
-      (tester
-                  .widget<IconButton>(
-                    find.byKey(const Key('assign-tags-todo-1')),
-                  )
-                  .icon
-              as Icon)
-          .icon,
-      Icons.sell_rounded,
     );
     await tester.tap(
       find.byKey(const Key('tag-assignment-bottom-sheet-close')),
@@ -1357,7 +1382,11 @@ void main() {
     await tester.pumpAndSettle();
 
     boardRepository.failNextSave = true;
-    await tester.tap(find.byKey(const Key('delete-todo-archived-linked')));
+    await tester.tap(find.byKey(const Key('more-todo-archived-linked')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('todo-action-delete-archived-linked')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(
       find.byKey(const Key('confirm-delete-todo-archived-linked')),
@@ -1443,6 +1472,7 @@ void main() {
     expect(find.text('Language'), findsOneWidget);
     expect(find.text('Window'), findsOneWidget);
     expect(find.text('Keep above other apps'), findsOneWidget);
+    expect(find.text('Collapse when clicking outside'), findsOneWidget);
     expect(find.text('Startup'), findsOneWidget);
     expect(find.text('Open at login'), findsOneWidget);
     expect(find.text('Updates'), findsOneWidget);
@@ -1665,11 +1695,21 @@ class _WidgetTestWindowBridge implements WindowBridge {
   final List<String> preferredThemeValues = <String>[];
   final List<bool> alwaysOnTopValues = <bool>[];
   ExpandRequestHandler? expandRequestHandler;
+  CollapseRequestHandler? collapseRequestHandler;
+  Future<void>? setExpandedBarrier;
 
   @override
   void setExpandRequestHandler(ExpandRequestHandler? handler) {
     expandRequestHandler = handler;
   }
+
+  @override
+  void setCollapseRequestHandler(CollapseRequestHandler? handler) {
+    collapseRequestHandler = handler;
+  }
+
+  @override
+  Future<void> synchronizeCollapsedState() async {}
 
   @override
   Future<WindowExpansionAnchor> preferredExpansionAnchor() async {
@@ -1680,6 +1720,7 @@ class _WidgetTestWindowBridge implements WindowBridge {
   Future<void> setExpanded(bool expanded, {bool animated = true}) async {
     expandedValues.add(expanded);
     expandedAnimatedValues.add(animated);
+    await setExpandedBarrier;
   }
 
   @override

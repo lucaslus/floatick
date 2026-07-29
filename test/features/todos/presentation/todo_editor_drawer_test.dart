@@ -3,9 +3,29 @@ import 'package:floatick/features/todos/domain/todo_item.dart';
 import 'package:floatick/features/todos/domain/todo_tag.dart';
 import 'package:floatick/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  late String clipboardText;
+
+  setUp(() {
+    clipboardText = '';
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            clipboardText =
+                (call.arguments as Map<Object?, Object?>)['text'] as String;
+          }
+          return null;
+        });
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
   testWidgets('a failed create stays open and shows an inline error', (
     WidgetTester tester,
   ) async {
@@ -150,6 +170,7 @@ void main() {
               item: TodoItem(
                 id: 'todo-1',
                 title: 'Prepare release',
+                content: '- Verify the DMG',
                 createdAt: DateTime.utc(2026, 7, 25),
               ),
               availableTags: <TodoTag>[tag],
@@ -185,6 +206,10 @@ void main() {
       findsNothing,
     );
     expect(find.text('Work'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('todo-details-copy')));
+    await tester.pump();
+    expect(clipboardText, '# Prepare release\n\n- Verify the DMG');
   });
 
   testWidgets('archived details are read-only', (WidgetTester tester) async {

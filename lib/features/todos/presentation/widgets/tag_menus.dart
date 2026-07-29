@@ -6,7 +6,6 @@ import '../../../../core/ui/floatick_modal_bottom_sheet.dart';
 import '../../../../core/ui/floatick_surface_metrics.dart';
 import '../../../../l10n/l10n.dart';
 import '../../domain/todo_tag.dart';
-import 'floatick_tag_chip.dart';
 import 'tag_selection_row.dart';
 
 const double _tagFilterButtonDimension = 42;
@@ -132,79 +131,27 @@ class TagFilterButton extends StatelessWidget {
   }
 }
 
-class TagAssignmentMenu extends StatefulWidget {
-  const TagAssignmentMenu({
-    required this.todoId,
-    required this.tags,
-    required this.assignedTagIds,
-    required this.onToggle,
-    required this.onManageTags,
-    super.key,
-  });
-
-  final String todoId;
-  final List<TodoTag> tags;
-  final List<String> assignedTagIds;
-  final Future<bool> Function(String tagId) onToggle;
-  final VoidCallback onManageTags;
-
-  @override
-  State<TagAssignmentMenu> createState() => _TagAssignmentMenuState();
-}
-
-class _TagAssignmentMenuState extends State<TagAssignmentMenu> {
-  Future<void> _openBottomSheet() async {
-    final shouldManageTags = await showFloatickModalBottomSheet<bool>(
-      context: context,
-      builder: (context) {
-        return _TagAssignmentBottomSheet(
-          todoId: widget.todoId,
-          tags: widget.tags,
-          assignedTagIds: widget.assignedTagIds,
-          onToggle: widget.onToggle,
-        );
-      },
-    );
-    if (shouldManageTags == true && mounted) {
-      widget.onManageTags();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final assignedIds = widget.assignedTagIds.toSet();
-    final assignedTags = widget.tags
-        .where((tag) => assignedIds.contains(tag.id))
-        .toList(growable: false);
-    return Wrap(
-      spacing: 4,
-      runSpacing: 3,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: <Widget>[
-        for (final tag in assignedTags)
-          FloatickTagChip(
-            key: ValueKey<String>('todo-tag-${widget.todoId}-${tag.id}'),
-            tag: tag,
-            compact: true,
-          ),
-        SizedBox.square(
-          dimension: 20,
-          child: IconButton(
-            key: ValueKey<String>('assign-tags-${widget.todoId}'),
-            tooltip: context.l10n.assignTagsTooltip,
-            onPressed: _openBottomSheet,
-            padding: EdgeInsets.zero,
-            icon: Icon(
-              assignedTags.isEmpty ? Icons.sell_outlined : Icons.sell_rounded,
-              size: 13,
-              color: assignedTags.isEmpty
-                  ? null
-                  : Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-      ],
-    );
+Future<void> showTodoTagAssignmentSheet({
+  required BuildContext context,
+  required String todoId,
+  required List<TodoTag> tags,
+  required List<String> assignedTagIds,
+  required Future<bool> Function(String tagId) onToggle,
+  required VoidCallback onManageTags,
+}) async {
+  final shouldManageTags = await showFloatickModalBottomSheet<bool>(
+    context: context,
+    builder: (context) {
+      return _TagAssignmentBottomSheet(
+        todoId: todoId,
+        tags: tags,
+        assignedTagIds: assignedTagIds,
+        onToggle: onToggle,
+      );
+    },
+  );
+  if (shouldManageTags == true && context.mounted) {
+    onManageTags();
   }
 }
 

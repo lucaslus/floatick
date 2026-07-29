@@ -164,6 +164,12 @@ abstract class AppLocalizations {
   /// **'Keep above other apps'**
   String get alwaysOnTopLabel;
 
+  /// No description provided for @collapseWhenClickingOutsideLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse when clicking outside'**
+  String get collapseWhenClickingOutsideLabel;
+
   /// No description provided for @startupSectionTitle.
   ///
   /// In en, this message translates to:
@@ -866,6 +872,36 @@ abstract class AppLocalizations {
   /// **'View details'**
   String get viewTodoDetailsTooltip;
 
+  /// No description provided for @copyTodoAsMarkdownTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy as Markdown'**
+  String get copyTodoAsMarkdownTooltip;
+
+  /// No description provided for @todoCopiedAsMarkdownMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied as Markdown'**
+  String get todoCopiedAsMarkdownMessage;
+
+  /// No description provided for @todoCopyFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t copy this todo.'**
+  String get todoCopyFailedMessage;
+
+  /// No description provided for @moreTodoActionsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moreTodoActionsTooltip;
+
+  /// No description provided for @todoActionsSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get todoActionsSheetTitle;
+
   /// No description provided for @dismissErrorTooltip.
   ///
   /// In en, this message translates to:
@@ -931,6 +967,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete permanently'**
   String get deleteTodoPermanentlyTooltip;
+
+  /// No description provided for @deleteTodoConfirmationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this todo?'**
+  String get deleteTodoConfirmationTitle;
+
+  /// No description provided for @deleteTodoConfirmationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This action cannot be undone.'**
+  String get deleteTodoConfirmationMessage;
+
+  /// No description provided for @deleteTodoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteTodoAction;
 
   /// No description provided for @cancelDeleteTodoTooltip.
   ///

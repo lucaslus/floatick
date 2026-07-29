@@ -53,8 +53,10 @@ final class MainFlutterWindow: NSWindow {
   private var loginItemService: LoginItemService?
   private var appliedAlwaysOnTop: Bool?
   private var preferredAppearance = PreferredAppearance.system
+  private var isCollapseRequestPending = false
   private var secondaryWindowKeyObserver: NSObjectProtocol?
   private let configuredSecondaryWindows = NSHashTable<NSWindow>.weakObjects()
+  private let initialSecondaryWindows = NSHashTable<NSWindow>.weakObjects()
 
   override var canBecomeKey: Bool { true }
   override var canBecomeMain: Bool { true }
@@ -88,6 +90,27 @@ final class MainFlutterWindow: NSWindow {
       _ = focusFlutterContent()
     }
     super.sendEvent(event)
+  }
+
+  override func resignKey() {
+    super.resignKey()
+    guard isExpanded else {
+      return
+    }
+    DispatchQueue.main.async { [weak self] in
+      self?.requestCollapseIfNeeded()
+    }
+  }
+
+  func handleApplicationReopen() -> Bool {
+    if isExpanded {
+      activateAndFocusFlutterContent()
+    } else {
+      orderOut(nil)
+      collapsedIconPanel?.orderFrontRegardless()
+      collapsedIconView?.playAttentionAnimation()
+    }
+    return true
   }
 
   override func awakeFromNib() {
@@ -180,6 +203,9 @@ final class MainFlutterWindow: NSWindow {
       }
 
       switch call.method {
+      case "synchronizeCollapsedState":
+        self.synchronizeCollapsedState()
+        result(nil)
       case "preferredExpansionAnchor":
         let anchor = self.preferredExpansionAnchor()
         self.pendingExpansionAnchor = anchor
@@ -432,11 +458,27 @@ final class MainFlutterWindow: NSWindow {
       // apply its WindowOptions. Keep that initial native surface invisible;
       // the coordinator reveals it only after configuration, positioning and
       // Flutter's first completed frame.
+      self.initialSecondaryWindows.add(targetWindow)
       targetWindow.alphaValue = 0
       self.configureTransparentRoundedWindow(
         targetWindow,
         flutterViewController: flutterViewController
       )
+      DispatchQueue.main.async { [weak self, weak targetWindow] in
+        guard let self, let targetWindow else {
+          return
+        }
+        defer {
+          self.initialSecondaryWindows.remove(targetWindow)
+        }
+        guard self.isExpanded else {
+          return
+        }
+        // Creating a pinned board briefly makes its hidden native window key.
+        // Restore the main window so that this programmatic handoff is not
+        // mistaken for an outside click.
+        self.activateAndFocusFlutterContent()
+      }
     }
   }
 
@@ -670,6 +712,30 @@ final class MainFlutterWindow: NSWindow {
     collapsedDragOverlay = overlay
   }
 
+  private func requestCollapseIfNeeded() {
+    if
+      let keyWindow = NSApp.keyWindow,
+      initialSecondaryWindows.contains(keyWindow)
+    {
+      return
+    }
+    guard
+      isExpanded,
+      !isKeyWindow,
+      !isCollapseRequestPending,
+      let windowChannel
+    else {
+      return
+    }
+    isCollapseRequestPending = true
+    windowChannel.invokeMethod(
+      "requestCollapse",
+      arguments: nil
+    ) { [weak self] _ in
+      self?.isCollapseRequestPending = false
+    }
+  }
+
   private func setExpanded(
     _ expanded: Bool,
     animated: Bool,
@@ -717,6 +783,29 @@ final class MainFlutterWindow: NSWindow {
         completion: completion
       )
     }
+  }
+
+  private func synchronizeCollapsedState() {
+    isExpanded = false
+    isCollapseRequestPending = false
+    pendingExpansionAnchor = nil
+    lockMainWindowSize()
+    alphaValue = 1
+    orderOut(nil)
+    resignKey()
+
+    let targetScreen = screen(containing: collapsedOrigin)
+    collapsedOrigin = clampedOrigin(
+      collapsedOrigin,
+      for: Layout.collapsedSize,
+      on: targetScreen
+    )
+    collapsedIconPanel?.setFrame(
+      NSRect(origin: collapsedOrigin, size: Layout.collapsedSize),
+      display: false
+    )
+    collapsedIconPanel?.alphaValue = 1
+    collapsedIconPanel?.orderFrontRegardless()
   }
 
   private func lockMainWindowSize() {
@@ -896,9 +985,13 @@ final class MainFlutterWindow: NSWindow {
 
   private func defaultCollapsedOrigin() -> NSPoint {
     let visibleFrame = (NSScreen.main ?? NSScreen.screens[0]).visibleFrame
+    return Self.defaultCollapsedOrigin(in: visibleFrame)
+  }
+
+  static func defaultCollapsedOrigin(in visibleFrame: NSRect) -> NSPoint {
     return NSPoint(
       x: visibleFrame.maxX - Layout.collapsedSize.width - 24,
-      y: visibleFrame.maxY - Layout.collapsedSize.height - 24
+      y: visibleFrame.minY + 24
     )
   }
 
@@ -962,15 +1055,24 @@ final class MainFlutterWindow: NSWindow {
   }
 }
 
-private final class FloatingTodoIconView: NSView {
+final class FloatingTodoIconView: NSView {
   private enum Metrics {
     static let brandFrame = NSRect(x: 10, y: 10, width: 52, height: 52)
     static let badgeHeight: CGFloat = 20
     static let badgeRightEdge: CGFloat = 65
     static let badgeTop: CGFloat = 7
+    static let attentionIconAnimationKey = "floatick-attention-icon"
+    static let attentionGlowAnimationKey = "floatick-attention-glow"
+    static let attentionDuration: CFTimeInterval = 0.52
+    static let reducedMotionAttentionDuration: CFTimeInterval = 0.24
+    static let attentionMaximumScale: CGFloat = 1.1
+    static let attentionGlowLineWidth: CGFloat = 2
+    static let attentionGlowShadowRadius: CGFloat = 4
+    static let attentionGlowFrame = brandFrame.insetBy(dx: 1.5, dy: 1.5)
   }
 
   private var activeCount: Int
+  private(set) var attentionGlowLayer = CAShapeLayer()
 
   override var isFlipped: Bool { true }
   override var isOpaque: Bool { false }
@@ -980,6 +1082,8 @@ private final class FloatingTodoIconView: NSView {
     super.init(frame: frameRect)
     wantsLayer = true
     layer?.backgroundColor = NSColor.clear.cgColor
+    layer?.masksToBounds = false
+    configureAttentionGlow()
   }
 
   @available(*, unavailable)
@@ -993,6 +1097,60 @@ private final class FloatingTodoIconView: NSView {
     }
     self.activeCount = activeCount
     needsDisplay = true
+  }
+
+  func playAttentionAnimation(
+    reduceMotion: Bool =
+      NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+  ) {
+    guard let layer else {
+      return
+    }
+
+    layer.removeAnimation(forKey: Metrics.attentionIconAnimationKey)
+    attentionGlowLayer.removeAnimation(
+      forKey: Metrics.attentionGlowAnimationKey
+    )
+
+    let glowOpacity = CAKeyframeAnimation(keyPath: "opacity")
+    glowOpacity.values = [0, 0.7, 0.35, 0]
+    glowOpacity.keyTimes = [0, 0.24, 0.68, 1]
+
+    let glowAnimation = CAAnimationGroup()
+    glowAnimation.animations = [glowOpacity]
+    glowAnimation.duration = reduceMotion
+      ? Metrics.reducedMotionAttentionDuration
+      : Metrics.attentionDuration
+    glowAnimation.timingFunction = CAMediaTimingFunction(name: .easeOut)
+    attentionGlowLayer.add(
+      glowAnimation,
+      forKey: Metrics.attentionGlowAnimationKey
+    )
+
+    guard !reduceMotion else {
+      return
+    }
+
+    let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+    scale.values = [1, Metrics.attentionMaximumScale, 0.98, 1.04, 1]
+    scale.keyTimes = [0, 0.24, 0.46, 0.72, 1]
+
+    let iconAnimation = CAAnimationGroup()
+    iconAnimation.animations = [scale]
+    iconAnimation.duration = Metrics.attentionDuration
+    iconAnimation.timingFunction = CAMediaTimingFunction(name: .easeOut)
+    layer.add(
+      iconAnimation,
+      forKey: Metrics.attentionIconAnimationKey
+    )
+  }
+
+  override func layout() {
+    super.layout()
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    attentionGlowLayer.frame = bounds
+    CATransaction.commit()
   }
 
   override func draw(_ dirtyRect: NSRect) {
@@ -1059,6 +1217,37 @@ private final class FloatingTodoIconView: NSView {
         alpha: 1
       )
     )
+  }
+
+  private func configureAttentionGlow() {
+    let glowColor = NSColor(
+      calibratedRed: 44 / 255,
+      green: 204 / 255,
+      blue: 189 / 255,
+      alpha: 1
+    )
+    let glowPath = CGPath(
+      ellipseIn: Metrics.attentionGlowFrame,
+      transform: nil
+    )
+    attentionGlowLayer.frame = bounds
+    attentionGlowLayer.path = glowPath
+    attentionGlowLayer.fillColor = NSColor.clear.cgColor
+    attentionGlowLayer.strokeColor = glowColor.withAlphaComponent(0.9).cgColor
+    attentionGlowLayer.lineWidth = Metrics.attentionGlowLineWidth
+    attentionGlowLayer.shadowColor = glowColor.cgColor
+    attentionGlowLayer.shadowPath = glowPath
+    attentionGlowLayer.shadowOffset = .zero
+    attentionGlowLayer.shadowOpacity = 0.95
+    attentionGlowLayer.shadowRadius = Metrics.attentionGlowShadowRadius
+    attentionGlowLayer.opacity = 0
+    attentionGlowLayer.actions = [
+      "bounds": NSNull(),
+      "frame": NSNull(),
+      "opacity": NSNull(),
+      "position": NSNull(),
+    ]
+    layer?.addSublayer(attentionGlowLayer)
   }
 
   private func point(x: CGFloat, y: CGFloat) -> NSPoint {

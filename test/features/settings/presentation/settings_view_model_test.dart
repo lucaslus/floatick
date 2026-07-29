@@ -27,6 +27,7 @@ void main() {
       themePreference: AppThemePreference.dark,
       languagePreference: AppLanguagePreference.english,
       alwaysOnTop: false,
+      collapseWhenClickingOutside: false,
     );
     loginItemRepository.status = LoginItemStatus.enabled;
 
@@ -35,6 +36,7 @@ void main() {
     expect(controller.themePreference, AppThemePreference.dark);
     expect(controller.languagePreference, AppLanguagePreference.english);
     expect(controller.alwaysOnTop, isFalse);
+    expect(controller.collapseWhenClickingOutside, isFalse);
     expect(controller.openAtLogin, isTrue);
     expect(controller.error, isNull);
     expect(controller.loginItemError, isNull);
@@ -136,6 +138,29 @@ void main() {
       await controller.setAlwaysOnTop(false);
 
       expect(controller.alwaysOnTop, isTrue);
+      expect(controller.error?.kind, StorageFailureKind.write);
+    },
+  );
+
+  test('outside-click behavior changes immediately and persists', () async {
+    await controller.load();
+
+    await controller.setCollapseWhenClickingOutside(false);
+
+    expect(controller.collapseWhenClickingOutside, isFalse);
+    expect(repository.savedSettings.collapseWhenClickingOutside, isFalse);
+    expect(controller.error, isNull);
+  });
+
+  test(
+    'a failed outside-click save rolls the visible preference back',
+    () async {
+      await controller.load();
+      repository.failNextSave = true;
+
+      await controller.setCollapseWhenClickingOutside(false);
+
+      expect(controller.collapseWhenClickingOutside, isTrue);
       expect(controller.error?.kind, StorageFailureKind.write);
     },
   );

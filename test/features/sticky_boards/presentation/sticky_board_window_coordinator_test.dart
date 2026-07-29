@@ -208,6 +208,12 @@ void main() {
 
 class _MemoryWindowBridge implements WindowBridge {
   @override
+  void setCollapseRequestHandler(CollapseRequestHandler? handler) {}
+
+  @override
+  Future<void> synchronizeCollapsedState() async {}
+
+  @override
   Future<void> configureBorderlessSecondaryWindow(
     int viewId, {
     bool positionAdjacentToMainWindow = false,

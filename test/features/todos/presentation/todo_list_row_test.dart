@@ -6,17 +6,41 @@ import 'package:floatick/features/todos/presentation/widgets/todo_list_row.dart'
 import 'package:floatick/l10n/app_localizations.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  late String clipboardText;
+
+  setUp(() {
+    clipboardText = '';
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            clipboardText =
+                (call.arguments as Map<Object?, Object?>)['text'] as String;
+          }
+          if (call.method == 'Clipboard.getData') {
+            return <String, String>{'text': clipboardText};
+          }
+          return null;
+        });
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
   testWidgets(
-    'primary controls align and double-clicking the title opens details',
+    'hover actions align, copy Markdown, and double-click opens details',
     (tester) async {
       var toggleCount = 0;
       var detailsCount = 0;
       final item = TodoItem(
         id: 'aligned',
         title: 'Review the aligned row',
+        content: 'The redundant content indicator should stay hidden.',
         createdAt: DateTime.utc(2026, 7, 27, 8),
       );
       final tags = <TodoTag>[
@@ -55,14 +79,19 @@ void main() {
         ),
       );
 
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer();
+      await mouse.moveTo(tester.getCenter(find.byType(TodoListRow)));
+      await tester.pumpAndSettle();
+
       final primaryCenterY = tester
           .getCenter(find.byKey(const Key('todo-title-aligned')))
           .dy;
       for (final key in <String>[
         'toggle-todo-aligned',
-        'edit-todo-aligned',
-        'view-todo-aligned',
-        'archive-todo-aligned',
+        'copy-todo-aligned',
+        'more-todo-aligned',
       ]) {
         expect(
           tester.getCenter(find.byKey(Key(key))).dy,
@@ -78,6 +107,36 @@ void main() {
           .dy;
       expect(timeCenterY, closeTo(tagCenterY, 0.5));
       expect(tagCenterY, greaterThan(primaryCenterY + 10));
+      expect(find.byKey(const Key('todo-has-content-aligned')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('copy-todo-aligned')));
+      await tester.pump();
+      expect(
+        clipboardText,
+        '# Review the aligned row\n\n'
+        'The redundant content indicator should stay hidden.',
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('copy-todo-aligned')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('more-todo-aligned')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('todo-action-view-aligned')), findsOneWidget);
+      expect(find.byKey(const Key('todo-action-edit-aligned')), findsOneWidget);
+      expect(
+        find.byKey(const Key('todo-action-archive-aligned')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('todo-action-tags-aligned')), findsOneWidget);
+      await tester.tap(
+        find.byKey(const Key('todo-actions-bottom-sheet-close')),
+      );
+      await tester.pumpAndSettle();
 
       final detailsRegion = find.byKey(
         const Key('todo-open-details-region-aligned'),
@@ -142,8 +201,21 @@ void main() {
     expect(find.byIcon(Icons.archive_outlined), findsNothing);
 
     await tester.tap(find.byKey(const Key('assign-tags-todo-1')));
+    await tester.pumpAndSettle();
 
     expect(openCount, 1);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer();
+    await mouse.moveTo(tester.getCenter(find.byType(TodoListRow)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('more-todo-todo-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('todo-action-tags-todo-1')));
+    await tester.pumpAndSettle();
+
+    expect(openCount, 2);
   });
 
   testWidgets(
@@ -365,7 +437,7 @@ void main() {
   );
 
   testWidgets(
-    'archived row only offers view, restore, and confirmed deletion',
+    'archived row menu only offers copy, view, restore, and deletion',
     (tester) async {
       var viewCount = 0;
       var restoreCount = 0;
@@ -408,20 +480,29 @@ void main() {
       );
 
       expect(find.text('Work'), findsOneWidget);
-      expect(find.byKey(const Key('edit-todo-archived')), findsNothing);
-      expect(find.byKey(const Key('assign-tags-archived')), findsNothing);
-
-      await tester.tap(find.byKey(const Key('view-todo-archived')));
-      await tester.tap(find.byKey(const Key('restore-todo-archived')));
-      expect(viewCount, 1);
-      expect(restoreCount, 1);
-
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       addTearDown(mouse.removePointer);
       await mouse.addPointer();
       await mouse.moveTo(tester.getCenter(find.byType(TodoListRow)));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('delete-todo-archived')));
+
+      await tester.tap(find.byKey(const Key('more-todo-archived')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('todo-action-edit-archived')), findsNothing);
+      expect(find.byKey(const Key('todo-action-tags-archived')), findsNothing);
+      await tester.tap(find.byKey(const Key('todo-action-view-archived')));
+      await tester.pumpAndSettle();
+      expect(viewCount, 1);
+
+      await tester.tap(find.byKey(const Key('more-todo-archived')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('todo-action-restore-archived')));
+      await tester.pumpAndSettle();
+      expect(restoreCount, 1);
+
+      await tester.tap(find.byKey(const Key('more-todo-archived')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('todo-action-delete-archived')));
       await tester.pumpAndSettle();
 
       expect(

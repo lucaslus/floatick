@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/ui/floatick_hover_motion.dart';
 import '../../../../l10n/l10n.dart';
 import '../../domain/todo_item.dart';
 import '../../domain/todo_tag.dart';
+import '../todo_clipboard_controller.dart';
 import 'floatick_tag_chip.dart';
 import 'tag_menus.dart';
+import 'todo_actions_bottom_sheet.dart';
+import 'todo_copy_button.dart';
 
 class TodoListRow extends StatefulWidget {
   const TodoListRow({
@@ -25,6 +30,7 @@ class TodoListRow extends StatefulWidget {
     this.onDeletePermanently,
     this.showArchiveAction = true,
     this.compact = false,
+    this.hoverEnabled = true,
     super.key,
   }) : assert(
          archivedScope ||
@@ -52,6 +58,7 @@ class TodoListRow extends StatefulWidget {
   final VoidCallback? onDeletePermanently;
   final bool showArchiveAction;
   final bool compact;
+  final bool hoverEnabled;
 
   @override
   State<TodoListRow> createState() => _TodoListRowState();
@@ -59,323 +66,349 @@ class TodoListRow extends StatefulWidget {
 
 class _TodoListRowState extends State<TodoListRow> {
   final _rowFocusNode = FocusNode();
+  final _copyController = TodoClipboardController();
 
   bool _isHovered = false;
   bool _hasFocus = false;
-  bool _isConfirmingDelete = false;
+
+  void _setHovered(bool value) {
+    if (_isHovered == value) {
+      return;
+    }
+    setState(() => _isHovered = value);
+  }
+
+  @override
+  void didUpdateWidget(covariant TodoListRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hoverEnabled && !widget.hoverEnabled) {
+      _isHovered = false;
+    }
+    if (oldWidget.item.id != widget.item.id ||
+        oldWidget.item.title != widget.item.title ||
+        oldWidget.item.content != widget.item.content) {
+      _copyController.reset();
+    }
+  }
 
   @override
   void dispose() {
     _rowFocusNode.dispose();
+    _copyController.dispose();
     super.dispose();
   }
 
-  void _requestPermanentDelete() {
-    setState(() => _isConfirmingDelete = true);
+  void _openTagAssignment() {
+    final externalHandler = widget.onOpenTagAssignment;
+    if (externalHandler != null) {
+      externalHandler();
+      return;
+    }
+    unawaited(
+      showTodoTagAssignmentSheet(
+        context: context,
+        todoId: widget.item.id,
+        tags: widget.tags,
+        assignedTagIds: widget.assignedTagIds,
+        onToggle: widget.onToggleTag!,
+        onManageTags: widget.onOpenTagManagement!,
+      ),
+    );
+  }
+
+  Future<void> _confirmPermanentDelete() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(context.l10n.deleteTodoConfirmationTitle),
+          content: Text(context.l10n.deleteTodoConfirmationMessage),
+          actions: <Widget>[
+            TextButton(
+              key: ValueKey<String>('cancel-delete-todo-${widget.item.id}'),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(context.l10n.cancelAction),
+            ),
+            TextButton(
+              key: ValueKey<String>('confirm-delete-todo-${widget.item.id}'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                context.l10n.deleteTodoAction,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    if (shouldDelete == true && mounted) {
+      widget.onDeletePermanently?.call();
+    }
+  }
+
+  Future<void> _showActions() async {
     _rowFocusNode.requestFocus();
-  }
+    final action = await showTodoActionsBottomSheet(
+      context: context,
+      todoId: widget.item.id,
+      archivedScope: widget.archivedScope,
+      showArchiveAction: widget.showArchiveAction,
+      showRemoveFromStickyBoard: widget.onRemoveFromStickyBoard != null,
+    );
+    if (!mounted || action == null) {
+      return;
+    }
 
-  void _cancelPermanentDelete() {
-    setState(() => _isConfirmingDelete = false);
-  }
-
-  void _confirmPermanentDelete() {
-    setState(() => _isConfirmingDelete = false);
-    widget.onDeletePermanently?.call();
+    switch (action) {
+      case TodoActionsSheetAction.copy:
+        await _copyController.copy(widget.item);
+        return;
+      case TodoActionsSheetAction.viewDetails:
+        widget.onOpenDetails();
+        return;
+      case TodoActionsSheetAction.edit:
+        widget.onEdit?.call();
+        return;
+      case TodoActionsSheetAction.assignTags:
+        _openTagAssignment();
+        return;
+      case TodoActionsSheetAction.archive:
+        widget.onArchive();
+        return;
+      case TodoActionsSheetAction.removeFromStickyBoard:
+        widget.onRemoveFromStickyBoard?.call();
+        return;
+      case TodoActionsSheetAction.restore:
+        widget.onRestore();
+        return;
+      case TodoActionsSheetAction.deletePermanently:
+        await _confirmPermanentDelete();
+        return;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
     final localizations = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final onSurface = theme.colorScheme.onSurface;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final showContextActions = _isHovered || _hasFocus || _isConfirmingDelete;
-    final trailingActionCount = widget.archivedScope
-        ? 3
-        : 2 +
-              (widget.showArchiveAction ? 1 : 0) +
-              (widget.onRemoveFromStickyBoard == null ? 0 : 1);
+    final showContextActions = (widget.hoverEnabled && _isHovered) || _hasFocus;
 
-    return Focus(
-      focusNode: _rowFocusNode,
-      onFocusChange: (hasFocus) {
-        if (_hasFocus != hasFocus) {
-          setState(() => _hasFocus = hasFocus);
-        }
-      },
-      child: Semantics(
-        container: true,
-        label: item.title,
-        value: item.isCompleted
-            ? localizations.completedStatus
-            : localizations.incompleteStatus,
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _isHovered = true),
-          onExit: (_) => setState(() => _isHovered = false),
-          child: AnimatedContainer(
-            duration: reduceMotion
-                ? Duration.zero
-                : const Duration(milliseconds: 150),
-            margin: const EdgeInsets.symmetric(vertical: 2),
-            padding: EdgeInsets.fromLTRB(
-              widget.compact ? 4 : 7,
-              widget.compact ? 6 : 8,
-              5,
-              widget.compact ? 6 : 8,
-            ),
-            decoration: BoxDecoration(
-              color: _isHovered
-                  ? (isDark
-                        ? Colors.white.withValues(alpha: 0.055)
-                        : Colors.black.withValues(alpha: 0.035))
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    if (!widget.archivedScope)
-                      Tooltip(
-                        message: item.isCompleted
-                            ? localizations.markIncompleteTooltip
-                            : localizations.markCompleteTooltip,
-                        child: Semantics(
-                          button: true,
-                          checked: item.isCompleted,
-                          child: FloatickHoverMotion(
-                            child: GestureDetector(
-                              key: ValueKey<String>(
-                                'toggle-todo-${widget.item.id}',
-                              ),
-                              behavior: HitTestBehavior.opaque,
-                              onTap: widget.onToggle,
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: AnimatedContainer(
-                                  duration: reduceMotion
-                                      ? Duration.zero
-                                      : const Duration(milliseconds: 160),
-                                  width: 21,
-                                  height: 21,
-                                  decoration: BoxDecoration(
-                                    color: item.isCompleted
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(7),
-                                    border: Border.all(
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onSecondaryTapDown: (_) => unawaited(_showActions()),
+      child: Focus(
+        focusNode: _rowFocusNode,
+        onFocusChange: (hasFocus) {
+          if (_hasFocus != hasFocus) {
+            setState(() => _hasFocus = hasFocus);
+          }
+        },
+        child: Semantics(
+          container: true,
+          label: item.title,
+          value: item.isCompleted
+              ? localizations.completedStatus
+              : localizations.incompleteStatus,
+          child: MouseRegion(
+            onEnter: widget.hoverEnabled ? (_) => _setHovered(true) : null,
+            onExit: (_) => _setHovered(false),
+            child: AnimatedContainer(
+              duration: reduceMotion || !widget.hoverEnabled
+                  ? Duration.zero
+                  : const Duration(milliseconds: 150),
+              margin: const EdgeInsets.symmetric(vertical: 2),
+              padding: EdgeInsets.fromLTRB(
+                widget.compact ? 4 : 7,
+                widget.compact ? 6 : 8,
+                5,
+                widget.compact ? 6 : 8,
+              ),
+              decoration: BoxDecoration(
+                color: _isHovered
+                    ? (isDark
+                          ? Colors.white.withValues(alpha: 0.055)
+                          : Colors.black.withValues(alpha: 0.035))
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      if (!widget.archivedScope)
+                        Tooltip(
+                          message: item.isCompleted
+                              ? localizations.markIncompleteTooltip
+                              : localizations.markCompleteTooltip,
+                          child: Semantics(
+                            button: true,
+                            checked: item.isCompleted,
+                            child: FloatickHoverMotion(
+                              child: GestureDetector(
+                                key: ValueKey<String>(
+                                  'toggle-todo-${widget.item.id}',
+                                ),
+                                behavior: HitTestBehavior.opaque,
+                                onTap: widget.onToggle,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: AnimatedContainer(
+                                    duration: reduceMotion
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 160),
+                                    width: 21,
+                                    height: 21,
+                                    decoration: BoxDecoration(
                                       color: item.isCompleted
-                                          ? Theme.of(
-                                              context,
-                                            ).colorScheme.primary
-                                          : onSurface.withValues(alpha: 0.28),
-                                      width: 1.4,
+                                          ? theme.colorScheme.primary
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(7),
+                                      border: Border.all(
+                                        color: item.isCompleted
+                                            ? theme.colorScheme.primary
+                                            : onSurface.withValues(alpha: 0.28),
+                                        width: 1.4,
+                                      ),
+                                    ),
+                                    child: item.isCompleted
+                                        ? const Icon(
+                                            Icons.check_rounded,
+                                            size: 15,
+                                            color: Colors.white,
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.inventory_2_outlined,
+                            key: ValueKey<String>(
+                              'archived-status-${widget.item.id}',
+                            ),
+                            size: 21,
+                            color: onSurface.withValues(alpha: 0.28),
+                          ),
+                        ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            key: ValueKey<String>(
+                              'todo-open-details-region-${widget.item.id}',
+                            ),
+                            behavior: HitTestBehavior.opaque,
+                            onDoubleTap: widget.onOpenDetails,
+                            child: SizedBox(
+                              height: 30,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  item.title,
+                                  key: ValueKey<String>(
+                                    'todo-title-${widget.item.id}',
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: onSurface.withValues(
+                                      alpha: item.isCompleted ? 0.45 : 0.91,
+                                    ),
+                                    fontSize: widget.compact ? 12.5 : 13.5,
+                                    height: 1.3,
+                                    decoration: item.isCompleted
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                    decorationColor: onSurface.withValues(
+                                      alpha: 0.42,
                                     ),
                                   ),
-                                  child: item.isCompleted
-                                      ? const Icon(
-                                          Icons.check_rounded,
-                                          size: 15,
-                                          color: Colors.white,
-                                        )
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          Icons.inventory_2_outlined,
-                          key: ValueKey<String>(
-                            'archived-status-${widget.item.id}',
-                          ),
-                          size: 21,
-                          color: onSurface.withValues(alpha: 0.28),
-                        ),
-                      ),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          key: ValueKey<String>(
-                            'todo-open-details-region-${widget.item.id}',
-                          ),
-                          behavior: HitTestBehavior.opaque,
-                          onDoubleTap: widget.onOpenDetails,
-                          child: SizedBox(
-                            height: 30,
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                item.title,
-                                key: ValueKey<String>(
-                                  'todo-title-${widget.item.id}',
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: onSurface.withValues(
-                                    alpha: item.isCompleted ? 0.45 : 0.91,
-                                  ),
-                                  fontSize: widget.compact ? 12.5 : 13.5,
-                                  height: 1.3,
-                                  decoration: item.isCompleted
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  decorationColor: onSurface.withValues(
-                                    alpha: 0.42,
-                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 3),
-                    SizedBox(
-                      width: trailingActionCount * 30,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          if (!widget.archivedScope)
-                            _HoverAction(
+                      const SizedBox(width: 3),
+                      SizedBox(
+                        width: 60,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: <Widget>[
+                            TodoCopyButton(
+                              key: ValueKey<String>(
+                                'copy-todo-${widget.item.id}',
+                              ),
+                              item: item,
+                              controller: _copyController,
                               visible: showContextActions,
-                              tooltip: localizations.editTooltip,
-                              onPressed: widget.onEdit!,
-                              icon: Icons.edit_outlined,
-                              key: ValueKey<String>(
-                                'edit-todo-${widget.item.id}',
-                              ),
-                            ),
-                          _ActionButton(
-                            tooltip: localizations.viewTodoDetailsTooltip,
-                            onPressed: widget.onOpenDetails,
-                            icon: Icons.subject_rounded,
-                            color: item.content.trim().isEmpty
-                                ? onSurface.withValues(alpha: 0.42)
-                                : Theme.of(context).colorScheme.primary,
-                            key: ValueKey<String>(
-                              'view-todo-${widget.item.id}',
-                            ),
-                          ),
-                          if (widget.archivedScope && _isConfirmingDelete) ...[
-                            _ActionButton(
-                              key: ValueKey<String>(
-                                'cancel-delete-todo-${widget.item.id}',
-                              ),
-                              tooltip: localizations.cancelDeleteTodoTooltip,
-                              onPressed: _cancelPermanentDelete,
-                              icon: Icons.close_rounded,
-                            ),
-                            _ActionButton(
-                              key: ValueKey<String>(
-                                'confirm-delete-todo-${widget.item.id}',
-                              ),
-                              tooltip: localizations.confirmDeleteTodoTooltip,
-                              onPressed: _confirmPermanentDelete,
-                              icon: Icons.delete_forever_outlined,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ] else if (widget.archivedScope) ...[
-                            _ActionButton(
-                              key: ValueKey<String>(
-                                'restore-todo-${widget.item.id}',
-                              ),
-                              tooltip: localizations.restoreTooltip,
-                              onPressed: widget.onRestore,
-                              icon: Icons.unarchive_outlined,
                             ),
                             _HoverAction(
                               key: ValueKey<String>(
-                                'delete-todo-${widget.item.id}',
+                                'more-todo-${widget.item.id}',
                               ),
                               visible: showContextActions,
-                              tooltip:
-                                  localizations.deleteTodoPermanentlyTooltip,
-                              onPressed: _requestPermanentDelete,
-                              icon: Icons.delete_outline_rounded,
-                              color: Theme.of(context).colorScheme.error,
+                              tooltip: localizations.moreTodoActionsTooltip,
+                              onPressed: () => unawaited(_showActions()),
+                              icon: Icons.more_horiz_rounded,
                             ),
-                          ] else if (widget.showArchiveAction)
-                            _ActionButton(
-                              key: ValueKey<String>(
-                                'archive-todo-${widget.item.id}',
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: widget.compact ? 3 : 5),
+                  Row(
+                    key: ValueKey<String>(
+                      'todo-metadata-row-${widget.item.id}',
+                    ),
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      const SizedBox(width: 36),
+                      Expanded(
+                        child: widget.archivedScope
+                            ? _ReadOnlyTodoTags(
+                                todoId: item.id,
+                                tags: widget.tags,
+                                assignedTagIds: widget.assignedTagIds,
+                              )
+                            : _ExternalTagAssignment(
+                                todoId: item.id,
+                                tags: widget.tags,
+                                assignedTagIds: widget.assignedTagIds,
+                                onPressed: _openTagAssignment,
                               ),
-                              tooltip: localizations.archiveTooltip,
-                              onPressed: widget.onArchive,
-                              icon: Icons.archive_outlined,
-                            ),
-                          if (widget.onRemoveFromStickyBoard != null)
-                            _HoverAction(
-                              key: ValueKey<String>(
-                                'remove-from-board-${widget.item.id}',
-                              ),
-                              visible: showContextActions,
-                              tooltip:
-                                  localizations.removeFromStickyBoardTooltip,
-                              onPressed: widget.onRemoveFromStickyBoard!,
-                              icon: Icons.remove_circle_outline_rounded,
-                            ),
-                        ],
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: widget.compact ? 3 : 5),
-                Row(
-                  key: ValueKey<String>('todo-metadata-row-${widget.item.id}'),
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    const SizedBox(width: 36),
-                    Expanded(
-                      child: widget.archivedScope
-                          ? _ReadOnlyTodoTags(
-                              todoId: item.id,
-                              tags: widget.tags,
-                              assignedTagIds: widget.assignedTagIds,
-                            )
-                          : widget.onOpenTagAssignment == null
-                          ? TagAssignmentMenu(
-                              todoId: item.id,
-                              tags: widget.tags,
-                              assignedTagIds: widget.assignedTagIds,
-                              onToggle: widget.onToggleTag!,
-                              onManageTags: widget.onOpenTagManagement!,
-                            )
-                          : _ExternalTagAssignment(
-                              todoId: item.id,
-                              tags: widget.tags,
-                              assignedTagIds: widget.assignedTagIds,
-                              onPressed: widget.onOpenTagAssignment!,
-                            ),
-                    ),
-                    const SizedBox(width: 7),
-                    Text(
-                      _formatTime(
-                        context,
-                        widget.archivedScope
-                            ? (item.archivedAt ?? item.createdAt)
-                            : item.createdAt,
+                      const SizedBox(width: 7),
+                      Text(
+                        _formatTime(
+                          context,
+                          widget.archivedScope
+                              ? (item.archivedAt ?? item.createdAt)
+                              : item.createdAt,
+                        ),
+                        key: ValueKey<String>('todo-time-${widget.item.id}'),
+                        style: TextStyle(
+                          color: onSurface.withValues(alpha: 0.35),
+                          fontSize: 10.5,
+                        ),
                       ),
-                      key: ValueKey<String>('todo-time-${widget.item.id}'),
-                      style: TextStyle(
-                        color: onSurface.withValues(alpha: 0.35),
-                        fontSize: 10.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -474,7 +507,6 @@ class _HoverAction extends StatelessWidget {
     required this.tooltip,
     required this.onPressed,
     required this.icon,
-    this.color,
     super.key,
   });
 
@@ -482,7 +514,6 @@ class _HoverAction extends StatelessWidget {
   final String tooltip;
   final VoidCallback onPressed;
   final IconData icon;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -496,41 +527,16 @@ class _HoverAction extends StatelessWidget {
         opacity: visible ? 1 : 0,
         child: IgnorePointer(
           ignoring: !visible,
-          child: IconButton(
-            tooltip: tooltip,
-            onPressed: onPressed,
-            padding: EdgeInsets.zero,
-            icon: Icon(icon, size: 16, color: color),
+          child: ExcludeFocus(
+            excluding: !visible,
+            child: IconButton(
+              tooltip: tooltip,
+              onPressed: onPressed,
+              padding: EdgeInsets.zero,
+              icon: Icon(icon, size: 17),
+            ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.tooltip,
-    required this.onPressed,
-    required this.icon,
-    this.color,
-    super.key,
-  });
-
-  final String tooltip;
-  final VoidCallback onPressed;
-  final IconData icon;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: 30,
-      child: IconButton(
-        tooltip: tooltip,
-        onPressed: onPressed,
-        padding: EdgeInsets.zero,
-        icon: Icon(icon, size: 17, color: color),
       ),
     );
   }

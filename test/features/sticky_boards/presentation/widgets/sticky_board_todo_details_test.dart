@@ -3,9 +3,29 @@ import 'package:floatick/features/todos/domain/todo_item.dart';
 import 'package:floatick/features/todos/domain/todo_tag.dart';
 import 'package:floatick/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  late String clipboardText;
+
+  setUp(() {
+    clipboardText = '';
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            clipboardText =
+                (call.arguments as Map<Object?, Object?>)['text'] as String;
+          }
+          return null;
+        });
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
   testWidgets('shows todo content locally without edit actions', (
     tester,
   ) async {
@@ -47,6 +67,13 @@ void main() {
     expect(find.text('Verify the DMG'), findsOneWidget);
     expect(find.text('Release'), findsOneWidget);
     expect(find.byKey(const Key('sticky-board-details-edit')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('sticky-board-details-copy')));
+    await tester.pump();
+    expect(
+      clipboardText,
+      '# Prepare release\n\n## Checklist\n\n- Verify the DMG',
+    );
 
     await tester.tap(find.byKey(const Key('sticky-board-details-back')));
 

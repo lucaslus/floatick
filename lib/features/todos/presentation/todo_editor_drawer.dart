@@ -8,7 +8,9 @@ import '../../../core/ui/floatick_hover_motion.dart';
 import '../../../l10n/l10n.dart';
 import '../domain/todo_item.dart';
 import '../domain/todo_tag.dart';
+import 'todo_clipboard_controller.dart';
 import 'widgets/floatick_tag_chip.dart';
+import 'widgets/todo_copy_button.dart';
 import 'widgets/todo_markdown.dart';
 
 enum TodoEditorDrawerMode { create, details, edit }
@@ -56,6 +58,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
   final _contentController = TextEditingController();
   final _titleFocusNode = FocusNode();
   final _contentFocusNode = FocusNode();
+  final _copyController = TodoClipboardController();
 
   bool _showPreview = false;
   bool _isSaving = false;
@@ -84,6 +87,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
         oldWidget.item?.content != widget.item?.content;
     final didOpen = !oldWidget.isOpen && widget.isOpen;
     if (changedContext) {
+      _copyController.reset();
       _formKey.currentState?.reset();
       _syncControllers();
       _showPreview = false;
@@ -105,6 +109,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
     _contentController.dispose();
     _titleFocusNode.dispose();
     _contentFocusNode.dispose();
+    _copyController.dispose();
     super.dispose();
   }
 
@@ -203,7 +208,9 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
           children: <Widget>[
             _DrawerHeader(
               mode: widget.mode,
+              item: widget.item,
               canEdit: widget.canEdit,
+              copyController: _copyController,
               onEdit: widget.onEdit,
               onClose: widget.onClose,
               closeFocusNode: widget.closeFocusNode,
@@ -273,14 +280,18 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
 class _DrawerHeader extends StatelessWidget {
   const _DrawerHeader({
     required this.mode,
+    required this.item,
     required this.canEdit,
+    required this.copyController,
     required this.onEdit,
     required this.onClose,
     required this.closeFocusNode,
   });
 
   final TodoEditorDrawerMode mode;
+  final TodoItem? item;
   final bool canEdit;
+  final TodoClipboardController copyController;
   final VoidCallback onEdit;
   final VoidCallback onClose;
   final FocusNode closeFocusNode;
@@ -304,6 +315,14 @@ class _DrawerHeader extends StatelessWidget {
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
+          if (mode == TodoEditorDrawerMode.details && item != null)
+            TodoCopyButton(
+              key: const Key('todo-details-copy'),
+              item: item!,
+              controller: copyController,
+              dimension: 40,
+              iconSize: 19,
+            ),
           if (mode == TodoEditorDrawerMode.details && canEdit)
             IconButton(
               key: const Key('todo-details-edit'),
