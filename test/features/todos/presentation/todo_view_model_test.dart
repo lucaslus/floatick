@@ -116,6 +116,62 @@ void main() {
     },
   );
 
+  test(
+    'derived list snapshots are reused until todo or tag data changes',
+    () async {
+      repository.savedItems = <TodoItem>[
+        TodoItem(
+          id: 'todo-1',
+          title: 'Prepare release',
+          createdAt: DateTime.parse(firstDate),
+        ),
+      ];
+      tagRepository.savedWorkspace = TagWorkspace(
+        tags: <TodoTag>[
+          TodoTag(
+            id: 'tag-focus',
+            name: 'Focus',
+            colorValue: 0xFF4C8FF5,
+            createdAt: DateTime.parse(firstDate),
+          ),
+        ],
+        assignments: const <String, List<String>>{
+          'todo-1': <String>['tag-focus'],
+        },
+      );
+      await controller.load();
+
+      final itemsReference = controller.items;
+      final firstView = controller.itemsForView(
+        archived: false,
+        query: ' FOCUS ',
+        selectedTagIds: const <String>{'tag-focus'},
+      );
+      final equivalentView = controller.itemsForView(
+        archived: false,
+        query: 'focus',
+        selectedTagIds: const <String>{'tag-focus'},
+      );
+
+      expect(identical(controller.items, itemsReference), isTrue);
+      expect(identical(firstView, equivalentView), isTrue);
+      expect(
+        () => controller.items.add(repository.savedItems.single),
+        throwsUnsupportedError,
+      );
+
+      await controller.toggleCompletion('todo-1');
+      final updatedView = controller.itemsForView(
+        archived: false,
+        query: 'focus',
+        selectedTagIds: const <String>{'tag-focus'},
+      );
+
+      expect(identical(updatedView, equivalentView), isFalse);
+      expect(updatedView.single.isCompleted, isTrue);
+    },
+  );
+
   test('rename trims and persists the updated title', () async {
     repository.savedItems = <TodoItem>[
       TodoItem(
