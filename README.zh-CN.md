@@ -1,6 +1,6 @@
 <div align="center">
   <img
-    src="./docs/assets/floatick-product-hero-v4.png"
+    src="./docs/assets/floatick-product-hero-v5.png"
     width="100%"
     alt="Floatick macOS 悬浮待办、Markdown 编辑器、标签与设置"
   />

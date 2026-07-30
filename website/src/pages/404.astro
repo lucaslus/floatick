@@ -1,0 +1,77 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+---
+
+<SiteLayout
+  lang="en"
+  title="Page not found — Floatick"
+  description="The page you requested could not be found."
+  canonicalPath="/404/"
+  alternatePath="/zh/"
+  noIndex
+>
+  <main class="not-found">
+    <a class="brand" href="/" aria-label="Floatick home">
+      <img src="/favicon.png" alt="" width="48" height="48" />
+      <span>Floatick</span>
+    </a>
+    <p class="code">404</p>
+    <h1>Page not found.</h1>
+    <p>This page does not exist or has moved.</p>
+    <a class="home-link" href="/">Go to Floatick</a>
+  </main>
+</SiteLayout>
+
+<style>
+  .not-found {
+    min-height: 100svh;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 18px;
+    padding: 32px;
+    text-align: center;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-text);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .brand img {
+    border-radius: 13px;
+  }
+
+  .code {
+    margin: 28px 0 0;
+    color: var(--color-accent);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.25rem, 7vw, 4.5rem);
+    letter-spacing: -0.05em;
+  }
+
+  .not-found > p:last-of-type {
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+
+  .home-link {
+    margin-top: 18px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: #032925;
+    font-weight: 720;
+    padding: 13px 22px;
+    text-decoration: none;
+  }
+</style>

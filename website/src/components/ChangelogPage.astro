@@ -1,0 +1,144 @@
+---
+import {
+  changelogCopy,
+  changelogEntries,
+} from '../content/changelog';
+import {
+  latestDownloadUrl,
+  repositoryUrl,
+} from '../config/site-links';
+import type { Locale } from '../content/site-copy';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import DownloadIcon from './DownloadIcon.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = changelogCopy[locale];
+const entries = changelogEntries[locale];
+const isEnglish = locale === 'en';
+const homeHref = isEnglish ? '/' : '/zh/';
+const languageHref = isEnglish ? '/zh/changelog/' : '/changelog/';
+---
+
+<SiteLayout
+  lang={isEnglish ? 'en' : 'zh-CN'}
+  title={copy.meta.title}
+  description={copy.meta.description}
+  canonicalPath={copy.meta.canonicalPath}
+  alternatePath={copy.meta.alternatePath}
+  schemaType="collection"
+>
+  <header class="site-header">
+    <nav
+      class="nav shell"
+      aria-label={isEnglish ? 'Changelog navigation' : '更新日志导航'}
+    >
+      <a class="brand" href={homeHref} aria-label="Floatick home">
+        <img src="/favicon.png" alt="" width="44" height="44" />
+        <span>Floatick</span>
+      </a>
+
+      <a class="changelog-home-link" href={homeHref}>
+        <span aria-hidden="true">←</span>
+        {copy.nav.home}
+      </a>
+
+      <div class="nav-actions">
+        <a
+          class="github-link"
+          href={repositoryUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={isEnglish ? 'View Floatick on GitHub' : '在 GitHub 查看 Floatick'}
+        >
+          <span class="github-mark" aria-hidden="true"></span>
+        </a>
+        <a
+          class="language-link"
+          href={languageHref}
+          lang={isEnglish ? 'zh-CN' : 'en'}
+          hreflang={isEnglish ? 'zh-CN' : 'en'}
+          aria-label={copy.nav.languageLabel}
+          title={copy.nav.languageLabel}
+        >
+          <span class="language-mark" aria-hidden="true"></span>
+          <span>{isEnglish ? '中文' : 'EN'}</span>
+        </a>
+        <a
+          class="button button-compact button-download"
+          href={latestDownloadUrl}
+        >
+          <DownloadIcon />
+          {copy.nav.download}
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="changelog-main">
+    <section class="changelog-hero shell">
+      <p class="eyebrow">{copy.hero.eyebrow}</p>
+      <h1>{copy.hero.title}</h1>
+      <p>{copy.hero.body}</p>
+    </section>
+
+    <section
+      class="changelog-list shell"
+      aria-label={isEnglish ? 'Floatick releases' : 'Floatick 版本'}
+    >
+      {
+        entries.map((entry, index) => (
+          <article class="changelog-entry">
+            <div class="changelog-marker" aria-hidden="true">
+              <span></span>
+            </div>
+
+            <div class="changelog-version">
+              <strong>{entry.version}</strong>
+              {index === 0 && (
+                <span>{isEnglish ? 'Latest' : '最新'}</span>
+              )}
+              <time datetime={entry.dateTime}>{entry.date}</time>
+            </div>
+
+            <div class="changelog-content">
+              <h2>{entry.title}</h2>
+              <p>{entry.summary}</p>
+              <ul>
+                {entry.highlights.map((highlight) => <li>{highlight}</li>)}
+              </ul>
+              <div class="changelog-actions">
+                <a href={entry.releaseUrl} target="_blank" rel="noreferrer">
+                  {copy.releaseLink}
+                  <span aria-hidden="true">↗</span>
+                </a>
+                {entry.compareUrl && (
+                  <a href={entry.compareUrl} target="_blank" rel="noreferrer">
+                    {copy.compareLink}
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          </article>
+        ))
+      }
+    </section>
+  </main>
+
+  <footer class="site-footer changelog-footer">
+    <div class="shell footer-content">
+      <div class="footer-brand">
+        <img src="/float-icon.svg" alt="" width="42" height="42" />
+        <div>
+          <strong>Floatick</strong>
+          <p>{copy.footer}</p>
+        </div>
+      </div>
+      <a class="text-link" href={homeHref}>{copy.nav.home}</a>
+    </div>
+  </footer>
+</SiteLayout>

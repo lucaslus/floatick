@@ -1,0 +1,115 @@
+---
+import type { Locale } from '../content/site-copy';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const demoCopy = {
+  en: {
+    ariaLabel:
+      'Interactive three-dimensional Floatick workspace with a todo list, a Sticky Board, an editor, and the floating icon',
+    remaining: '3 tasks remaining',
+    search: 'Search todos',
+    newTodo: 'New',
+    today: 'Today',
+    tasks: [
+      { title: 'Plan a focused morning', tag: 'Personal', time: '09:10' },
+      { title: 'Review the launch checklist', tag: 'Work', time: '11:30' },
+      { title: 'Write down one good idea', tag: 'Ideas', time: '16:20' },
+    ],
+    boardTitle: 'This week',
+    boardCount: '3 todos',
+    drawerTitle: 'New todo',
+    titleLabel: 'Title',
+    titleValue: 'Prepare tomorrow’s top task',
+    contentLabel: 'Content',
+    contentValue: 'Add a short note so the next step is clear.',
+    save: 'Add todo',
+    fallback: 'Floatick product preview',
+  },
+  zh: {
+    ariaLabel:
+      'Floatick 的交互式三维工作台，包含待办列表、便利板、编辑器和圆形悬浮图标',
+    remaining: '还有 3 项待完成',
+    search: '搜索待办',
+    newTodo: '新建',
+    today: '今天',
+    tasks: [
+      { title: '规划一个专注的上午', tag: '个人', time: '09:10' },
+      { title: '检查今天的任务清单', tag: '工作', time: '11:30' },
+      { title: '记录一个值得尝试的想法', tag: '灵感', time: '16:20' },
+    ],
+    boardTitle: '本周计划',
+    boardCount: '3 项待办',
+    drawerTitle: '新建待办',
+    titleLabel: '标题',
+    titleValue: '确定明天最重要的一件事',
+    contentLabel: '内容',
+    contentValue: '补充一句简短说明，让下一步足够清晰。',
+    save: '添加待办',
+    fallback: 'Floatick 产品预览',
+  },
+} as const;
+
+const copy = demoCopy[locale];
+---
+
+<div
+  class="product-hero-stage"
+  data-product-scene
+  data-remaining={copy.remaining}
+  data-search={copy.search}
+  data-new-todo={copy.newTodo}
+  data-today={copy.today}
+  data-task-one-title={copy.tasks[0].title}
+  data-task-one-tag={copy.tasks[0].tag}
+  data-task-one-time={copy.tasks[0].time}
+  data-task-two-title={copy.tasks[1].title}
+  data-task-two-tag={copy.tasks[1].tag}
+  data-task-two-time={copy.tasks[1].time}
+  data-task-three-title={copy.tasks[2].title}
+  data-task-three-tag={copy.tasks[2].tag}
+  data-task-three-time={copy.tasks[2].time}
+  data-board-title={copy.boardTitle}
+  data-board-count={copy.boardCount}
+  data-drawer-title={copy.drawerTitle}
+  data-title-label={copy.titleLabel}
+  data-title-value={copy.titleValue}
+  data-content-label={copy.contentLabel}
+  data-content-value={copy.contentValue}
+  data-save={copy.save}
+  role="img"
+  aria-label={copy.ariaLabel}
+>
+  <canvas class="product-scene-canvas" data-product-scene-canvas aria-hidden="true"></canvas>
+  <div class="product-scene-fallback" aria-hidden="true">
+    <img src="/float-icon.svg" alt={copy.fallback} width="132" height="132" />
+  </div>
+</div>
+
+<script>
+  const loadProductScene = async () => {
+    const { initializeProductHeroScenes } = await import(
+      '../scripts/product-hero-scene'
+    );
+    initializeProductHeroScenes();
+  };
+
+  const startProductScene = () => {
+    void loadProductScene().catch((error: unknown) => {
+      document
+        .querySelector<HTMLElement>('[data-product-scene]')
+        ?.classList.add('has-webgl-error');
+      console.error('Floatick product scene module could not be loaded.', error);
+    });
+  };
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(startProductScene, { timeout: 450 });
+  } else {
+    window.setTimeout(startProductScene, 1);
+  }
+</script>

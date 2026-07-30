@@ -1,6 +1,6 @@
 <div align="center">
   <img
-    src="./docs/assets/floatick-product-hero-v4.png"
+    src="./docs/assets/floatick-product-hero-v5.png"
     width="100%"
     alt="Floatick floating todo list, Markdown editor, tags, and settings for macOS"
   />
