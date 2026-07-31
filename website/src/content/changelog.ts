@@ -82,6 +82,21 @@ export const changelogCopy: Record<Locale, ChangelogCopy> = {
 export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
   en: [
     {
+      version: 'v0.3.1',
+      date: 'July 31, 2026',
+      dateTime: '2026-07-31',
+      title: 'Clearer Settings and mobile preview',
+      summary:
+        'This patch keeps long Settings labels readable and improves the mobile product showcase.',
+      highlights: [
+        'Show compact Settings labels on up to two lines instead of truncating them.',
+        'Render a sharper, closer 3D product view on mobile.',
+        'Remove the oversized 3D backdrop on narrow screens so the app panels stay in focus.',
+      ],
+      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.3.1',
+      compareUrl: 'https://github.com/lucaslushuo/floatick/compare/v0.3.0...v0.3.1',
+    },
+    {
       version: 'v0.3.0',
       date: 'July 29, 2026',
       dateTime: '2026-07-29',
@@ -130,6 +145,21 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
     },
   ],
   zh: [
+    {
+      version: 'v0.3.1',
+      date: '2026 年 7 月 31 日',
+      dateTime: '2026-07-31',
+      title: '更清晰的设置项与移动端预览',
+      summary:
+        '这个补丁让较长的设置项文案保持可读，并优化移动端产品展示。',
+      highlights: [
+        '紧凑设置项最多显示两行，不再过早截断。',
+        '移动端使用更清晰、更聚焦的 3D 产品视图。',
+        '窄屏隐藏过大的 3D 背景板，让应用面板成为视觉焦点。',
+      ],
+      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.3.1',
+      compareUrl: 'https://github.com/lucaslushuo/floatick/compare/v0.3.0...v0.3.1',
+    },
     {
       version: 'v0.3.0',
       date: '2026 年 7 月 29 日',

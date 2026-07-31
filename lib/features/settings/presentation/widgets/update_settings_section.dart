@@ -4,10 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../updates/presentation/update_view_model.dart';
+import 'compact_settings_item.dart';
 import 'compact_settings_toggle.dart';
-
-const _updateRowHeight = 34.0;
-const _updateRowRadius = 8.0;
 
 class UpdateSettingsSection extends StatelessWidget {
   const UpdateSettingsSection({required this.viewModel, super.key});
@@ -59,7 +57,7 @@ class UpdateSettingsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            _UpdateSettingRow(
+            CompactSettingsItem(
               key: const Key('automatic-update-checks'),
               label: localizations.automaticUpdateChecksLabel,
               toggled: viewModel.automaticallyChecksForUpdates,
@@ -79,7 +77,7 @@ class UpdateSettingsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            _UpdateSettingRow(
+            CompactSettingsItem(
               key: const Key('check-for-updates'),
               onPressed: viewModel.isLoading || viewModel.isChecking
                   ? null
@@ -114,71 +112,6 @@ class UpdateSettingsSection extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-}
-
-class _UpdateSettingRow extends StatelessWidget {
-  const _UpdateSettingRow({
-    required this.label,
-    required this.trailing,
-    required this.onPressed,
-    this.toggled,
-    super.key,
-  });
-
-  final String label;
-  final Widget trailing;
-  final VoidCallback? onPressed;
-  final bool? toggled;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Semantics(
-      button: toggled == null,
-      enabled: onPressed != null,
-      label: label,
-      toggled: toggled,
-      child: ExcludeSemantics(
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(_updateRowRadius),
-            hoverColor: theme.colorScheme.primary.withValues(alpha: 0.06),
-            highlightColor: theme.colorScheme.primary.withValues(alpha: 0.10),
-            onTap: onPressed,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: _updateRowHeight),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: onPressed == null
-                              ? theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.38,
-                                )
-                              : null,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    trailing,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

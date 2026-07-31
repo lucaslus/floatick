@@ -1792,7 +1792,7 @@ img {
 
 @media (max-width: 480px) {
   .product-hero-stage {
-    min-height: 490px;
+    min-height: 540px;
   }
 }
 

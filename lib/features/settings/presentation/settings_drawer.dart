@@ -8,6 +8,7 @@ import '../../updates/presentation/update_view_model.dart';
 import '../domain/app_settings.dart';
 import '../domain/login_item_status.dart';
 import 'settings_view_model.dart';
+import 'widgets/compact_settings_item.dart';
 import 'widgets/compact_settings_toggle.dart';
 import 'widgets/update_settings_section.dart';
 
@@ -164,17 +165,20 @@ class _AlwaysOnTopSetting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = !viewModel.isSaving;
-    return _SettingsToggleRow(
-      settingKey: const Key('always-on-top-setting'),
-      toggleKey: const Key('always-on-top-toggle'),
+    return CompactSettingsItem(
+      key: const Key('always-on-top-setting'),
       label: context.l10n.alwaysOnTopLabel,
-      value: viewModel.alwaysOnTop,
-      enabled: enabled,
-      onTap: enabled
+      toggled: viewModel.alwaysOnTop,
+      onPressed: enabled
           ? () {
               unawaited(viewModel.setAlwaysOnTop(!viewModel.alwaysOnTop));
             }
           : null,
+      trailing: CompactSettingsToggle(
+        key: const Key('always-on-top-toggle'),
+        value: viewModel.alwaysOnTop,
+        enabled: enabled,
+      ),
     );
   }
 }
@@ -187,17 +191,20 @@ class _OpenAtLoginSetting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = viewModel.canChangeOpenAtLogin;
-    return _SettingsToggleRow(
-      settingKey: const Key('open-at-login-setting'),
-      toggleKey: const Key('open-at-login-toggle'),
+    return CompactSettingsItem(
+      key: const Key('open-at-login-setting'),
       label: context.l10n.openAtLoginLabel,
-      value: viewModel.openAtLogin,
-      enabled: enabled,
-      onTap: enabled
+      toggled: viewModel.openAtLogin,
+      onPressed: enabled
           ? () {
               unawaited(viewModel.setOpenAtLogin(!viewModel.openAtLogin));
             }
           : null,
+      trailing: CompactSettingsToggle(
+        key: const Key('open-at-login-toggle'),
+        value: viewModel.openAtLogin,
+        enabled: enabled,
+      ),
     );
   }
 }
@@ -210,13 +217,11 @@ class _CollapseWhenClickingOutsideSetting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = !viewModel.isSaving;
-    return _SettingsToggleRow(
-      settingKey: const Key('collapse-when-clicking-outside-setting'),
-      toggleKey: const Key('collapse-when-clicking-outside-toggle'),
+    return CompactSettingsItem(
+      key: const Key('collapse-when-clicking-outside-setting'),
       label: context.l10n.collapseWhenClickingOutsideLabel,
-      value: viewModel.collapseWhenClickingOutside,
-      enabled: enabled,
-      onTap: enabled
+      toggled: viewModel.collapseWhenClickingOutside,
+      onPressed: enabled
           ? () {
               unawaited(
                 viewModel.setCollapseWhenClickingOutside(
@@ -225,76 +230,10 @@ class _CollapseWhenClickingOutsideSetting extends StatelessWidget {
               );
             }
           : null,
-    );
-  }
-}
-
-class _SettingsToggleRow extends StatelessWidget {
-  const _SettingsToggleRow({
-    required this.settingKey,
-    required this.toggleKey,
-    required this.label,
-    required this.value,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final Key settingKey;
-  final Key toggleKey;
-  final String label;
-  final bool value;
-  final bool enabled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      label: label,
-      toggled: value,
-      enabled: enabled,
-      child: ExcludeSemantics(
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            key: settingKey,
-            borderRadius: BorderRadius.circular(8),
-            hoverColor: theme.colorScheme.primary.withValues(alpha: 0.06),
-            highlightColor: theme.colorScheme.primary.withValues(alpha: 0.10),
-            onTap: onTap,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 34),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: enabled
-                              ? null
-                              : theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.38,
-                                ),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    CompactSettingsToggle(
-                      key: toggleKey,
-                      value: value,
-                      enabled: enabled,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+      trailing: CompactSettingsToggle(
+        key: const Key('collapse-when-clicking-outside-toggle'),
+        value: viewModel.collapseWhenClickingOutside,
+        enabled: enabled,
       ),
     );
   }
