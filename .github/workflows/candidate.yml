@@ -97,6 +97,15 @@ jobs:
           tool/release/prepare_unsigned_app.sh \
             "build/macos/Build/Products/Release/$PRODUCT_NAME.app"
 
+      - name: Verify update feed
+        shell: bash
+        run: |
+          repository_name=${GITHUB_REPOSITORY#*/}
+          expected_feed_url="https://$GITHUB_REPOSITORY_OWNER.github.io/$repository_name/appcast.xml"
+          tool/release/verify_update_feed.sh \
+            "build/macos/Build/Products/Release/$PRODUCT_NAME.app" \
+            "$expected_feed_url"
+
       - name: Verify app architectures
         shell: bash
         run: |

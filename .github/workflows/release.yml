@@ -183,6 +183,12 @@ jobs:
             exit 1
           fi
 
+          repository_name=${GITHUB_REPOSITORY#*/}
+          expected_feed_url="https://$GITHUB_REPOSITORY_OWNER.github.io/$repository_name/appcast.xml"
+          tool/release/verify_update_feed.sh \
+            "$app_path" \
+            "$expected_feed_url"
+
           hdiutil detach "$mount_point"
           trap - EXIT
 

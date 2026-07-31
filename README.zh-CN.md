@@ -10,8 +10,8 @@
     无需账号或云服务，让任务记录与整理始终触手可及。
   </p>
   <p>
-    <a href="https://github.com/lucaslushuo/floatick/actions/workflows/ci.yml">
-      <img src="https://github.com/lucaslushuo/floatick/actions/workflows/ci.yml/badge.svg" alt="CI 状态" />
+    <a href="https://github.com/lucaslus/floatick/actions/workflows/ci.yml">
+      <img src="https://github.com/lucaslus/floatick/actions/workflows/ci.yml/badge.svg" alt="CI 状态" />
     </a>
     <img src="https://img.shields.io/badge/macOS-10.15%2B-111111?logo=apple" alt="支持 macOS 10.15 或更高版本" />
     <img src="https://img.shields.io/badge/Flutter-3.44.7-02569B?logo=flutter" alt="Flutter 3.44.7" />
@@ -41,7 +41,7 @@ Floatick 是一款支持离线使用的 macOS 桌面待办应用。它平时以�
 
 ## 下载 Floatick macOS 版
 
-从 [GitHub Releases](https://github.com/lucaslushuo/floatick/releases)
+从 [GitHub Releases](https://github.com/lucaslus/floatick/releases)
 下载最新 DMG，打开后将 Floatick 拖入 `Applications`。发布包是 Universal
 Binary，同时支持 Apple 芯片和 Intel Mac。
 
@@ -162,7 +162,7 @@ flowchart LR
 
 ## 参与贡献
 
-欢迎提交 [Issue](https://github.com/lucaslushuo/floatick/issues) 和范围清晰的
+欢迎提交 [Issue](https://github.com/lucaslus/floatick/issues) 和范围清晰的
 Pull Request。请为有意义的行为变更补充测试，并保持本地 JSON 数据格式向后
 兼容。
 
