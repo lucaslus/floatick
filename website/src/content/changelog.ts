@@ -82,6 +82,21 @@ export const changelogCopy: Record<Locale, ChangelogCopy> = {
 export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
   en: [
     {
+      version: 'v0.3.2',
+      date: 'July 31, 2026',
+      dateTime: '2026-07-31',
+      title: 'Update checks restored',
+      summary:
+        'This hotfix restores the Sparkle update feed after the GitHub account address changed.',
+      highlights: [
+        'Point in-app update checks to the active GitHub Pages feed.',
+        'Verify the built app feed address and live appcast before publishing a release.',
+        'Users on v0.3.0 or v0.3.1 need to install this update manually once.',
+      ],
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.2',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.1...v0.3.2',
+    },
+    {
       version: 'v0.3.1',
       date: 'July 31, 2026',
       dateTime: '2026-07-31',
@@ -93,8 +108,8 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
         'Render a sharper, closer 3D product view on mobile.',
         'Remove the oversized 3D backdrop on narrow screens so the app panels stay in focus.',
       ],
-      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.3.1',
-      compareUrl: 'https://github.com/lucaslushuo/floatick/compare/v0.3.0...v0.3.1',
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.1',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.0...v0.3.1',
     },
     {
       version: 'v0.3.0',
@@ -109,8 +124,8 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
         'Optionally collapse the main panel after clicking outside it.',
         'Keep scrolling responsive in local workspaces with up to 10,000 todos.',
       ],
-      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.3.0',
-      compareUrl: 'https://github.com/lucaslushuo/floatick/compare/v0.2.0...v0.3.0',
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.0',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.2.0...v0.3.0',
     },
     {
       version: 'v0.2.0',
@@ -125,8 +140,8 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
         'Create, edit, search, and combine multiple color-coded tags.',
         'Choose appearance, always-on-top behavior, and open-at-login settings.',
       ],
-      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.2.0',
-      compareUrl: 'https://github.com/lucaslushuo/floatick/compare/v0.1.0...v0.2.0',
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.2.0',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.1.0...v0.2.0',
     },
     {
       version: 'v0.1.0',
@@ -141,10 +156,25 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
         'Switch between English and Simplified Chinese.',
         'Check for updates through Sparkle with EdDSA verification.',
       ],
-      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.1.0',
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.1.0',
     },
   ],
   zh: [
+    {
+      version: 'v0.3.2',
+      date: '2026 年 7 月 31 日',
+      dateTime: '2026-07-31',
+      title: '恢复应用更新检查',
+      summary:
+        '这个热修复解决 GitHub 账号地址变更后 Sparkle 更新源不可用的问题。',
+      highlights: [
+        '将应用内更新检查切换到当前有效的 GitHub Pages 地址。',
+        '发布前校验构建产物中的更新地址和线上 appcast。',
+        'v0.3.0 或 v0.3.1 用户需要手动安装一次这个版本。',
+      ],
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.2',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.1...v0.3.2',
+    },
     {
       version: 'v0.3.1',
       date: '2026 年 7 月 31 日',
@@ -157,8 +187,8 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
         '移动端使用更清晰、更聚焦的 3D 产品视图。',
         '窄屏隐藏过大的 3D 背景板，让应用面板成为视觉焦点。',
       ],
-      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.3.1',
-      compareUrl: 'https://github.com/lucaslushuo/floatick/compare/v0.3.0...v0.3.1',
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.1',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.0...v0.3.1',
     },
     {
       version: 'v0.3.0',
@@ -173,8 +203,8 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
         '支持点击窗口外部后自动收起主容器。',
         '在多达 10,000 条本地 Todo 下保持列表滚动响应。',
       ],
-      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.3.0',
-      compareUrl: 'https://github.com/lucaslushuo/floatick/compare/v0.2.0...v0.3.0',
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.0',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.2.0...v0.3.0',
     },
     {
       version: 'v0.2.0',
@@ -189,8 +219,8 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
         '创建、编辑、搜索并组合多个彩色标签。',
         '设置外观、始终置顶与登录时启动。',
       ],
-      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.2.0',
-      compareUrl: 'https://github.com/lucaslushuo/floatick/compare/v0.1.0...v0.2.0',
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.2.0',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.1.0...v0.2.0',
     },
     {
       version: 'v0.1.0',
@@ -205,7 +235,7 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
         '支持英文与简体中文切换。',
         '通过 Sparkle 与 EdDSA 验证应用更新。',
       ],
-      releaseUrl: 'https://github.com/lucaslushuo/floatick/releases/tag/v0.1.0',
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.1.0',
     },
   ],
 };

@@ -4,9 +4,9 @@ Floatick uses a lightweight release-branch model. `main` is the only stable
 branch, short-lived branches carry daily work, and `release/x.y.z` branches
 produce private Draft Releases for manual acceptance.
 
-Release repository: `https://github.com/lucaslushuo/floatick`
+Release repository: `https://github.com/lucaslus/floatick`
 
-Sparkle appcast: `https://lucaslushuo.github.io/floatick/appcast.xml`
+Sparkle appcast: `https://lucaslus.github.io/floatick/appcast.xml`
 
 ## Branch model
 
@@ -63,9 +63,10 @@ Every push to `release/X.Y.Z` runs the Release Candidate workflow. It:
 2. runs formatting, analysis, and tests;
 3. builds the universal release-mode macOS app;
 4. normalizes embedded code to one ad-hoc identity for the unsigned candidate;
-5. verifies both architectures and launches the app on the Apple silicon runner;
-6. creates the DMG, SHA-256 checksum, and build manifest;
-7. creates or updates a Draft Release associated with
+5. verifies the embedded Sparkle feed URL and downloads a valid live appcast;
+6. verifies both architectures and launches the app on the Apple silicon runner;
+7. creates the DMG, SHA-256 checksum, and build manifest;
+8. creates or updates a Draft Release associated with
    `candidate/vX.Y.Z`.
 
 Only users with push access can list Draft Releases through the GitHub API.
@@ -93,6 +94,7 @@ Download the DMG from the Draft Release and verify at least:
   unavailable status instead of Sparkle's network error;
 - after the first appcast is published, manual “Check for updates” opens
   Sparkle's native result;
+- the built app's `SUFeedURL` matches the live appcast URL listed above;
 - CPU and memory remain reasonable with a long todo list;
 - both architecture slices exist, with an Apple silicon launch test and a
   Rosetta launch smoke test when available.
@@ -174,7 +176,7 @@ independent EdDSA key. The public key is stored in
 Keychain and in the production environment's `SPARKLE_ED_PRIVATE_KEY` GitHub
 Actions secret. Candidate workflows cannot access the production secret. The
 production environment accepts only `v*` tags and requires approval from
-`lucaslushuo` before exposing the secret.
+`lucaslus` before exposing the secret.
 
 Never commit or print the private key. Keep an encrypted offline backup. The
 Sparkle key protects the update chain but does not replace Apple Developer ID

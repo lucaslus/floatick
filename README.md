@@ -10,8 +10,8 @@
     Capture and organize tasks one click away—without an account or cloud service.
   </p>
   <p>
-    <a href="https://github.com/lucaslushuo/floatick/actions/workflows/ci.yml">
-      <img src="https://github.com/lucaslushuo/floatick/actions/workflows/ci.yml/badge.svg" alt="CI status" />
+    <a href="https://github.com/lucaslus/floatick/actions/workflows/ci.yml">
+      <img src="https://github.com/lucaslus/floatick/actions/workflows/ci.yml/badge.svg" alt="CI status" />
     </a>
     <img src="https://img.shields.io/badge/macOS-10.15%2B-111111?logo=apple" alt="macOS 10.15 or later" />
     <img src="https://img.shields.io/badge/Flutter-3.44.7-02569B?logo=flutter" alt="Flutter 3.44.7" />
@@ -46,7 +46,7 @@ near any display edge.
 ## Download Floatick for macOS
 
 Download the latest DMG from
-[GitHub Releases](https://github.com/lucaslushuo/floatick/releases), open it,
+[GitHub Releases](https://github.com/lucaslus/floatick/releases), open it,
 and drag Floatick into `Applications`. Release packages are universal binaries
 for both Apple silicon and Intel Macs.
 
@@ -170,7 +170,7 @@ preparing a release.
 
 ## Contributing
 
-[Issues](https://github.com/lucaslushuo/floatick/issues) and focused pull
+[Issues](https://github.com/lucaslus/floatick/issues) and focused pull
 requests are welcome. Please keep changes scoped, add tests for meaningful
 behavior, and preserve the local JSON data contract.
 

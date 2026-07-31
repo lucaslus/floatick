@@ -18,7 +18,7 @@ const isEnglish = locale === 'en';
 const languageHref = isEnglish ? '/zh/' : '/';
 const changelogHref = isEnglish ? '/changelog/' : '/zh/changelog/';
 const featureRequestUrl =
-  'https://github.com/lucaslushuo/floatick/issues/new?labels=enhancement';
+  'https://github.com/lucaslus/floatick/issues/new?labels=enhancement';
 ---
 
 <SiteLayout
@@ -277,7 +277,7 @@ const featureRequestUrl =
       <article class="latest-release-card" data-reveal>
         <div class="release-meta">
           <span>{copy.updates.latestLabel}</span>
-          <time datetime="2026-07-29">{copy.updates.date}</time>
+          <time datetime={copy.updates.dateTime}>{copy.updates.date}</time>
         </div>
         <strong>{copy.updates.version}</strong>
         <ul>
@@ -397,7 +397,7 @@ const featureRequestUrl =
           {copy.footer.releases}
         </a>
         <a
-          href="https://github.com/lucaslushuo/floatick/blob/main/LICENSE"
+          href="https://github.com/lucaslus/floatick/blob/main/LICENSE"
           target="_blank"
           rel="noreferrer"
         >

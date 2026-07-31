@@ -186,7 +186,7 @@ git push origin "v$VERSION"
 Floatick 使用以下 Sparkle 更新源：
 
 ```text
-https://lucaslushuo.github.io/floatick/appcast.xml
+https://lucaslus.github.io/floatick/appcast.xml
 ```
 
 - 首个正式版本发布前，该文件还不存在，候选包会显示“更新服务暂未就绪”。

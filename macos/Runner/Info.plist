@@ -44,7 +44,7 @@
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://lucaslushuo.github.io/floatick/appcast.xml</string>
+	<string>https://lucaslus.github.io/floatick/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>QV3YrniNCTaEG6ePfUUTvB1bTgxcoOjL4/OG9fRdS9A=</string>
 	<key>SURequireSignedFeed</key>

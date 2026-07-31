@@ -78,6 +78,7 @@ type SiteCopy = {
     latestLabel: string;
     version: string;
     date: string;
+    dateTime: string;
     highlights: string[];
     viewAll: string;
   };
@@ -250,12 +251,12 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       body:
         'Each release lists its new features, fixes, and behavior changes.',
       latestLabel: 'Latest release',
-      version: 'v0.3.1',
+      version: 'v0.3.2',
       date: 'July 31, 2026',
+      dateTime: '2026-07-31',
       highlights: [
-        'Keep long Settings labels readable over up to two lines.',
-        'Show a sharper and more focused 3D product preview on mobile.',
-        'Remove the oversized 3D backdrop from narrow screens.',
+        'Restore in-app update checks after the GitHub account address changed.',
+        'Validate the embedded Sparkle feed before publishing future releases.',
       ],
       viewAll: 'Read the full changelog',
     },
@@ -455,12 +456,12 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       body:
         '每个版本都会列出新增功能、问题修复和行为变化。',
       latestLabel: '最新版本',
-      version: 'v0.3.1',
+      version: 'v0.3.2',
       date: '2026 年 7 月 31 日',
+      dateTime: '2026-07-31',
       highlights: [
-        '较长的设置项文案最多显示两行。',
-        '移动端 3D 产品预览更清晰、更聚焦。',
-        '在窄屏移除过大的 3D 背景板。',
+        '修复 GitHub 账号地址变更后无法检查应用更新的问题。',
+        '发布前校验 App 内置的 Sparkle 更新源，避免再次断链。',
       ],
       viewAll: '查看完整更新日志',
     },
