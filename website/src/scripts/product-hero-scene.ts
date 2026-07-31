@@ -2,13 +2,14 @@ import {
   ACESFilmicToneMapping,
   BufferAttribute,
   CanvasTexture,
-  CatmullRomCurve3,
   CircleGeometry,
   Clock,
+  CurvePath,
   CylinderGeometry,
   FogExp2,
   Group,
   HemisphereLight,
+  LineCurve3,
   LinearFilter,
   LinearMipmapLinearFilter,
   MathUtils,
@@ -21,6 +22,8 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   PointLight,
+  QuadraticBezierCurve3,
+  Raycaster,
   Scene,
   Shape,
   ShapeGeometry,
@@ -98,6 +101,17 @@ const CONVEYOR_CARRIER_DEPTH = 0.16;
 const CONVEYOR_CARRIER_GAP = 0.045;
 const CONVEYOR_CARRIER_Z_OFFSET =
   CONVEYOR_RAIL_RADIUS + CONVEYOR_CARRIER_DEPTH / 2 + CONVEYOR_CARRIER_GAP;
+const PRODUCT_FRAME = {
+  width: 17.08,
+  height: 9.04,
+  depth: 0.38,
+  cornerRadius: 0.48,
+  innerInset: 0.3,
+  innerDepth: 0.16,
+  innerCornerRadius: 0.42,
+  trackInset: 0.11,
+  trackZ: -0.91,
+} as const;
 
 const DEFAULT_COPY: ProductSceneCopy = {
   remaining: '3 tasks remaining',
@@ -1038,29 +1052,74 @@ function addBezelBolts(
   disposables.push(geometry, material);
 }
 
-function addConveyorTrack(
-  root: Group,
-  disposables: Disposable[],
-) {
-  const curve = new CatmullRomCurve3(
-    [
-      new Vector3(-5.8, -2.65, -0.8),
-      new Vector3(-3.9, -3.55, -0.64),
-      new Vector3(0, -3.82, -0.52),
-      new Vector3(4.3, -3.38, -0.68),
-      new Vector3(5.9, -1.7, -0.85),
-      new Vector3(5.55, 2.35, -1.02),
-      new Vector3(2.7, 3.72, -0.88),
-      new Vector3(-2.7, 3.78, -0.88),
-      new Vector3(-5.6, 2.4, -0.92),
-    ],
-    true,
-    'catmullrom',
-    0.45,
+function createRoundedFramePath() {
+  const halfWidth = PRODUCT_FRAME.width / 2 - PRODUCT_FRAME.trackInset;
+  const halfHeight = PRODUCT_FRAME.height / 2 - PRODUCT_FRAME.trackInset;
+  const radius = PRODUCT_FRAME.cornerRadius - PRODUCT_FRAME.trackInset;
+  const z = PRODUCT_FRAME.trackZ;
+  const path = new CurvePath<Vector3>();
+
+  path.add(
+    new LineCurve3(
+      new Vector3(-halfWidth + radius, halfHeight, z),
+      new Vector3(halfWidth - radius, halfHeight, z),
+    ),
   );
+  path.add(
+    new QuadraticBezierCurve3(
+      new Vector3(halfWidth - radius, halfHeight, z),
+      new Vector3(halfWidth, halfHeight, z),
+      new Vector3(halfWidth, halfHeight - radius, z),
+    ),
+  );
+  path.add(
+    new LineCurve3(
+      new Vector3(halfWidth, halfHeight - radius, z),
+      new Vector3(halfWidth, -halfHeight + radius, z),
+    ),
+  );
+  path.add(
+    new QuadraticBezierCurve3(
+      new Vector3(halfWidth, -halfHeight + radius, z),
+      new Vector3(halfWidth, -halfHeight, z),
+      new Vector3(halfWidth - radius, -halfHeight, z),
+    ),
+  );
+  path.add(
+    new LineCurve3(
+      new Vector3(halfWidth - radius, -halfHeight, z),
+      new Vector3(-halfWidth + radius, -halfHeight, z),
+    ),
+  );
+  path.add(
+    new QuadraticBezierCurve3(
+      new Vector3(-halfWidth + radius, -halfHeight, z),
+      new Vector3(-halfWidth, -halfHeight, z),
+      new Vector3(-halfWidth, -halfHeight + radius, z),
+    ),
+  );
+  path.add(
+    new LineCurve3(
+      new Vector3(-halfWidth, -halfHeight + radius, z),
+      new Vector3(-halfWidth, halfHeight - radius, z),
+    ),
+  );
+  path.add(
+    new QuadraticBezierCurve3(
+      new Vector3(-halfWidth, halfHeight - radius, z),
+      new Vector3(-halfWidth, halfHeight, z),
+      new Vector3(-halfWidth + radius, halfHeight, z),
+    ),
+  );
+
+  return path;
+}
+
+function addConveyorTrack(root: Group, disposables: Disposable[]) {
+  const curve = createRoundedFramePath();
   const railGeometry = new TubeGeometry(
     curve,
-    180,
+    240,
     CONVEYOR_RAIL_RADIUS,
     12,
     true,
@@ -1076,7 +1135,7 @@ function addConveyorTrack(
   rail.receiveShadow = true;
   root.add(rail);
 
-  const glowGeometry = new TubeGeometry(curve, 180, 0.027, 8, true);
+  const glowGeometry = new TubeGeometry(curve, 240, 0.027, 8, true);
   const glowMaterial = new MeshBasicMaterial({
     color: COLORS.accent,
     transparent: true,
@@ -1193,7 +1252,13 @@ function buildProductScene(
   blueLight.position.set(-5.4, -3.6, 3.3);
   scene.add(blueLight);
 
-  const platformGeometry = new RoundedBoxGeometry(17.08, 9.04, 0.38, 8, 0.48);
+  const platformGeometry = new RoundedBoxGeometry(
+    PRODUCT_FRAME.width,
+    PRODUCT_FRAME.height,
+    PRODUCT_FRAME.depth,
+    8,
+    PRODUCT_FRAME.cornerRadius,
+  );
   const platformMaterial = new MeshPhysicalMaterial({
     color: '#245057',
     emissive: '#0b2a2e',
@@ -1208,10 +1273,22 @@ function buildProductScene(
   platform.receiveShadow = true;
   platform.castShadow = true;
   root.add(platform);
-  addBezelBolts(platform, 17.08, 9.04, 0.21, disposables);
+  addBezelBolts(
+    platform,
+    PRODUCT_FRAME.width,
+    PRODUCT_FRAME.height,
+    PRODUCT_FRAME.depth / 2 + 0.02,
+    disposables,
+  );
   disposables.push(platformGeometry, platformMaterial);
 
-  const innerPlatformGeometry = new RoundedBoxGeometry(16.78, 8.74, 0.16, 6, 0.42);
+  const innerPlatformGeometry = new RoundedBoxGeometry(
+    PRODUCT_FRAME.width - PRODUCT_FRAME.innerInset,
+    PRODUCT_FRAME.height - PRODUCT_FRAME.innerInset,
+    PRODUCT_FRAME.innerDepth,
+    6,
+    PRODUCT_FRAME.innerCornerRadius,
+  );
   const innerPlatformMaterial = new MeshPhysicalMaterial({
     color: '#20474c',
     emissive: '#09272b',
@@ -1231,7 +1308,6 @@ function buildProductScene(
   disposables.push(innerPlatformGeometry, innerPlatformMaterial);
 
   const conveyorAssembly = new Group();
-  conveyorAssembly.scale.set(1.27, 1.08, 1);
   root.add(conveyorAssembly);
   const { curve, carriers } = addConveyorTrack(
     conveyorAssembly,
@@ -1382,6 +1458,7 @@ function buildProductScene(
 
   const pointerTarget = new Vector2();
   const pointerCurrent = new Vector2();
+  const pointerRaycaster = new Raycaster();
   let scrollDepth = 0;
   let renderedWidth = 0;
   let renderedHeight = 0;
@@ -1510,6 +1587,8 @@ function buildProductScene(
     clock.stop();
   };
 
+  const resetPointer = () => pointerTarget.set(0, 0);
+
   const handlePointerMove = (event: PointerEvent) => {
     if (event.pointerType === 'touch' || reducedMotion) return;
     const bounds = stage.getBoundingClientRect();
@@ -1517,12 +1596,15 @@ function buildProductScene(
       ((event.clientX - bounds.left) / bounds.width - 0.5) * 2,
       -((event.clientY - bounds.top) / bounds.height - 0.5) * 2,
     );
+    pointerRaycaster.setFromCamera(pointerTarget, camera);
+    if (pointerRaycaster.intersectObject(platform, false).length > 0) {
+      isExpanded = true;
+      return;
+    }
+    isExpanded = false;
+    resetPointer();
   };
 
-  const resetPointer = () => pointerTarget.set(0, 0);
-  const expandPanels = () => {
-    isExpanded = true;
-  };
   const collapsePanels = () => {
     isExpanded = false;
     resetPointer();
@@ -1546,7 +1628,6 @@ function buildProductScene(
   visibilityObserver.observe(stage);
 
   stage.addEventListener('pointermove', handlePointerMove, { passive: true });
-  stage.addEventListener('pointerenter', expandPanels);
   stage.addEventListener('pointerleave', collapsePanels);
   window.addEventListener('scroll', requestScrollDepth, { passive: true });
 
@@ -1567,7 +1648,6 @@ function buildProductScene(
     resizeObserver.disconnect();
     visibilityObserver.disconnect();
     stage.removeEventListener('pointermove', handlePointerMove);
-    stage.removeEventListener('pointerenter', expandPanels);
     stage.removeEventListener('pointerleave', collapsePanels);
     window.removeEventListener('scroll', requestScrollDepth);
     disposables.forEach((disposable) => disposable.dispose());
