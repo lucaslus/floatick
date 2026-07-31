@@ -306,6 +306,19 @@ jobs:
             --notes-file "$RUNNER_TEMP/artifacts/release-notes.md" \
             --latest
 
+      - name: Upload stable website download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_VERSION: ${{ needs.verify.outputs.app_version }}
+        shell: bash
+        run: |
+          versioned_dmg="$RUNNER_TEMP/artifacts/$PRODUCT_NAME-$APP_VERSION-macos-universal.dmg"
+          stable_dmg="$RUNNER_TEMP/artifacts/$PRODUCT_NAME-macos-universal.dmg"
+
+          test -f "$versioned_dmg"
+          cp "$versioned_dmg" "$stable_dmg"
+          gh release upload "$GITHUB_REF_NAME" "$stable_dmg" --clobber
+
       - name: Remove candidate tag
         env:
           GH_TOKEN: ${{ github.token }}

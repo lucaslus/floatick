@@ -1,0 +1,444 @@
+---
+import { siteCopy, type Locale } from '../content/site-copy';
+import {
+  latestDownloadUrl,
+  repositoryUrl,
+} from '../config/site-links';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import DownloadIcon from './DownloadIcon.astro';
+import ProductHero3D from './ProductHero3D.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = siteCopy[locale];
+const isEnglish = locale === 'en';
+const languageHref = isEnglish ? '/zh/' : '/';
+const changelogHref = isEnglish ? '/changelog/' : '/zh/changelog/';
+const featureRequestUrl =
+  'https://github.com/lucaslushuo/floatick/issues/new?labels=enhancement';
+---
+
+<SiteLayout
+  lang={copy.meta.lang}
+  title={copy.meta.title}
+  description={copy.meta.description}
+  canonicalPath={copy.meta.canonicalPath}
+  alternatePath={copy.meta.alternatePath}
+  faqItems={copy.faq.items}
+>
+  <header class="site-header">
+    <nav class="nav shell" aria-label={isEnglish ? 'Primary navigation' : '主导航'}>
+      <a class="brand" href={copy.meta.canonicalPath} aria-label="Floatick home">
+        <img src="/favicon.png" alt="" width="44" height="44" />
+        <span>Floatick</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#features">{copy.nav.features}</a>
+        <a href="#workflow">{copy.nav.workflow}</a>
+        <a href="#privacy">{copy.nav.privacy}</a>
+        <a href={changelogHref}>{copy.nav.changelog}</a>
+      </div>
+
+      <div class="nav-actions">
+        <a
+          class="github-link"
+          href={repositoryUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={isEnglish ? 'View Floatick on GitHub' : '在 GitHub 查看 Floatick'}
+        >
+          <span class="github-mark" aria-hidden="true"></span>
+        </a>
+        <a
+          class="language-link"
+          href={languageHref}
+          lang={isEnglish ? 'zh-CN' : 'en'}
+          hreflang={isEnglish ? 'zh-CN' : 'en'}
+          aria-label={copy.nav.languageLabel}
+          title={copy.nav.languageLabel}
+        >
+          <span class="language-mark" aria-hidden="true"></span>
+          <span>{isEnglish ? '中文' : 'EN'}</span>
+        </a>
+        <a
+          class="button button-compact button-download"
+          href={latestDownloadUrl}
+        >
+          <DownloadIcon />
+          {copy.nav.download}
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero shell">
+      <div class="hero-intro">
+        <div class="hero-app-icon-stage" aria-hidden="true">
+          <div class="hero-app-icon">
+            <span class="hero-app-icon-depth"></span>
+            <span class="hero-app-icon-face">
+              <svg viewBox="0 0 256 256" role="presentation">
+                <path
+                  d="M48 126c17 13 30 31 47 47 19-19 40-44 62-64"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="21"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+                <path
+                  d="M98 126c17 17 31 34 47 47 25-28 51-57 82-88"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="21"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="hero-copy">
+          <p class="eyebrow">{copy.hero.eyebrow}</p>
+          <h1>
+            <span class="hero-title-base">{copy.hero.titleBefore}</span>
+            <span class="hero-title-accent">{copy.hero.titleAccent}</span>
+          </h1>
+          <p class="hero-body">{copy.hero.body}</p>
+          <div class="hero-actions">
+            <a
+              class="button button-primary button-download"
+              href={latestDownloadUrl}
+            >
+              <DownloadIcon />
+              {copy.hero.download}
+            </a>
+            <a
+              class="button button-secondary"
+              href={repositoryUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {copy.hero.github}
+            </a>
+          </div>
+          <p class="compatibility">{copy.hero.compatibility}</p>
+        </div>
+      </div>
+
+      <ProductHero3D locale={locale} />
+    </section>
+
+    <section
+      class="proof shell"
+      aria-label={isEnglish ? 'Product facts' : '产品信息'}
+      data-reveal
+    >
+      {
+        copy.proof.map((item, index) => (
+          <div
+            class="proof-item"
+            data-reveal
+            style={`--reveal-delay: ${index * 70}ms`}
+          >
+            <strong>{item.value}</strong>
+            <span>{item.label}</span>
+          </div>
+        ))
+      }
+    </section>
+
+    <section class="section shell" id="features">
+      <div class="section-heading" data-reveal>
+        <p class="eyebrow">{copy.features.eyebrow}</p>
+        <h2>{copy.features.title}</h2>
+        <p>{copy.features.body}</p>
+      </div>
+
+      <div class="feature-grid">
+        {
+          copy.features.items.map((feature, index) => (
+            <article
+              class="feature-card"
+              data-reveal
+              style={`--reveal-delay: ${(index % 3) * 70}ms`}
+            >
+              <span class="feature-number">{feature.number}</span>
+              <h3>{feature.title}</h3>
+              <p>{feature.body}</p>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section workflow-section" id="workflow">
+      <div class="shell">
+        <div class="section-heading section-heading-centered" data-reveal>
+          <p class="eyebrow">{copy.workflow.eyebrow}</p>
+          <h2>{copy.workflow.title}</h2>
+          <p>{copy.workflow.body}</p>
+        </div>
+
+        <ol class="workflow-list">
+          {
+            copy.workflow.steps.map((step, index) => (
+              <li data-reveal style={`--reveal-delay: ${index * 80}ms`}>
+                <div class="step-index">{String(index + 1).padStart(2, '0')}</div>
+                <div>
+                  <p class="step-label">{step.label}</p>
+                  <h3>{step.title}</h3>
+                  <p>{step.body}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </section>
+
+    <section class="section agent-section shell">
+      <div class="agent-copy" data-reveal>
+        <p class="eyebrow">{copy.agent.eyebrow}</p>
+        <h2>{copy.agent.title}</h2>
+        <p>{copy.agent.body}</p>
+      </div>
+
+      <div class="handoff-demo" data-reveal>
+        <article class="task-card">
+          <p class="demo-label">{copy.agent.sourceLabel}</p>
+          <div class="task-title">
+            <span class="checkbox" aria-hidden="true"></span>
+            <h3>{copy.agent.sourceTitle}</h3>
+          </div>
+          <p>{copy.agent.sourceContent}</p>
+          <div class="tag-row" aria-hidden="true">
+            {
+              copy.agent.sourceTags.map((tag) => (
+                <span>{tag}</span>
+              ))
+            }
+          </div>
+        </article>
+
+        <div class="copy-flow" aria-hidden="true">
+          <span></span>
+        </div>
+
+        <article class="markdown-card">
+          <div class="markdown-header">
+            <p class="demo-label">{copy.agent.resultLabel}</p>
+            <span>MD</span>
+          </div>
+          <pre>{copy.agent.copied}</pre>
+        </article>
+      </div>
+    </section>
+
+    <section class="section privacy-section" id="privacy">
+      <div class="shell privacy-grid">
+        <div data-reveal>
+          <p class="eyebrow">{copy.privacy.eyebrow}</p>
+          <h2>{copy.privacy.title}</h2>
+          <p class="privacy-body">{copy.privacy.body}</p>
+        </div>
+
+        <div class="privacy-card" data-reveal>
+          <p class="path-label">{copy.privacy.pathLabel}</p>
+          <code>~/.floatick</code>
+          <ul>
+            {
+              copy.privacy.points.map((point) => (
+                <li>{point}</li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section updates-section shell">
+      <div class="updates-copy" data-reveal>
+        <p class="eyebrow">{copy.updates.eyebrow}</p>
+        <h2>{copy.updates.title}</h2>
+        <p>{copy.updates.body}</p>
+        <a class="text-link" href={changelogHref}>
+          {copy.updates.viewAll}
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+
+      <article class="latest-release-card" data-reveal>
+        <div class="release-meta">
+          <span>{copy.updates.latestLabel}</span>
+          <time datetime="2026-07-29">{copy.updates.date}</time>
+        </div>
+        <strong>{copy.updates.version}</strong>
+        <ul>
+          {
+            copy.updates.highlights.map((highlight) => (
+              <li>{highlight}</li>
+            ))
+          }
+        </ul>
+      </article>
+    </section>
+
+    <section class="section community-section">
+      <div class="shell community-grid">
+        <div data-reveal>
+          <p class="eyebrow">{copy.community.eyebrow}</p>
+          <h2>{copy.community.title}</h2>
+          <p class="community-body">{copy.community.body}</p>
+          <div class="hero-actions">
+            <a
+              class="button button-primary"
+              href={repositoryUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {copy.community.contribute}
+            </a>
+            <a
+              class="button button-secondary"
+              href={featureRequestUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {copy.community.suggest}
+            </a>
+          </div>
+        </div>
+
+        <ol class="community-points">
+          {
+            copy.community.points.map((point, index) => (
+              <li data-reveal style={`--reveal-delay: ${index * 80}ms`}>
+                <span>{String(index + 1).padStart(2, '0')}</span>
+                <p>{point}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </section>
+
+    <section class="section faq-section shell" id="faq">
+      <div class="section-heading" data-reveal>
+        <p class="eyebrow">{copy.faq.eyebrow}</p>
+        <h2>{copy.faq.title}</h2>
+        <p>{copy.faq.body}</p>
+      </div>
+
+      <div class="faq-list">
+        {
+          copy.faq.items.map((item, index) => (
+            <details
+              class="faq-item"
+              data-reveal
+              style={`--reveal-delay: ${index * 60}ms`}
+            >
+              <summary>
+                <span>{item.question}</span>
+                <span class="faq-toggle" aria-hidden="true">+</span>
+              </summary>
+              <p>{item.answer}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="final-cta shell" data-reveal>
+      <p class="eyebrow">{copy.finalCta.eyebrow}</p>
+      <h2>{copy.finalCta.title}</h2>
+      <p>{copy.finalCta.body}</p>
+      <div class="hero-actions final-actions">
+        <a
+          class="button button-primary button-download"
+          href={latestDownloadUrl}
+        >
+          <DownloadIcon />
+          {copy.finalCta.download}
+        </a>
+        <a
+          class="button button-secondary"
+          href={repositoryUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {copy.finalCta.github}
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-content">
+      <div class="footer-brand">
+        <img src="/favicon.png" alt="" width="42" height="42" />
+        <div>
+          <strong>Floatick</strong>
+          <p>{copy.footer.tagline}</p>
+        </div>
+      </div>
+
+      <div class="footer-links">
+        <a href={repositoryUrl} target="_blank" rel="noreferrer">
+          {copy.footer.source}
+        </a>
+        <a href={changelogHref}>
+          {copy.footer.releases}
+        </a>
+        <a
+          href="https://github.com/lucaslushuo/floatick/blob/main/LICENSE"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {copy.footer.license}
+        </a>
+        <a href={languageHref} lang={isEnglish ? 'zh-CN' : 'en'}>
+          {copy.footer.language}
+        </a>
+      </div>
+    </div>
+  </footer>
+</SiteLayout>
+
+<script>
+  const prefersReducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)',
+  ).matches;
+
+  const revealElements = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-reveal]'),
+  );
+
+  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+    revealElements.forEach((element) => element.classList.add('is-visible'));
+  } else {
+    document.documentElement.classList.add('motion-ready');
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          revealObserver.unobserve(entry.target);
+        });
+      },
+      {
+        rootMargin: '0px 0px -8% 0px',
+        threshold: 0.12,
+      },
+    );
+
+    revealElements.forEach((element) => revealObserver.observe(element));
+  }
+
+</script>
