@@ -206,6 +206,16 @@ void main() {
     expect(find.text('每天检查一次，安装前会询问你'), findsNothing);
     expect(find.text('自动检查'), findsOneWidget);
     expect(find.text('立即检查'), findsOneWidget);
+    final collapseWhenClickingOutsideText = tester.widget<Text>(
+      find.text('点击外部时收起'),
+    );
+    expect(collapseWhenClickingOutsideText.maxLines, 2);
+    expect(collapseWhenClickingOutsideText.overflow, TextOverflow.ellipsis);
+    expect(collapseWhenClickingOutsideText.style?.fontSize, 11);
+    final automaticUpdateChecksText = tester.widget<Text>(find.text('自动检查'));
+    expect(automaticUpdateChecksText.maxLines, 2);
+    expect(automaticUpdateChecksText.overflow, TextOverflow.ellipsis);
+    expect(automaticUpdateChecksText.style?.fontSize, 11);
     expect(find.byType(Switch), findsNothing);
     expect(
       tester.getSize(find.byKey(const Key('automatic-update-toggle'))),

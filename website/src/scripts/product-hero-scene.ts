@@ -94,8 +94,32 @@ const TEXTURE_ANISOTROPY = 16;
 const PANEL_FACE_INSET = 0.018;
 const PANEL_FACE_DEPTH_OFFSET = 0.004;
 const PANEL_FACE_CURVE_SEGMENTS = 16;
-const DESKTOP_RENDER_PIXEL_RATIO = 2;
-const COMPACT_RENDER_PIXEL_RATIO = 1.35;
+const MAX_RENDER_PIXEL_RATIO = 2;
+const COMPACT_VIEWPORT_MAX_WIDTH = 720;
+const NARROW_VIEWPORT_MAX_WIDTH = 560;
+const MEDIUM_VIEWPORT_MAX_WIDTH = 760;
+// Small screens use a close-up composition instead of shrinking the full
+// landscape frame until its product UI becomes unreadable.
+const SCENE_VIEWPORT_LAYOUTS = {
+  narrow: {
+    cameraFieldOfView: 34,
+    cameraDistance: 19.8,
+    rootScale: 0.94,
+    showBackdrop: false,
+  },
+  compact: {
+    cameraFieldOfView: 31,
+    cameraDistance: 20.3,
+    rootScale: 0.86,
+    showBackdrop: false,
+  },
+  desktop: {
+    cameraFieldOfView: 31,
+    cameraDistance: 20.8,
+    rootScale: 0.82,
+    showBackdrop: true,
+  },
+} as const;
 const CONVEYOR_RAIL_RADIUS = 0.105;
 const CONVEYOR_CARRIER_DEPTH = 0.16;
 const CONVEYOR_CARRIER_GAP = 0.045;
@@ -144,6 +168,16 @@ const PANEL_LAYOUT = {
 } as const;
 
 const COIN_BASE_POSITION = new Vector3(3.52, -3.22, 2.16);
+
+function sceneViewportLayout(width: number) {
+  if (width < NARROW_VIEWPORT_MAX_WIDTH) {
+    return SCENE_VIEWPORT_LAYOUTS.narrow;
+  }
+  if (width < MEDIUM_VIEWPORT_MAX_WIDTH) {
+    return SCENE_VIEWPORT_LAYOUTS.compact;
+  }
+  return SCENE_VIEWPORT_LAYOUTS.desktop;
+}
 
 function dataValue(stage: HTMLElement, key: keyof DOMStringMap, fallback: string) {
   const value = stage.dataset[key];
@@ -1198,12 +1232,15 @@ function buildProductScene(
   const reducedMotion = window.matchMedia(
     '(prefers-reduced-motion: reduce)',
   ).matches;
-  const compactViewport = window.matchMedia('(max-width: 720px)').matches;
+  const compactViewport = window.matchMedia(
+    `(max-width: ${COMPACT_VIEWPORT_MAX_WIDTH}px)`,
+  ).matches;
+  const initialViewportLayout = sceneViewportLayout(stage.clientWidth);
   const disposables: Disposable[] = [];
 
   const renderer = new WebGLRenderer({
     canvas,
-    antialias: !compactViewport,
+    antialias: true,
     alpha: true,
     powerPreference: 'high-performance',
   });
@@ -1213,24 +1250,24 @@ function buildProductScene(
   renderer.shadowMap.enabled = !compactViewport;
   renderer.shadowMap.type = PCFSoftShadowMap;
   renderer.setPixelRatio(
-    Math.min(
-      window.devicePixelRatio,
-      compactViewport
-        ? COMPACT_RENDER_PIXEL_RATIO
-        : DESKTOP_RENDER_PIXEL_RATIO,
-    ),
+    Math.min(window.devicePixelRatio, MAX_RENDER_PIXEL_RATIO),
   );
 
   const scene = new Scene();
   scene.fog = new FogExp2('#071113', 0.018);
 
-  const camera = new PerspectiveCamera(31, 1, 0.1, 50);
-  camera.position.set(0, 0.25, compactViewport ? 21.8 : 20.8);
+  const camera = new PerspectiveCamera(
+    initialViewportLayout.cameraFieldOfView,
+    1,
+    0.1,
+    50,
+  );
+  camera.position.set(0, 0.25, initialViewportLayout.cameraDistance);
   camera.lookAt(0, 0, 0);
 
   const root = new Group();
   root.rotation.set(-0.035, -0.055, -0.018);
-  root.scale.setScalar(compactViewport ? 0.67 : 0.82);
+  root.scale.setScalar(initialViewportLayout.rootScale);
   scene.add(root);
 
   const ambient = new HemisphereLight('#c5fff9', '#17393d', 1.68);
@@ -1272,6 +1309,7 @@ function buildProductScene(
   platform.position.z = -1.36;
   platform.receiveShadow = true;
   platform.castShadow = true;
+  platform.visible = initialViewportLayout.showBackdrop;
   root.add(platform);
   addBezelBolts(
     platform,
@@ -1304,10 +1342,12 @@ function buildProductScene(
   );
   innerPlatform.position.z = -1.08;
   innerPlatform.receiveShadow = true;
+  innerPlatform.visible = initialViewportLayout.showBackdrop;
   root.add(innerPlatform);
   disposables.push(innerPlatformGeometry, innerPlatformMaterial);
 
   const conveyorAssembly = new Group();
+  conveyorAssembly.visible = initialViewportLayout.showBackdrop;
   root.add(conveyorAssembly);
   const { curve, carriers } = addConveyorTrack(
     conveyorAssembly,
@@ -1449,6 +1489,7 @@ function buildProductScene(
   );
   contactShadow.rotation.x = -Math.PI / 2;
   contactShadow.position.set(0, -4.18, -0.16);
+  contactShadow.visible = initialViewportLayout.showBackdrop;
   scene.add(contactShadow);
   disposables.push(
     contactShadowTexture,
@@ -1482,10 +1523,15 @@ function buildProductScene(
     renderedWidth = width;
     renderedHeight = height;
     renderer.setSize(width, height, false);
+    const viewportLayout = sceneViewportLayout(width);
     camera.aspect = width / height;
-    camera.fov = width < 560 ? 40 : 31;
-    camera.position.z = width < 560 ? 21.8 : 20.8;
-    root.scale.setScalar(width < 560 ? 0.67 : width < 760 ? 0.76 : 0.82);
+    camera.fov = viewportLayout.cameraFieldOfView;
+    camera.position.z = viewportLayout.cameraDistance;
+    root.scale.setScalar(viewportLayout.rootScale);
+    platform.visible = viewportLayout.showBackdrop;
+    innerPlatform.visible = viewportLayout.showBackdrop;
+    conveyorAssembly.visible = viewportLayout.showBackdrop;
+    contactShadow.visible = viewportLayout.showBackdrop;
     camera.updateProjectionMatrix();
     render();
   };
@@ -1561,14 +1607,16 @@ function buildProductScene(
     coinAssembly.rotation.z =
       -0.12 + Math.sin(elapsed * 0.64) * 0.08;
 
-    carriers.forEach((carrier, index) => {
-      const progress = (elapsed * 0.025 + index / carriers.length) % 1;
-      const position = curve.getPointAt(progress);
-      const tangent = curve.getTangentAt(progress);
-      carrier.position.copy(position);
-      carrier.position.z += CONVEYOR_CARRIER_Z_OFFSET;
-      carrier.rotation.set(0, 0, Math.atan2(tangent.y, tangent.x));
-    });
+    if (conveyorAssembly.visible) {
+      carriers.forEach((carrier, index) => {
+        const progress = (elapsed * 0.025 + index / carriers.length) % 1;
+        const position = curve.getPointAt(progress);
+        const tangent = curve.getTangentAt(progress);
+        carrier.position.copy(position);
+        carrier.position.z += CONVEYOR_CARRIER_Z_OFFSET;
+        carrier.rotation.set(0, 0, Math.atan2(tangent.y, tangent.x));
+      });
+    }
 
     render();
     animationFrame = window.requestAnimationFrame(animate);
@@ -1591,6 +1639,11 @@ function buildProductScene(
 
   const handlePointerMove = (event: PointerEvent) => {
     if (event.pointerType === 'touch' || reducedMotion) return;
+    if (!platform.visible) {
+      isExpanded = false;
+      resetPointer();
+      return;
+    }
     const bounds = stage.getBoundingClientRect();
     pointerTarget.set(
       ((event.clientX - bounds.left) / bounds.width - 0.5) * 2,
