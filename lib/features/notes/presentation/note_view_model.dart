@@ -11,11 +11,10 @@ typedef NoteIdGenerator = String Function();
 
 class NoteViewModel extends ChangeNotifier {
   NoteViewModel({
-    required NoteRepository repository,
+    required this._repository,
     NoteClock? clock,
     NoteIdGenerator? idGenerator,
-  }) : _repository = repository,
-       _clock = clock ?? DateTime.now,
+  }) : _clock = clock ?? DateTime.now,
        _idGenerator = idGenerator ?? _generateUuidV4;
 
   static const String untitledFallback = 'Untitled note';
