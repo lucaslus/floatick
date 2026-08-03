@@ -20,7 +20,8 @@ void main() {
     );
 
     expect(find.byKey(const Key('note-document-editor')), findsOneWidget);
-    expect(find.text('标题'), findsNothing);
+    expect(find.text('标题'), findsOneWidget);
+    expect(find.text('标题（可选）'), findsNothing);
     expect(find.text('内容'), findsNothing);
     expect(
       find.byKey(const Key('floatick-document-title-divider')),

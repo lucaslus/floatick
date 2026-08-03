@@ -361,7 +361,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get todoTitleLabel => '标题';
 
   @override
-  String get todoTitleFieldHint => '标题（可选）';
+  String get todoTitleFieldHint => '标题';
 
   @override
   String get todoContentLabel => '内容';
@@ -522,7 +522,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get closeNoteDrawerTooltip => '关闭笔记抽屉';
 
   @override
-  String get noteTitleOptionalHint => '标题（可选）';
+  String get noteTitleHint => '标题';
 
   @override
   String get noteTitleLabel => '标题';

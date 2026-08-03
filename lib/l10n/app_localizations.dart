@@ -767,7 +767,7 @@ abstract class AppLocalizations {
   /// No description provided for @todoTitleFieldHint.
   ///
   /// In en, this message translates to:
-  /// **'Title (optional)'**
+  /// **'Title'**
   String get todoTitleFieldHint;
 
   /// No description provided for @todoContentLabel.
@@ -1082,11 +1082,11 @@ abstract class AppLocalizations {
   /// **'Close note drawer'**
   String get closeNoteDrawerTooltip;
 
-  /// No description provided for @noteTitleOptionalHint.
+  /// No description provided for @noteTitleHint.
   ///
   /// In en, this message translates to:
-  /// **'Title (optional)'**
-  String get noteTitleOptionalHint;
+  /// **'Title'**
+  String get noteTitleHint;
 
   /// No description provided for @noteTitleLabel.
   ///

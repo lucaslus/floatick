@@ -71,6 +71,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('todo-document-editor')), findsOneWidget);
+    expect(find.text('Title'), findsOneWidget);
+    expect(find.text('Title (optional)'), findsNothing);
     expect(find.byKey(const Key('todo-editor-footer')), findsOneWidget);
     expect(find.text('Tags'), findsNothing);
     expect(

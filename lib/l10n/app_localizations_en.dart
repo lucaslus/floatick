@@ -389,7 +389,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoTitleLabel => 'Title';
 
   @override
-  String get todoTitleFieldHint => 'Title (optional)';
+  String get todoTitleFieldHint => 'Title';
 
   @override
   String get todoContentLabel => 'Content';
@@ -557,7 +557,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get closeNoteDrawerTooltip => 'Close note drawer';
 
   @override
-  String get noteTitleOptionalHint => 'Title (optional)';
+  String get noteTitleHint => 'Title';
 
   @override
   String get noteTitleLabel => 'Title';

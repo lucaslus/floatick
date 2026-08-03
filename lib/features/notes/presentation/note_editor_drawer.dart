@@ -277,7 +277,7 @@ class NoteEditorDrawerState extends State<NoteEditorDrawer> {
                       contentController: _contentController,
                       titleFocusNode: _titleFocusNode,
                       contentFocusNode: _contentFocusNode,
-                      titleHint: context.l10n.noteTitleOptionalHint,
+                      titleHint: context.l10n.noteTitleHint,
                       contentHint: context.l10n.noteContentHint,
                       titleSemanticsLabel: context.l10n.noteTitleLabel,
                       contentSemanticsLabel: context.l10n.noteContentLabel,
