@@ -389,16 +389,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoTitleLabel => 'Title';
 
   @override
-  String get todoTitleFieldHint => 'What needs to be done?';
+  String get todoTitleFieldHint => 'Title (optional)';
 
   @override
   String get todoContentLabel => 'Content';
 
   @override
   String get todoContentFieldHint => 'Add notes with Markdown…';
-
-  @override
-  String get markdownSupportedHint => 'Markdown supported · ⌘ Return saves';
 
   @override
   String get markdownWriteLabel => 'Write';
@@ -438,7 +435,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get markdownImageBlockedMessage =>
-      'Images are not displayed in todo details.';
+      'Images are not displayed in previews.';
 
   @override
   String get viewTodoDetailsTooltip => 'View details';
@@ -472,9 +469,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get markCompleteTooltip => 'Mark complete';
-
-  @override
-  String get todoTitleRequiredHint => 'Todo title cannot be empty';
 
   @override
   String get editTooltip => 'Edit';
@@ -526,6 +520,105 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyTodosMessage => 'Add a new item above whenever you like';
+
+  @override
+  String get todoTabLabel => 'Todos';
+
+  @override
+  String get notesTabLabel => 'Notes';
+
+  @override
+  String noteCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes',
+      one: '1 note',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get searchNotesHint => 'Search notes';
+
+  @override
+  String get searchNoteArchiveHint => 'Search note archive';
+
+  @override
+  String get newNoteAction => 'New';
+
+  @override
+  String get newNoteDrawerTitle => 'New note';
+
+  @override
+  String get editNoteDrawerTitle => 'Edit note';
+
+  @override
+  String get closeNoteDrawerTooltip => 'Close note drawer';
+
+  @override
+  String get noteTitleOptionalHint => 'Title (optional)';
+
+  @override
+  String get noteTitleLabel => 'Title';
+
+  @override
+  String get noteContentLabel => 'Content';
+
+  @override
+  String get noteContentHint => 'Capture it now, organize it later…';
+
+  @override
+  String get noteAutoSaving => 'Saving automatically…';
+
+  @override
+  String get noteAutoSaved => 'Saved automatically';
+
+  @override
+  String get noteAutoSaveFailed => 'Autosave failed. Try again.';
+
+  @override
+  String get noteEmptyDraftHint => 'Blank notes are not saved';
+
+  @override
+  String get finishNoteAction => 'Done';
+
+  @override
+  String get pinnedNotesLabel => 'Pinned';
+
+  @override
+  String get recentNotesLabel => 'Recently edited';
+
+  @override
+  String get noteWithoutContent => 'No content yet';
+
+  @override
+  String get pinNoteTooltip => 'Pin note';
+
+  @override
+  String get unpinNoteTooltip => 'Unpin note';
+
+  @override
+  String get archiveNoteTooltip => 'Archive note';
+
+  @override
+  String get restoreNoteTooltip => 'Restore note';
+
+  @override
+  String get deleteNoteTooltip => 'Delete note permanently';
+
+  @override
+  String get emptyNotesTitle => 'Write your first note';
+
+  @override
+  String get emptyNotesMessage =>
+      'Capture ideas, daily updates, and useful tips here';
+
+  @override
+  String get emptyNoteArchiveTitle => 'Note archive is empty';
+
+  @override
+  String get emptyNoteArchiveMessage => 'Archived notes will appear here';
 
   @override
   String get todayLabel => 'Today';

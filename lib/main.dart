@@ -5,6 +5,8 @@ import 'package:multiview_desktop/multiview_desktop.dart';
 
 import 'app/floatick_app.dart';
 import 'core/platform/window_bridge.dart';
+import 'features/notes/data/note_repository.dart';
+import 'features/notes/presentation/note_view_model.dart';
 import 'features/settings/data/login_item_repository.dart';
 import 'features/settings/data/settings_repository.dart';
 import 'features/settings/presentation/settings_view_model.dart';
@@ -30,6 +32,7 @@ Future<void> main() async {
   }
 
   final todoRepository = LocalTodoRepository();
+  final noteController = NoteViewModel(repository: LocalNoteRepository());
   final tagRepository = LocalTagRepository();
   final controller = TodoViewModel(
     todoRepository: todoRepository,
@@ -52,6 +55,7 @@ Future<void> main() async {
   );
   await Future.wait<void>(<Future<void>>[
     controller.load(),
+    noteController.load(),
     settingsController.load(),
     updateController.load(),
     stickyBoardController.load(),
@@ -65,6 +69,7 @@ Future<void> main() async {
   runMultiApp(
     home: (context, viewId) => FloatickApp(
       controller: controller,
+      noteController: noteController,
       settingsController: settingsController,
       updateController: updateController,
       stickyBoardController: stickyBoardController,

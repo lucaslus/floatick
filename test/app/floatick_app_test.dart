@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:floatick/app/floatick_app.dart';
 import 'package:floatick/core/platform/window_bridge.dart';
 import 'package:floatick/core/storage/storage_failure.dart';
+import 'package:floatick/features/notes/data/note_repository.dart';
+import 'package:floatick/features/notes/domain/note_item.dart';
+import 'package:floatick/features/notes/presentation/note_view_model.dart';
 import 'package:floatick/features/settings/data/login_item_repository.dart';
 import 'package:floatick/features/settings/data/settings_repository.dart';
 import 'package:floatick/features/settings/domain/app_settings.dart';
@@ -46,6 +49,12 @@ void main() {
       clock: () => DateTime.utc(2026, 7, 23, 8),
       idGenerator: () => 'new-todo',
     );
+    final noteRepository = _WidgetTestNoteRepository();
+    final noteController = NoteViewModel(
+      repository: noteRepository,
+      clock: () => DateTime.utc(2026, 7, 23, 8),
+      idGenerator: () => 'new-note',
+    );
     final windowBridge = _WidgetTestWindowBridge();
     final settingsRepository = _WidgetTestSettingsRepository();
     final loginItemRepository = _WidgetTestLoginItemRepository();
@@ -66,6 +75,7 @@ void main() {
       windowBridge: windowBridge,
     );
     await controller.load();
+    await noteController.load();
     await settingsController.load();
     await updateController.load();
     await stickyBoardController.load();
@@ -73,6 +83,7 @@ void main() {
     await tester.pumpWidget(
       FloatickApp(
         controller: controller,
+        noteController: noteController,
         settingsController: settingsController,
         updateController: updateController,
         stickyBoardController: stickyBoardController,
@@ -172,6 +183,36 @@ void main() {
     expect(find.byKey(const Key('sticky-board-drawer-slide')), findsNothing);
     expect(find.byKey(const Key('todo-drawer-slide')), findsNothing);
     expect(find.byKey(const Key('todo-context-scrim')), findsNothing);
+
+    expect(find.byKey(const Key('todo-tab')), findsOneWidget);
+    expect(find.byKey(const Key('note-tab')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('note-tab')));
+    await tester.pumpAndSettle();
+    expect(find.text('搜索笔记'), findsOneWidget);
+    expect(find.byKey(const Key('tag-filter-button')), findsOneWidget);
+    expect(find.byKey(const Key('add-note-button')), findsOneWidget);
+    expect(find.text('写下第一条笔记'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('add-note-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('note-editor-drawer')), findsOneWidget);
+    expect(find.byKey(const Key('note-document-editor')), findsOneWidget);
+    expect(find.byKey(const Key('note-template-daily')), findsNothing);
+    expect(find.byKey(const Key('note-editor-tag-button')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('note-editor-tag-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tag-assignment-drawer')), findsOneWidget);
+    expect(find.byKey(const Key('note-editor-drawer')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tag-assignment-close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('note-document-editor')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('close-note-editor')));
+    await tester.pumpAndSettle();
+    expect(noteRepository.savedItems, isEmpty);
+
+    await tester.tap(find.byKey(const Key('todo-tab')));
+    await tester.pumpAndSettle();
+    expect(find.text('搜索待办'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('settings-button')));
     await tester.pumpAndSettle();
@@ -695,7 +736,7 @@ void main() {
     );
     expect(
       tester
-          .widget<TextFormField>(find.byKey(const Key('todo-title-field')))
+          .widget<TextField>(find.byKey(const Key('todo-title-field')))
           .controller
           ?.text,
       'Tagged task',
@@ -1267,7 +1308,7 @@ void main() {
     );
     expect(
       tester
-          .widget<TextFormField>(find.byKey(const Key('todo-title-field')))
+          .widget<TextField>(find.byKey(const Key('todo-title-field')))
           .controller
           ?.text,
       'Review the launch checklist',
@@ -1615,6 +1656,21 @@ class _WidgetTestLoginItemRepository implements LoginItemRepository {
         (enabled ? LoginItemStatus.enabled : LoginItemStatus.disabled);
     nextStatus = null;
     return status;
+  }
+}
+
+class _WidgetTestNoteRepository implements NoteRepository {
+  List<NoteItem> savedItems = <NoteItem>[];
+
+  @override
+  String get storagePath => '/tmp/floatick-widget-test/notes.json';
+
+  @override
+  Future<List<NoteItem>> load() async => List<NoteItem>.of(savedItems);
+
+  @override
+  Future<void> save(List<NoteItem> items) async {
+    savedItems = List<NoteItem>.of(items);
   }
 }
 

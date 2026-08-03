@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../core/platform/window_bridge.dart';
 import '../core/ui/floatick_surface_metrics.dart';
+import '../features/notes/presentation/note_view_model.dart';
 import '../features/settings/domain/app_settings.dart';
 import '../features/settings/presentation/settings_view_model.dart';
 import '../features/sticky_boards/presentation/sticky_board_view_model.dart';
@@ -18,6 +19,7 @@ import 'theme/floatick_theme.dart';
 class FloatickApp extends StatelessWidget {
   const FloatickApp({
     required this.controller,
+    this.noteController,
     required this.settingsController,
     required this.updateController,
     required this.stickyBoardController,
@@ -28,6 +30,7 @@ class FloatickApp extends StatelessWidget {
   });
 
   final TodoViewModel controller;
+  final NoteViewModel? noteController;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
   final StickyBoardViewModel stickyBoardController;
@@ -61,6 +64,7 @@ class FloatickApp extends StatelessWidget {
           },
           home: _FloatickShell(
             controller: controller,
+            noteController: noteController,
             settingsController: settingsController,
             updateController: updateController,
             stickyBoardController: stickyBoardController,
@@ -76,6 +80,7 @@ class FloatickApp extends StatelessWidget {
 class _FloatickShell extends StatefulWidget {
   const _FloatickShell({
     required this.controller,
+    required this.noteController,
     required this.settingsController,
     required this.updateController,
     required this.stickyBoardController,
@@ -84,6 +89,7 @@ class _FloatickShell extends StatefulWidget {
   });
 
   final TodoViewModel controller;
+  final NoteViewModel? noteController;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
   final StickyBoardViewModel stickyBoardController;
@@ -470,6 +476,7 @@ class _FloatickShellState extends State<_FloatickShell> {
                           visible: _panelTooltipsEnabled,
                           child: TodoPanel(
                             controller: widget.controller,
+                            noteController: widget.noteController,
                             settingsController: widget.settingsController,
                             updateController: widget.updateController,
                             stickyBoardController: widget.stickyBoardController,

@@ -66,6 +66,29 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(
+      find.byKey(const Key('floatick-editor-mode-switch')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('todo-document-editor')), findsOneWidget);
+    expect(find.byKey(const Key('todo-editor-footer')), findsOneWidget);
+    expect(find.text('Tags'), findsNothing);
+    expect(
+      tester.getTopLeft(find.byKey(const Key('todo-editor-tag-button'))).dx,
+      lessThan(
+        tester
+            .getTopLeft(find.byKey(const Key('floatick-editor-mode-switch')))
+            .dx,
+      ),
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('todo-title-field')))
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
+
     await tester.enterText(
       find.byKey(const Key('todo-title-field')),
       'Write release notes',
@@ -78,6 +101,59 @@ void main() {
     expect(didFinishSaving, isFalse);
     expect(find.text("Couldn't save this todo."), findsOneWidget);
     expect(find.byKey(const Key('todo-title-field')), findsOneWidget);
+  });
+
+  testWidgets('create drawer accepts a content-only todo', (
+    WidgetTester tester,
+  ) async {
+    final closeFocusNode = FocusNode();
+    addTearDown(closeFocusNode.dispose);
+    String? savedTitle;
+    String? savedContent;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 440,
+            height: 520,
+            child: TodoEditorDrawer(
+              mode: TodoEditorDrawerMode.create,
+              item: null,
+              availableTags: const <TodoTag>[],
+              originalAssignedTagIds: const <String>[],
+              assignedTagIds: const <String>[],
+              isOpen: true,
+              onClose: () {},
+              onEdit: () {},
+              onOpenTagAssignment: () {},
+              onSave: (title, content, tagIds) async {
+                savedTitle = title;
+                savedContent = content;
+                return true;
+              },
+              onSaved: () {},
+              closeFocusNode: closeFocusNode,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('todo-content-field')),
+      'Capture this without stopping',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('save-todo-details')));
+    await tester.pumpAndSettle();
+
+    expect(savedTitle, isEmpty);
+    expect(savedContent, 'Capture this without stopping');
   });
 
   testWidgets('create drawer saves selected tags with the todo', (
