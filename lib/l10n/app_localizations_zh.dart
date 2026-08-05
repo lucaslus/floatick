@@ -436,6 +436,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incompleteStatus => '未完成';
 
   @override
+  String get doingStatus => '进行中';
+
+  @override
+  String get startDoingTooltip => '开始进行';
+
+  @override
+  String get stopDoingTooltip => '退回待办';
+
+  @override
   String get markIncompleteTooltip => '标记为未完成';
 
   @override

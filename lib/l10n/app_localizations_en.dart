@@ -465,6 +465,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incompleteStatus => 'Incomplete';
 
   @override
+  String get doingStatus => 'Doing';
+
+  @override
+  String get startDoingTooltip => 'Start doing';
+
+  @override
+  String get stopDoingTooltip => 'Return to todo';
+
+  @override
   String get markIncompleteTooltip => 'Mark incomplete';
 
   @override

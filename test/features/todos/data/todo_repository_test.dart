@@ -41,6 +41,7 @@ void main() {
       title: 'Finish the Flutter shell',
       content: '## Notes\n\n- Keep it **fast**.',
       createdAt: DateTime.utc(2026, 7, 23, 6, 30),
+      startedAt: DateTime.utc(2026, 7, 23, 6, 45),
       completedAt: DateTime.utc(2026, 7, 23, 7),
     );
 
@@ -55,6 +56,7 @@ void main() {
         'title': 'Finish the Flutter shell',
         'content': '## Notes\n\n- Keep it **fast**.',
         'createdAt': '2026-07-23T06:30:00.000Z',
+        'startedAt': '2026-07-23T06:45:00.000Z',
         'completedAt': '2026-07-23T07:00:00.000Z',
       },
     ]);
@@ -76,6 +78,8 @@ void main() {
 
     expect(item.title, 'Existing todo');
     expect(item.content, isEmpty);
+    expect(item.startedAt, isNull);
+    expect(item.isDoing, isFalse);
   });
 
   test('damaged storage is reported and left unchanged', () async {

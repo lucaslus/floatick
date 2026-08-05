@@ -2109,6 +2109,10 @@ class _ScrollableTodoEntriesState extends State<_ScrollableTodoEntries> {
               hoverEnabled: !_isScrolling,
               onToggle: () =>
                   unawaited(widget.controller.toggleCompletion(entry.item.id)),
+              onToggleDoing: archived
+                  ? null
+                  : () =>
+                        unawaited(widget.controller.toggleDoing(entry.item.id)),
               onOpenDetails: () => widget.onOpenDetails(entry.item.id),
               onEdit: archived ? null : () => widget.onEditTodo(entry.item.id),
               onArchive: () =>

@@ -914,6 +914,24 @@ abstract class AppLocalizations {
   /// **'Incomplete'**
   String get incompleteStatus;
 
+  /// No description provided for @doingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Doing'**
+  String get doingStatus;
+
+  /// No description provided for @startDoingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Start doing'**
+  String get startDoingTooltip;
+
+  /// No description provided for @stopDoingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to todo'**
+  String get stopDoingTooltip;
+
   /// No description provided for @markIncompleteTooltip.
   ///
   /// In en, this message translates to:

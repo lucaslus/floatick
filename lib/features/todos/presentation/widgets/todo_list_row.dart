@@ -17,6 +17,7 @@ class TodoListRow extends StatefulWidget {
     required this.item,
     required this.archivedScope,
     required this.onToggle,
+    required this.onToggleDoing,
     required this.onOpenDetails,
     required this.onEdit,
     required this.onArchive,
@@ -37,6 +38,7 @@ class TodoListRow extends StatefulWidget {
              onOpenTagAssignment != null ||
              (onToggleTag != null && onOpenTagManagement != null),
        ),
+       assert(archivedScope || onToggleDoing != null),
        assert(!archivedScope || onEdit == null),
        assert(archivedScope || onEdit != null),
        assert(archivedScope || onDeletePermanently == null),
@@ -45,6 +47,7 @@ class TodoListRow extends StatefulWidget {
   final TodoItem item;
   final bool archivedScope;
   final VoidCallback onToggle;
+  final VoidCallback? onToggleDoing;
   final VoidCallback onOpenDetails;
   final VoidCallback? onEdit;
   final VoidCallback onArchive;
@@ -196,6 +199,16 @@ class _TodoListRowState extends State<TodoListRow> {
     final onSurface = theme.colorScheme.onSurface;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final showContextActions = (widget.hoverEnabled && _isHovered) || _hasFocus;
+    final isDoing = item.isDoing;
+    final rowColor = isDoing
+        ? theme.colorScheme.primary.withValues(
+            alpha: isDark ? (_isHovered ? 0.11 : 0.08) : 0.07,
+          )
+        : _isHovered
+        ? (isDark
+              ? Colors.white.withValues(alpha: 0.055)
+              : Colors.black.withValues(alpha: 0.035))
+        : Colors.transparent;
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
@@ -212,11 +225,14 @@ class _TodoListRowState extends State<TodoListRow> {
           label: item.title,
           value: item.isCompleted
               ? localizations.completedStatus
+              : isDoing
+              ? localizations.doingStatus
               : localizations.incompleteStatus,
           child: MouseRegion(
             onEnter: widget.hoverEnabled ? (_) => _setHovered(true) : null,
             onExit: (_) => _setHovered(false),
             child: AnimatedContainer(
+              key: ValueKey<String>('todo-row-surface-${widget.item.id}'),
               duration: reduceMotion || !widget.hoverEnabled
                   ? Duration.zero
                   : const Duration(milliseconds: 150),
@@ -228,11 +244,7 @@ class _TodoListRowState extends State<TodoListRow> {
                 widget.compact ? 6 : 8,
               ),
               decoration: BoxDecoration(
-                color: _isHovered
-                    ? (isDark
-                          ? Colors.white.withValues(alpha: 0.055)
-                          : Colors.black.withValues(alpha: 0.035))
-                    : Colors.transparent,
+                color: rowColor,
                 borderRadius: BorderRadius.circular(11),
               ),
               child: Column(
@@ -343,10 +355,34 @@ class _TodoListRowState extends State<TodoListRow> {
                       ),
                       const SizedBox(width: 3),
                       SizedBox(
-                        width: 60,
+                        width: widget.archivedScope ? 60 : 90,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: <Widget>[
+                            if (!widget.archivedScope)
+                              _HoverAction(
+                                key: ValueKey<String>(
+                                  'toggle-doing-todo-${widget.item.id}',
+                                ),
+                                visible:
+                                    !item.isCompleted &&
+                                    (showContextActions || isDoing),
+                                tooltip: isDoing
+                                    ? localizations.stopDoingTooltip
+                                    : localizations.startDoingTooltip,
+                                onPressed: widget.onToggleDoing!,
+                                icon: isDoing
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                foregroundColor: isDoing
+                                    ? theme.colorScheme.primary
+                                    : null,
+                                backgroundColor: isDoing
+                                    ? theme.colorScheme.primary.withValues(
+                                        alpha: isDark ? 0.12 : 0.09,
+                                      )
+                                    : null,
+                              ),
                             TodoCopyButton(
                               key: ValueKey<String>(
                                 'copy-todo-${widget.item.id}',
@@ -389,6 +425,7 @@ class _TodoListRowState extends State<TodoListRow> {
                                 tags: widget.tags,
                                 assignedTagIds: widget.assignedTagIds,
                                 onPressed: _openTagAssignment,
+                                showDoingStatus: isDoing,
                               ),
                       ),
                       const SizedBox(width: 7),
@@ -423,12 +460,14 @@ class _ExternalTagAssignment extends StatelessWidget {
     required this.tags,
     required this.assignedTagIds,
     required this.onPressed,
+    required this.showDoingStatus,
   });
 
   final String todoId;
   final List<TodoTag> tags;
   final List<String> assignedTagIds;
   final VoidCallback onPressed;
+  final bool showDoingStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -464,7 +503,53 @@ class _ExternalTagAssignment extends StatelessWidget {
             ),
           ),
         ),
+        if (showDoingStatus) _DoingStatusChip(todoId: todoId),
       ],
+    );
+  }
+}
+
+class _DoingStatusChip extends StatelessWidget {
+  const _DoingStatusChip({required this.todoId});
+
+  final String todoId;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      key: ValueKey<String>('doing-status-$todoId'),
+      height: 17,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.16 : 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.28 : 0.22),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 4,
+            height: 4,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            context.l10n.doingStatus,
+            style: TextStyle(
+              color: color,
+              fontSize: 8.75,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -507,6 +592,8 @@ class _HoverAction extends StatelessWidget {
     required this.tooltip,
     required this.onPressed,
     required this.icon,
+    this.foregroundColor,
+    this.backgroundColor,
     super.key,
   });
 
@@ -514,6 +601,8 @@ class _HoverAction extends StatelessWidget {
   final String tooltip;
   final VoidCallback onPressed;
   final IconData icon;
+  final Color? foregroundColor;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -533,7 +622,10 @@ class _HoverAction extends StatelessWidget {
               tooltip: tooltip,
               onPressed: onPressed,
               padding: EdgeInsets.zero,
-              icon: Icon(icon, size: 17),
+              style: backgroundColor == null
+                  ? null
+                  : IconButton.styleFrom(backgroundColor: backgroundColor),
+              icon: Icon(icon, size: 17, color: foregroundColor),
             ),
           ),
         ),

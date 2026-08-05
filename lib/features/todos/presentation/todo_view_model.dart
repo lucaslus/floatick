@@ -238,6 +238,15 @@ class TodoViewModel extends ChangeNotifier {
     });
   }
 
+  Future<void> toggleDoing(String id) {
+    return _updateItem(id, (item) {
+      if (item.isArchived || item.isCompleted) {
+        return item;
+      }
+      return item.withStartedAt(item.isDoing ? null : _clock().toUtc());
+    });
+  }
+
   Future<bool> rename(String id, String title) async {
     final normalizedTitle = title.trim();
     if (normalizedTitle.isEmpty) {

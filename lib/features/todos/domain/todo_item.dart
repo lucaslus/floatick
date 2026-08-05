@@ -4,6 +4,7 @@ class TodoItem {
     required this.title,
     required this.createdAt,
     this.content = '',
+    this.startedAt,
     this.completedAt,
     this.archivedAt,
   });
@@ -12,9 +13,11 @@ class TodoItem {
   final String title;
   final String content;
   final DateTime createdAt;
+  final DateTime? startedAt;
   final DateTime? completedAt;
   final DateTime? archivedAt;
 
+  bool get isDoing => startedAt != null && !isCompleted && !isArchived;
   bool get isCompleted => completedAt != null;
   bool get isArchived => archivedAt != null;
 
@@ -24,6 +27,7 @@ class TodoItem {
       title: value,
       content: content,
       createdAt: createdAt,
+      startedAt: startedAt,
       completedAt: completedAt,
       archivedAt: archivedAt,
     );
@@ -35,6 +39,19 @@ class TodoItem {
       title: title,
       content: content,
       createdAt: createdAt,
+      startedAt: startedAt,
+      completedAt: completedAt,
+      archivedAt: archivedAt,
+    );
+  }
+
+  TodoItem withStartedAt(DateTime? value) {
+    return TodoItem(
+      id: id,
+      title: title,
+      content: content,
+      createdAt: createdAt,
+      startedAt: value,
       completedAt: completedAt,
       archivedAt: archivedAt,
     );
@@ -46,6 +63,7 @@ class TodoItem {
       title: title,
       content: content,
       createdAt: createdAt,
+      startedAt: startedAt,
       completedAt: value,
       archivedAt: archivedAt,
     );
@@ -57,6 +75,7 @@ class TodoItem {
       title: title,
       content: content,
       createdAt: createdAt,
+      startedAt: startedAt,
       completedAt: completedAt,
       archivedAt: value,
     );
@@ -68,6 +87,7 @@ class TodoItem {
       title: _requiredString(json, 'title'),
       content: _optionalString(json, 'content'),
       createdAt: _requiredDate(json, 'createdAt'),
+      startedAt: _optionalDate(json, 'startedAt'),
       completedAt: _optionalDate(json, 'completedAt'),
       archivedAt: _optionalDate(json, 'archivedAt'),
     );
@@ -79,6 +99,7 @@ class TodoItem {
       'title': title,
       if (content.isNotEmpty) 'content': content,
       'createdAt': createdAt.toUtc().toIso8601String(),
+      if (startedAt != null) 'startedAt': startedAt!.toUtc().toIso8601String(),
       if (completedAt != null)
         'completedAt': completedAt!.toUtc().toIso8601String(),
       if (archivedAt != null)
@@ -131,12 +152,21 @@ class TodoItem {
         other.title == title &&
         other.content == content &&
         other.createdAt == createdAt &&
+        other.startedAt == startedAt &&
         other.completedAt == completedAt &&
         other.archivedAt == archivedAt;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, title, content, createdAt, completedAt, archivedAt);
+    return Object.hash(
+      id,
+      title,
+      content,
+      createdAt,
+      startedAt,
+      completedAt,
+      archivedAt,
+    );
   }
 }

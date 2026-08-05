@@ -281,7 +281,7 @@ void main() {
   });
 
   test(
-    'completion, archive, and restore share one persisted state flow',
+    'doing and completion preserve the previous active progress state',
     () async {
       repository.savedItems = <TodoItem>[
         TodoItem(
@@ -292,18 +292,76 @@ void main() {
       ];
       await controller.load();
 
+      await controller.toggleDoing('existing');
+      expect(controller.items.single.isDoing, isTrue);
+      expect(controller.items.single.startedAt, DateTime.parse(firstDate));
+
       await controller.toggleCompletion('existing');
       expect(controller.items.single.isCompleted, isTrue);
+      expect(controller.items.single.isDoing, isFalse);
+      expect(controller.items.single.startedAt, DateTime.parse(firstDate));
       expect(controller.activeCount, 0);
+
+      await controller.toggleCompletion('existing');
+      expect(controller.items.single.isCompleted, isFalse);
+      expect(controller.items.single.isDoing, isTrue);
+
+      await controller.toggleDoing('existing');
+      expect(controller.items.single.isDoing, isFalse);
+      expect(controller.items.single.startedAt, isNull);
+      expect(controller.activeCount, 1);
+      expect(repository.saveCount, 4);
+    },
+  );
+
+  test('completed and archived todos cannot enter doing', () async {
+    repository.savedItems = <TodoItem>[
+      TodoItem(
+        id: 'completed',
+        title: 'Completed todo',
+        createdAt: DateTime.parse(firstDate),
+        completedAt: DateTime.parse(firstDate),
+      ),
+      TodoItem(
+        id: 'archived',
+        title: 'Archived todo',
+        createdAt: DateTime.parse(firstDate),
+        archivedAt: DateTime.parse(firstDate),
+      ),
+    ];
+    await controller.load();
+
+    await controller.toggleDoing('completed');
+    await controller.toggleDoing('archived');
+
+    expect(controller.itemById('completed')!.isDoing, isFalse);
+    expect(controller.itemById('archived')!.isDoing, isFalse);
+    expect(repository.saveCount, 0);
+  });
+
+  test(
+    'archive and restore preserve a doing todo without exposing it as active',
+    () async {
+      repository.savedItems = <TodoItem>[
+        TodoItem(
+          id: 'existing',
+          title: 'Ship it',
+          createdAt: DateTime.parse(firstDate),
+          startedAt: DateTime.parse(firstDate),
+        ),
+      ];
+      await controller.load();
 
       await controller.archive('existing');
       expect(controller.items.single.isArchived, isTrue);
+      expect(controller.items.single.isDoing, isFalse);
       expect(controller.archivedCount, 1);
 
       await controller.restore('existing');
       expect(controller.items.single.isArchived, isFalse);
+      expect(controller.items.single.isDoing, isTrue);
       expect(controller.archivedCount, 0);
-      expect(repository.saveCount, 3);
+      expect(repository.saveCount, 2);
     },
   );
 
@@ -345,6 +403,7 @@ void main() {
       isFalse,
     );
     await controller.toggleCompletion('archived');
+    await controller.toggleDoing('archived');
 
     expect(controller.items.single.title, 'Archived todo');
     expect(controller.items.single.content, 'Original notes');

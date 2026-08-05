@@ -36,6 +36,7 @@ void main() {
     'hover actions align, copy Markdown, and double-click opens details',
     (tester) async {
       var toggleCount = 0;
+      var doingToggleCount = 0;
       var detailsCount = 0;
       final item = TodoItem(
         id: 'aligned',
@@ -65,6 +66,7 @@ void main() {
                   item: item,
                   archivedScope: false,
                   onToggle: () => toggleCount += 1,
+                  onToggleDoing: () => doingToggleCount += 1,
                   onOpenDetails: () => detailsCount += 1,
                   onEdit: () {},
                   onArchive: () {},
@@ -90,6 +92,7 @@ void main() {
           .dy;
       for (final key in <String>[
         'toggle-todo-aligned',
+        'toggle-doing-todo-aligned',
         'copy-todo-aligned',
         'more-todo-aligned',
       ]) {
@@ -108,6 +111,9 @@ void main() {
       expect(timeCenterY, closeTo(tagCenterY, 0.5));
       expect(tagCenterY, greaterThan(primaryCenterY + 10));
       expect(find.byKey(const Key('todo-has-content-aligned')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('toggle-doing-todo-aligned')));
+      expect(doingToggleCount, 1);
 
       await tester.tap(find.byKey(const Key('copy-todo-aligned')));
       await tester.pump();
@@ -155,6 +161,88 @@ void main() {
     },
   );
 
+  testWidgets('doing row keeps its geometry, status, and pause action', (
+    tester,
+  ) async {
+    var doingToggleCount = 0;
+    final todoItem = TodoItem(
+      id: 'todo',
+      title: 'Plan progress state',
+      createdAt: DateTime.utc(2026, 7, 27, 8),
+    );
+    final item = TodoItem(
+      id: 'doing',
+      title: 'Implement progress state',
+      createdAt: DateTime.utc(2026, 7, 27, 8),
+      startedAt: DateTime.utc(2026, 7, 27, 9),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TodoListRow(
+                item: todoItem,
+                archivedScope: false,
+                onToggle: () {},
+                onToggleDoing: () {},
+                onOpenDetails: () {},
+                onEdit: () {},
+                onArchive: () {},
+                onRestore: () {},
+                tags: const <TodoTag>[],
+                assignedTagIds: const <String>[],
+                onOpenTagAssignment: () {},
+              ),
+              TodoListRow(
+                item: item,
+                archivedScope: false,
+                onToggle: () {},
+                onToggleDoing: () => doingToggleCount += 1,
+                onOpenDetails: () {},
+                onEdit: () {},
+                onArchive: () {},
+                onRestore: () {},
+                tags: const <TodoTag>[],
+                assignedTagIds: const <String>[],
+                onOpenTagAssignment: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('doing-status-doing')), findsOneWidget);
+    expect(find.text('Doing'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('toggle-doing-todo-doing')),
+        matching: find.byIcon(Icons.pause_rounded),
+      ),
+      findsOneWidget,
+    );
+
+    final rowSurface = tester.widget<AnimatedContainer>(
+      find.byKey(const Key('todo-row-surface-doing')),
+    );
+    final decoration = rowSurface.decoration as BoxDecoration;
+    expect(decoration.color, isNot(Colors.transparent));
+    expect(decoration.border, isNull);
+    expect(
+      tester.getSize(find.byKey(const Key('todo-row-surface-doing'))),
+      tester.getSize(find.byKey(const Key('todo-row-surface-todo'))),
+    );
+
+    await tester.tap(find.byKey(const Key('toggle-doing-todo-doing')));
+    expect(doingToggleCount, 1);
+  });
+
   testWidgets('external tag action bypasses the inline assignment menu', (
     tester,
   ) async {
@@ -183,6 +271,7 @@ void main() {
             item: item,
             archivedScope: false,
             onToggle: () {},
+            onToggleDoing: () {},
             onOpenDetails: () {},
             onEdit: () {},
             onArchive: () {},
@@ -252,6 +341,7 @@ void main() {
               item: item,
               archivedScope: false,
               onToggle: () {},
+              onToggleDoing: () {},
               onOpenDetails: () {},
               onEdit: () {},
               onArchive: () {},
@@ -350,6 +440,7 @@ void main() {
                   item: item,
                   archivedScope: false,
                   onToggle: () {},
+                  onToggleDoing: () {},
                   onOpenDetails: () {},
                   onEdit: () {},
                   onArchive: () {},
@@ -467,6 +558,7 @@ void main() {
               item: item,
               archivedScope: true,
               onToggle: () {},
+              onToggleDoing: null,
               onOpenDetails: () => viewCount += 1,
               onEdit: null,
               onArchive: () {},
