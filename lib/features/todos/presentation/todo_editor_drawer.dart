@@ -4,14 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/ui/floatick_hover_motion.dart';
+import '../../../core/ui/floatick_editor_components.dart';
+import '../../../core/ui/floatick_markdown.dart';
 import '../../../l10n/l10n.dart';
 import '../domain/todo_item.dart';
 import '../domain/todo_tag.dart';
 import 'todo_clipboard_controller.dart';
+import 'widgets/editor_tag_selector.dart';
 import 'widgets/floatick_tag_chip.dart';
 import 'widgets/todo_copy_button.dart';
-import 'widgets/todo_markdown.dart';
 
 enum TodoEditorDrawerMode { create, details, edit }
 
@@ -124,11 +125,11 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
         return;
       }
       if (_isEditing) {
-        _titleFocusNode.requestFocus();
         _titleController.selection = TextSelection(
           baseOffset: 0,
           extentOffset: _titleController.text.length,
         );
+        _titleFocusNode.requestFocus();
       } else {
         widget.closeFocusNode.requestFocus();
       }
@@ -136,7 +137,10 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
   }
 
   bool get _canSave {
-    if (_isSaving || _titleController.text.trim().isEmpty) {
+    final hasText =
+        _titleController.text.trim().isNotEmpty ||
+        _contentController.text.trim().isNotEmpty;
+    if (_isSaving || !hasText) {
       return false;
     }
     if (widget.mode == TodoEditorDrawerMode.create) {
@@ -185,159 +189,79 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final availableTags = widget.availableTags;
-    return DecoratedBox(
-      key: const Key('todo-editor-drawer'),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF202A2E) : const Color(0xFFF9FBFA),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-        border: Border(
-          top: BorderSide(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.11)
-                : Colors.black.withValues(alpha: 0.07),
-          ),
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            _DrawerHeader(
-              mode: widget.mode,
-              item: widget.item,
-              canEdit: widget.canEdit,
-              copyController: _copyController,
-              onEdit: widget.onEdit,
-              onClose: widget.onClose,
-              closeFocusNode: widget.closeFocusNode,
-            ),
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.06),
-            ),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: MediaQuery.disableAnimationsOf(context)
-                    ? Duration.zero
-                    : const Duration(milliseconds: 160),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                child: widget.mode == TodoEditorDrawerMode.details
-                    ? _TodoDetails(
-                        key: ValueKey<String>(
-                          'details-${widget.item?.id ?? 'missing'}',
-                        ),
-                        item: widget.item,
-                        canEdit: widget.canEdit,
-                        tags: availableTags
-                            .where(
-                              (tag) => widget.assignedTagIds.contains(tag.id),
-                            )
-                            .toList(growable: false),
-                      )
-                    : _TodoEditor(
-                        key: const ValueKey<String>('todo-editor'),
-                        formKey: _formKey,
-                        titleController: _titleController,
-                        contentController: _contentController,
-                        titleFocusNode: _titleFocusNode,
-                        contentFocusNode: _contentFocusNode,
-                        availableTags: availableTags,
-                        selectedTagIds: widget.assignedTagIds.toSet(),
-                        showPreview: _showPreview,
-                        isSaving: _isSaving,
-                        saveFailed: _saveFailed,
-                        canSave: _canSave,
-                        mode: widget.mode,
-                        onChanged: () {
-                          setState(() {
-                            _saveFailed = false;
-                          });
-                        },
-                        onPreviewChanged: (showPreview) {
-                          setState(() => _showPreview = showPreview);
-                        },
-                        onOpenTagAssignment: widget.onOpenTagAssignment,
-                        onSubmit: () => unawaited(_submit()),
-                        onCancel: widget.onClose,
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DrawerHeader extends StatelessWidget {
-  const _DrawerHeader({
-    required this.mode,
-    required this.item,
-    required this.canEdit,
-    required this.copyController,
-    required this.onEdit,
-    required this.onClose,
-    required this.closeFocusNode,
-  });
-
-  final TodoEditorDrawerMode mode;
-  final TodoItem? item;
-  final bool canEdit;
-  final TodoClipboardController copyController;
-  final VoidCallback onEdit;
-  final VoidCallback onClose;
-  final FocusNode closeFocusNode;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = switch (mode) {
+    final title = switch (widget.mode) {
       TodoEditorDrawerMode.create => context.l10n.newTodoDrawerTitle,
       TodoEditorDrawerMode.details => context.l10n.todoDetailsDrawerTitle,
       TodoEditorDrawerMode.edit => context.l10n.editTodoDrawerTitle,
     };
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 10, 11),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
+    return FloatickEditorDrawerSurface(
+      key: const Key('todo-editor-drawer'),
+      title: title,
+      closeTooltip: context.l10n.closeTodoDrawerTooltip,
+      closeButtonKey: const Key('todo-drawer-close'),
+      onClose: widget.onClose,
+      closeFocusNode: widget.closeFocusNode,
+      headerActions: <Widget>[
+        if (widget.mode == TodoEditorDrawerMode.details && widget.item != null)
+          TodoCopyButton(
+            key: const Key('todo-details-copy'),
+            item: widget.item!,
+            controller: _copyController,
+            dimension: 40,
+            iconSize: 19,
           ),
-          if (mode == TodoEditorDrawerMode.details && item != null)
-            TodoCopyButton(
-              key: const Key('todo-details-copy'),
-              item: item!,
-              controller: copyController,
-              dimension: 40,
-              iconSize: 19,
-            ),
-          if (mode == TodoEditorDrawerMode.details && canEdit)
-            IconButton(
-              key: const Key('todo-details-edit'),
-              onPressed: onEdit,
-              tooltip: context.l10n.editTodoAction,
-              icon: const Icon(Icons.edit_outlined, size: 19),
-            ),
+        if (widget.mode == TodoEditorDrawerMode.details && widget.canEdit)
           IconButton(
-            key: const Key('todo-drawer-close'),
-            focusNode: closeFocusNode,
-            tooltip: context.l10n.closeTodoDrawerTooltip,
-            onPressed: onClose,
-            icon: const Icon(Icons.close_rounded, size: 19),
+            key: const Key('todo-details-edit'),
+            onPressed: widget.onEdit,
+            tooltip: context.l10n.editTodoAction,
+            icon: const Icon(Icons.edit_outlined, size: 19),
           ),
-        ],
+      ],
+      child: AnimatedSwitcher(
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 160),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: widget.mode == TodoEditorDrawerMode.details
+            ? _TodoDetails(
+                key: ValueKey<String>(
+                  'details-${widget.item?.id ?? 'missing'}',
+                ),
+                item: widget.item,
+                canEdit: widget.canEdit,
+                tags: availableTags
+                    .where((tag) => widget.assignedTagIds.contains(tag.id))
+                    .toList(growable: false),
+              )
+            : _TodoEditor(
+                key: const ValueKey<String>('todo-editor'),
+                formKey: _formKey,
+                titleController: _titleController,
+                contentController: _contentController,
+                titleFocusNode: _titleFocusNode,
+                contentFocusNode: _contentFocusNode,
+                availableTags: availableTags,
+                selectedTagIds: widget.assignedTagIds.toSet(),
+                showPreview: _showPreview,
+                isSaving: _isSaving,
+                saveFailed: _saveFailed,
+                canSave: _canSave,
+                mode: widget.mode,
+                onChanged: () {
+                  setState(() {
+                    _saveFailed = false;
+                  });
+                },
+                onPreviewChanged: (showPreview) {
+                  setState(() => _showPreview = showPreview);
+                },
+                onOpenTagAssignment: widget.onOpenTagAssignment,
+                onSubmit: () => unawaited(_submit()),
+                onCancel: widget.onClose,
+              ),
       ),
     );
   }
@@ -415,145 +339,46 @@ class _TodoEditor extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                  padding: FloatickEditorMetrics.bodyPadding,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Text(
-                        context.l10n.todoTitleLabel,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 7),
-                      TextFormField(
-                        key: const Key('todo-title-field'),
-                        controller: titleController,
-                        focusNode: titleFocusNode,
-                        enabled: !isSaving,
-                        maxLines: 1,
-                        textInputAction: TextInputAction.next,
-                        onChanged: (_) => onChanged(),
-                        onFieldSubmitted: (_) =>
-                            contentFocusNode.requestFocus(),
-                        validator: (value) {
-                          return value == null || value.trim().isEmpty
-                              ? context.l10n.todoTitleRequiredHint
-                              : null;
-                        },
-                        decoration: InputDecoration(
-                          hintText: context.l10n.todoTitleFieldHint,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          Text(
-                            context.l10n.assignTagsTitle,
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Wrap(
-                              alignment: WrapAlignment.end,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 5,
-                              runSpacing: 5,
-                              children: <Widget>[
-                                for (final tag in availableTags)
-                                  if (selectedTagIds.contains(tag.id))
-                                    FloatickTagChip(
-                                      key: ValueKey<String>(
-                                        'todo-editor-tag-${tag.id}',
-                                      ),
-                                      tag: tag,
-                                      compact: true,
-                                    ),
-                                IconButton(
-                                  key: const Key('todo-editor-tag-button'),
-                                  tooltip: context.l10n.assignTagsTooltip,
-                                  onPressed: isSaving
-                                      ? null
-                                      : onOpenTagAssignment,
-                                  style: IconButton.styleFrom(
-                                    minimumSize: const Size.square(30),
-                                    maximumSize: const Size.square(30),
-                                    padding: EdgeInsets.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    foregroundColor: selectedTagIds.isEmpty
-                                        ? Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.56)
-                                        : Theme.of(context).colorScheme.primary,
-                                  ),
-                                  icon: Icon(
-                                    selectedTagIds.isEmpty
-                                        ? Icons.sell_outlined
-                                        : Icons.sell_rounded,
-                                    size: 17,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              context.l10n.todoContentLabel,
-                              style: Theme.of(context).textTheme.labelLarge
-                                  ?.copyWith(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          _EditorModeSwitch(
-                            showPreview: showPreview,
-                            onChanged: onPreviewChanged,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 7),
                       Expanded(
-                        child: AnimatedSwitcher(
-                          duration: MediaQuery.disableAnimationsOf(context)
-                              ? Duration.zero
-                              : const Duration(milliseconds: 140),
-                          child: showPreview
-                              ? TodoMarkdownPreview(
-                                  key: const Key('todo-content-preview'),
-                                  content: contentController.text,
-                                )
-                              : TextFormField(
-                                  key: const Key('todo-content-field'),
-                                  controller: contentController,
-                                  focusNode: contentFocusNode,
-                                  enabled: !isSaving,
-                                  expands: true,
-                                  minLines: null,
-                                  maxLines: null,
-                                  textAlignVertical: TextAlignVertical.top,
-                                  keyboardType: TextInputType.multiline,
-                                  onChanged: (_) => onChanged(),
-                                  decoration: InputDecoration(
-                                    hintText: context.l10n.todoContentFieldHint,
-                                    alignLabelWithHint: true,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 7),
-                      Text(
-                        context.l10n.markdownSupportedHint,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.42),
+                        child: FloatickDocumentEditor(
+                          editorSurfaceKey: const Key('todo-document-editor'),
+                          titleFieldKey: const Key('todo-title-field'),
+                          contentFieldKey: const Key('todo-content-field'),
+                          modeSwitchKey: const Key(
+                            'floatick-editor-mode-switch',
+                          ),
+                          writeTabKey: const Key('markdown-write-tab'),
+                          previewTabKey: const Key('markdown-preview-tab'),
+                          titleController: titleController,
+                          contentController: contentController,
+                          titleFocusNode: titleFocusNode,
+                          contentFocusNode: contentFocusNode,
+                          titleHint: context.l10n.todoTitleFieldHint,
+                          contentHint: context.l10n.todoContentFieldHint,
+                          titleSemanticsLabel: context.l10n.todoTitleLabel,
+                          contentSemanticsLabel: context.l10n.todoContentLabel,
+                          toolbarLeading: EditorTagSelector(
+                            availableTags: availableTags,
+                            selectedTagIds: selectedTagIds,
+                            enabled: !isSaving,
+                            buttonKey: const Key('todo-editor-tag-button'),
+                            tagKeyPrefix: 'todo-editor-tag',
+                            onPressed: onOpenTagAssignment,
+                          ),
+                          enabled: !isSaving,
+                          showPreview: showPreview,
+                          preview: FloatickMarkdownPreview(
+                            key: const Key('todo-content-preview'),
+                            content: contentController.text,
+                            embedded: true,
+                          ),
+                          onTitleChanged: (_) => onChanged(),
+                          onContentChanged: (_) => onChanged(),
+                          onPreviewChanged: onPreviewChanged,
                         ),
                       ),
                     ],
@@ -570,15 +395,8 @@ class _TodoEditor extends StatelessWidget {
                     ),
                   ),
                 ),
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.08),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+              FloatickEditorFooter(
+                key: const Key('todo-editor-footer'),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
@@ -609,95 +427,6 @@ class _TodoEditor extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EditorModeSwitch extends StatelessWidget {
-  const _EditorModeSwitch({required this.showPreview, required this.onChanged});
-
-  final bool showPreview;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      height: 30,
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.055),
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          _EditorModeButton(
-            key: const Key('markdown-write-tab'),
-            label: context.l10n.markdownWriteLabel,
-            selected: !showPreview,
-            onPressed: () => onChanged(false),
-          ),
-          _EditorModeButton(
-            key: const Key('markdown-preview-tab'),
-            label: context.l10n.markdownPreviewLabel,
-            selected: showPreview,
-            onPressed: () => onChanged(true),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EditorModeButton extends StatelessWidget {
-  const _EditorModeButton({
-    required this.label,
-    required this.selected,
-    required this.onPressed,
-    super.key,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: FloatickHoverMotion(
-        hoverScale: FloatickMotion.controlHoverScale,
-        pressedScale: FloatickMotion.controlPressedScale,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(7),
-          child: AnimatedContainer(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 140),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 9),
-            decoration: BoxDecoration(
-              color: selected
-                  ? theme.colorScheme.surface.withValues(alpha: 0.92)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(7),
-            ),
-            child: Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: selected
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.52),
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              ),
-            ),
           ),
         ),
       ),
@@ -754,7 +483,7 @@ class _TodoDetails extends StatelessWidget {
           Expanded(
             child: item.content.trim().isEmpty
                 ? _EmptyTodoContent(canEdit: canEdit)
-                : TodoMarkdownContent(
+                : FloatickMarkdownContent(
                     key: const Key('todo-details-markdown'),
                     content: item.content,
                   ),

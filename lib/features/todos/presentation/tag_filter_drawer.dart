@@ -16,6 +16,7 @@ class TagFilterDrawer extends StatelessWidget {
     required this.onManageTags,
     required this.onClose,
     required this.closeFocusNode,
+    this.usageCounts,
     super.key,
   }) : mode = TagDrawerSelectionMode.filter;
 
@@ -29,7 +30,8 @@ class TagFilterDrawer extends StatelessWidget {
     required this.closeFocusNode,
     super.key,
   }) : mode = TagDrawerSelectionMode.assignment,
-       onClear = null;
+       onClear = null,
+       usageCounts = null;
 
   final TagDrawerSelectionMode mode;
   final TodoViewModel controller;
@@ -40,6 +42,7 @@ class TagFilterDrawer extends StatelessWidget {
   final VoidCallback onManageTags;
   final VoidCallback onClose;
   final FocusNode closeFocusNode;
+  final Map<String, int>? usageCounts;
 
   @override
   Widget build(BuildContext context) {
@@ -75,9 +78,9 @@ class TagFilterDrawer extends StatelessWidget {
           final effectiveSelectedTagIds = selectedTagIds
               .where(knownTagIds.contains)
               .toSet();
-          final usageCounts = controller.tagUsageCountsFor(
-            tags.map((tag) => tag.id),
-          );
+          final resolvedUsageCounts =
+              usageCounts ??
+              controller.tagUsageCountsFor(tags.map((tag) => tag.id));
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -182,7 +185,7 @@ class TagFilterDrawer extends StatelessWidget {
                             ),
                             tag: tag,
                             label: tag.name,
-                            trailing: '${usageCounts[tag.id] ?? 0}',
+                            trailing: '${resolvedUsageCounts[tag.id] ?? 0}',
                             selected: effectiveSelectedTagIds.contains(tag.id),
                             onPressed: () => onToggled(tag.id),
                           );

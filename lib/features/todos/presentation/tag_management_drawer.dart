@@ -19,6 +19,8 @@ class TagManagementDrawer extends StatefulWidget {
     required this.borderOnLeft,
     required this.onClose,
     required this.closeFocusNode,
+    this.additionalUsageCounts = const <String, int>{},
+    this.onTagDeleted,
     super.key,
   });
 
@@ -27,6 +29,8 @@ class TagManagementDrawer extends StatefulWidget {
   final bool borderOnLeft;
   final VoidCallback onClose;
   final FocusNode closeFocusNode;
+  final Map<String, int> additionalUsageCounts;
+  final Future<bool> Function(String tagId)? onTagDeleted;
 
   @override
   State<TagManagementDrawer> createState() => _TagManagementDrawerState();
@@ -147,7 +151,13 @@ class _TagManagementDrawerState extends State<TagManagementDrawer> {
       return;
     }
     setState(() => _isSaving = true);
-    final result = await widget.controller.deleteTag(tagId);
+    var result = await widget.controller.deleteTag(tagId);
+    if (result == TagMutationResult.success && widget.onTagDeleted != null) {
+      final removedFromDependents = await widget.onTagDeleted!(tagId);
+      if (!removedFromDependents) {
+        result = TagMutationResult.storageFailure;
+      }
+    }
     if (!mounted) {
       return;
     }
@@ -213,9 +223,15 @@ class _TagManagementDrawerState extends State<TagManagementDrawer> {
                 return query.isEmpty || tag.name.toLowerCase().contains(query);
               })
               .toList(growable: false);
-          final usageCounts = widget.controller.tagUsageCountsFor(
+          final todoUsageCounts = widget.controller.tagUsageCountsFor(
             filteredTags.map((tag) => tag.id),
           );
+          final usageCounts = <String, int>{
+            for (final tag in filteredTags)
+              tag.id:
+                  (todoUsageCounts[tag.id] ?? 0) +
+                  (widget.additionalUsageCounts[tag.id] ?? 0),
+          };
           final canSubmit = !_isSaving;
 
           return Column(

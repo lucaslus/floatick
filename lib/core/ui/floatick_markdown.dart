@@ -1,16 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
-import '../../../../l10n/l10n.dart';
+import '../../l10n/l10n.dart';
 
-class TodoMarkdownPreview extends StatelessWidget {
-  const TodoMarkdownPreview({required this.content, super.key});
+class FloatickMarkdownPreview extends StatelessWidget {
+  const FloatickMarkdownPreview({
+    required this.content,
+    this.embedded = false,
+    super.key,
+  });
 
   final String content;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final child = content.trim().isEmpty
+        ? Center(
+            child: Text(
+              context.l10n.markdownPreviewEmptyMessage,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.42),
+              ),
+            ),
+          )
+        : FloatickMarkdownContent(content: content);
+    if (embedded) {
+      return child;
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.onSurface.withValues(alpha: 0.035),
@@ -19,22 +37,13 @@ class TodoMarkdownPreview extends StatelessWidget {
           color: theme.colorScheme.onSurface.withValues(alpha: 0.07),
         ),
       ),
-      child: content.trim().isEmpty
-          ? Center(
-              child: Text(
-                context.l10n.markdownPreviewEmptyMessage,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.42),
-                ),
-              ),
-            )
-          : TodoMarkdownContent(content: content),
+      child: child,
     );
   }
 }
 
-class TodoMarkdownContent extends StatelessWidget {
-  const TodoMarkdownContent({required this.content, super.key});
+class FloatickMarkdownContent extends StatelessWidget {
+  const FloatickMarkdownContent({required this.content, super.key});
 
   final String content;
 

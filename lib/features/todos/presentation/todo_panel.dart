@@ -10,6 +10,9 @@ import '../../../core/ui/floatick_brand_mark.dart';
 import '../../../core/ui/floatick_surface_metrics.dart';
 import '../../../l10n/l10n.dart';
 import '../../../l10n/storage_failure_localizations.dart';
+import '../../notes/presentation/note_editor_drawer.dart';
+import '../../notes/presentation/note_panel_content.dart';
+import '../../notes/presentation/note_view_model.dart';
 import '../../settings/presentation/settings_drawer.dart';
 import '../../settings/presentation/settings_view_model.dart';
 import '../../sticky_boards/presentation/sticky_board_drawers.dart';
@@ -28,12 +31,15 @@ const double _settingsDrawerWidth = 268;
 const double _tagDrawerWidth = 292;
 const double _stickyBoardDrawerWidth = 336;
 const double _todoDrawerHeight = 520;
+const double _noteDrawerHeight = 590;
 const Duration _drawerSlideDuration = Duration(milliseconds: 220);
 const Duration _drawerScrimDuration = Duration(milliseconds: 160);
 const Duration _scrollHoverResumeDelay = Duration(milliseconds: 120);
 const double _todoListCacheExtentViewportFraction = 0.75;
 
 enum TodoListScope { active, archived }
+
+enum _PanelContentKind { todos, notes }
 
 enum _TodoPanelDrawerMode {
   none,
@@ -47,13 +53,22 @@ enum _TodoPanelDrawerMode {
   createTodo,
   todoDetails,
   editTodo,
+  createNote,
+  editNote,
 }
 
-enum _TodoPanelDrawerFamily { settings, tags, stickyBoards, todoEditor }
+enum _TodoPanelDrawerFamily {
+  settings,
+  tags,
+  stickyBoards,
+  todoEditor,
+  noteEditor,
+}
 
 class TodoPanel extends StatefulWidget {
   const TodoPanel({
     required this.controller,
+    this.noteController,
     required this.settingsController,
     required this.updateController,
     required this.stickyBoardController,
@@ -67,6 +82,7 @@ class TodoPanel extends StatefulWidget {
   });
 
   final TodoViewModel controller;
+  final NoteViewModel? noteController;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
   final StickyBoardViewModel stickyBoardController;
@@ -91,8 +107,13 @@ class _TodoPanelState extends State<TodoPanel> {
   final _tagManagementCloseFocusNode = FocusNode();
   final _stickyBoardCloseFocusNode = FocusNode();
   final _todoDrawerCloseFocusNode = FocusNode();
+  final _noteDrawerCloseFocusNode = FocusNode();
+  GlobalKey<NoteEditorDrawerState> _noteEditorKey =
+      GlobalKey<NoteEditorDrawerState>();
 
+  _PanelContentKind _contentKind = _PanelContentKind.todos;
   TodoListScope _scope = TodoListScope.active;
+  bool _noteArchived = false;
   String _query = '';
   final Set<String> _selectedTagIds = <String>{};
   String? _selectedTodoId;
@@ -104,12 +125,14 @@ class _TodoPanelState extends State<TodoPanel> {
   _TodoPanelDrawerMode? _tagAssignmentReturnMode;
   _TodoPanelDrawerMode? _todoDrawerReturnMode;
   Set<String> _todoEditorTagIds = <String>{};
+  Set<String> _noteEditorTagIds = <String>{};
   final Set<_TodoPanelDrawerFamily> _mountedDrawerFamilies =
       <_TodoPanelDrawerFamily>{};
   String? _selectedStickyBoardId;
   String? _todoCreationBoardId;
   String? _pendingCreatedTodoId;
   int _todoEditorSession = 0;
+  String? _selectedNoteId;
   int _lastHandledStickyBoardRequestSerial = -1;
   int _drawerRequestSerial = 0;
 
@@ -138,6 +161,7 @@ class _TodoPanelState extends State<TodoPanel> {
     _tagManagementCloseFocusNode.dispose();
     _stickyBoardCloseFocusNode.dispose();
     _todoDrawerCloseFocusNode.dispose();
+    _noteDrawerCloseFocusNode.dispose();
     super.dispose();
   }
 
@@ -183,6 +207,9 @@ class _TodoPanelState extends State<TodoPanel> {
     }
 
     _selectedStickyBoardId = boardId;
+    if (_contentKind != _PanelContentKind.todos) {
+      setState(() => _contentKind = _PanelContentKind.todos);
+    }
     if (!_mountedDrawerFamilies.contains(_TodoPanelDrawerFamily.stickyBoards)) {
       setState(
         () => _mountedDrawerFamilies.add(_TodoPanelDrawerFamily.stickyBoards),
@@ -274,6 +301,84 @@ class _TodoPanelState extends State<TodoPanel> {
 
   void _openTagFilter() {
     _showDrawer(_TodoPanelDrawerMode.tagFilter);
+  }
+
+  void _selectContentKind(_PanelContentKind kind) {
+    if (_contentKind == kind || _drawerMode != _TodoPanelDrawerMode.none) {
+      return;
+    }
+    _searchController.clear();
+    setState(() {
+      _contentKind = kind;
+      _query = '';
+    });
+  }
+
+  void _toggleNoteArchive() {
+    setState(() => _noteArchived = !_noteArchived);
+  }
+
+  void _openNoteCreate() {
+    if (widget.noteController == null) {
+      return;
+    }
+    _showNoteDrawer(
+      _TodoPanelDrawerMode.createNote,
+      initialTagIds: const <String>[],
+    );
+  }
+
+  void _openNote(String noteId) {
+    if (widget.noteController?.itemById(noteId) == null) {
+      return;
+    }
+    _showNoteDrawer(
+      _TodoPanelDrawerMode.editNote,
+      noteId: noteId,
+      initialTagIds: widget.noteController!.itemById(noteId)!.tagIds,
+    );
+  }
+
+  void _showNoteDrawer(
+    _TodoPanelDrawerMode mode, {
+    required Iterable<String> initialTagIds,
+    String? noteId,
+  }) {
+    assert(
+      mode == _TodoPanelDrawerMode.createNote ||
+          mode == _TodoPanelDrawerMode.editNote,
+    );
+    final requestSerial = ++_drawerRequestSerial;
+    _noteEditorKey = GlobalKey<NoteEditorDrawerState>();
+    final needsMount = !_mountedDrawerFamilies.contains(
+      _TodoPanelDrawerFamily.noteEditor,
+    );
+    setState(() {
+      _selectedNoteId = noteId;
+      _noteEditorTagIds = initialTagIds.toSet();
+      if (needsMount) {
+        _mountedDrawerFamilies.add(_TodoPanelDrawerFamily.noteEditor);
+        _pendingDrawerMode = mode;
+      } else {
+        _pendingDrawerMode = null;
+        _drawerMode = mode;
+      }
+      if (mode == _TodoPanelDrawerMode.createNote) {
+        _noteArchived = false;
+      }
+    });
+    if (!needsMount) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || requestSerial != _drawerRequestSerial) {
+        return;
+      }
+      setState(() {
+        _pendingDrawerMode = null;
+        _drawerMode = mode;
+      });
+    });
   }
 
   void _openTagManagement() {
@@ -402,9 +507,11 @@ class _TodoPanelState extends State<TodoPanel> {
     return linked;
   }
 
-  void _openTagAssignmentFromTodo() {
+  void _openTagAssignmentFromEditor() {
     if (_drawerMode != _TodoPanelDrawerMode.createTodo &&
-        _drawerMode != _TodoPanelDrawerMode.editTodo) {
+        _drawerMode != _TodoPanelDrawerMode.editTodo &&
+        _drawerMode != _TodoPanelDrawerMode.createNote &&
+        _drawerMode != _TodoPanelDrawerMode.editNote) {
       return;
     }
     _tagAssignmentReturnMode = _drawerMode;
@@ -419,13 +526,19 @@ class _TodoPanelState extends State<TodoPanel> {
     _showDrawer(_TodoPanelDrawerMode.tagManagement);
   }
 
-  void _toggleTodoEditorTag(String tagId) {
+  void _toggleEditorTag(String tagId) {
     if (widget.controller.tagById(tagId) == null) {
       return;
     }
     setState(() {
-      if (!_todoEditorTagIds.add(tagId)) {
-        _todoEditorTagIds.remove(tagId);
+      final isNoteAssignment =
+          _tagAssignmentReturnMode == _TodoPanelDrawerMode.createNote ||
+          _tagAssignmentReturnMode == _TodoPanelDrawerMode.editNote;
+      final editorTagIds = isNoteAssignment
+          ? _noteEditorTagIds
+          : _todoEditorTagIds;
+      if (!editorTagIds.add(tagId)) {
+        editorTagIds.remove(tagId);
       }
     });
   }
@@ -437,6 +550,7 @@ class _TodoPanelState extends State<TodoPanel> {
     _tagManagementCloseFocusNode.unfocus();
     _stickyBoardCloseFocusNode.unfocus();
     _todoDrawerCloseFocusNode.unfocus();
+    _noteDrawerCloseFocusNode.unfocus();
   }
 
   void _showDrawer(_TodoPanelDrawerMode mode) {
@@ -496,7 +610,9 @@ class _TodoPanelState extends State<TodoPanel> {
         _TodoPanelDrawerMode.tagManagement ||
         _TodoPanelDrawerMode.createTodo ||
         _TodoPanelDrawerMode.todoDetails ||
-        _TodoPanelDrawerMode.editTodo => null,
+        _TodoPanelDrawerMode.editTodo ||
+        _TodoPanelDrawerMode.createNote ||
+        _TodoPanelDrawerMode.editNote => null,
       };
       focusNode?.requestFocus();
     });
@@ -604,6 +720,10 @@ class _TodoPanelState extends State<TodoPanel> {
         _todoCreationBoardId = null;
         _pendingCreatedTodoId = null;
       }
+      if (_isNoteDrawerMode(closedMode)) {
+        _selectedNoteId = null;
+        _noteEditorTagIds = <String>{};
+      }
     });
     if (returnMode != null) {
       _requestDrawerFocus(returnMode);
@@ -616,6 +736,16 @@ class _TodoPanelState extends State<TodoPanel> {
     if (_isTodoDrawerMode(closedMode)) {
       _releaseClosedTodoDrawer(closedMode);
     }
+  }
+
+  Future<void> _requestCloseActiveDrawer() async {
+    if (_isNoteDrawerMode(_drawerMode)) {
+      final canClose = await _noteEditorKey.currentState?.flush() ?? true;
+      if (!canClose || !mounted) {
+        return;
+      }
+    }
+    _closeActiveDrawer();
   }
 
   void _restorePanelFocus() {
@@ -650,6 +780,11 @@ class _TodoPanelState extends State<TodoPanel> {
         mode == _TodoPanelDrawerMode.editTodo;
   }
 
+  bool _isNoteDrawerMode(_TodoPanelDrawerMode mode) {
+    return mode == _TodoPanelDrawerMode.createNote ||
+        mode == _TodoPanelDrawerMode.editNote;
+  }
+
   _TodoPanelDrawerFamily? _drawerFamilyFor(_TodoPanelDrawerMode mode) {
     return switch (mode) {
       _TodoPanelDrawerMode.settings => _TodoPanelDrawerFamily.settings,
@@ -663,6 +798,8 @@ class _TodoPanelState extends State<TodoPanel> {
       _TodoPanelDrawerMode.createTodo ||
       _TodoPanelDrawerMode.todoDetails ||
       _TodoPanelDrawerMode.editTodo => _TodoPanelDrawerFamily.todoEditor,
+      _TodoPanelDrawerMode.createNote ||
+      _TodoPanelDrawerMode.editNote => _TodoPanelDrawerFamily.noteEditor,
       _TodoPanelDrawerMode.none => null,
     };
   }
@@ -696,6 +833,9 @@ class _TodoPanelState extends State<TodoPanel> {
         _drawerMode == _TodoPanelDrawerMode.createTodo ||
         _drawerMode == _TodoPanelDrawerMode.todoDetails ||
         _drawerMode == _TodoPanelDrawerMode.editTodo;
+    final isNoteDrawerOpen =
+        _drawerMode == _TodoPanelDrawerMode.createNote ||
+        _drawerMode == _TodoPanelDrawerMode.editNote;
     final hasSettingsDrawer = _mountedDrawerFamilies.contains(
       _TodoPanelDrawerFamily.settings,
     );
@@ -708,14 +848,27 @@ class _TodoPanelState extends State<TodoPanel> {
     final hasTodoDrawer = _mountedDrawerFamilies.contains(
       _TodoPanelDrawerFamily.todoEditor,
     );
-    final isTodoContextOverlayOpen =
+    final hasNoteDrawer = _mountedDrawerFamilies.contains(
+      _TodoPanelDrawerFamily.noteEditor,
+    );
+    final isEditorContextOverlayOpen =
         isTagAssignmentOpen ||
         (isTagManagementOpen &&
             _tagManagementReturnMode == _TodoPanelDrawerMode.tagAssignment);
-    final isTodoDrawerVisible = isTodoDrawerOpen || isTodoContextOverlayOpen;
+    final tagAssignmentOwner = _tagAssignmentReturnMode;
+    final isTodoTagContext =
+        isEditorContextOverlayOpen &&
+        (tagAssignmentOwner == _TodoPanelDrawerMode.createTodo ||
+            tagAssignmentOwner == _TodoPanelDrawerMode.editTodo);
+    final isNoteTagContext =
+        isEditorContextOverlayOpen &&
+        (tagAssignmentOwner == _TodoPanelDrawerMode.createNote ||
+            tagAssignmentOwner == _TodoPanelDrawerMode.editNote);
+    final isTodoDrawerVisible = isTodoDrawerOpen || isTodoTagContext;
+    final isNoteDrawerVisible = isNoteDrawerOpen || isNoteTagContext;
     final isStickyBoardContextVisible =
         (_todoDrawerReturnMode == _TodoPanelDrawerMode.stickyBoardDetail &&
-        (isTodoDrawerOpen || isTodoContextOverlayOpen));
+        (isTodoDrawerOpen || isTodoTagContext));
     final isStickyBoardDrawerVisible =
         isStickyBoardDrawerOpen || isStickyBoardContextVisible;
     final visibleTagDrawerMode = isTagDrawerOpen
@@ -732,10 +885,20 @@ class _TodoPanelState extends State<TodoPanel> {
     final selectedTodo = _selectedTodoId == null
         ? null
         : widget.controller.itemById(_selectedTodoId!);
+    final selectedNote = _selectedNoteId == null
+        ? null
+        : widget.noteController?.itemById(_selectedNoteId!);
     final todoEditorTagIds = widget.controller.tags
         .where((tag) => _todoEditorTagIds.contains(tag.id))
         .map((tag) => tag.id)
         .toList(growable: false);
+    final noteEditorTagIds = widget.controller.tags
+        .where((tag) => _noteEditorTagIds.contains(tag.id))
+        .map((tag) => tag.id)
+        .toList(growable: false);
+    final assignmentTagIds = isNoteTagContext
+        ? _noteEditorTagIds
+        : _todoEditorTagIds;
     final originalTodoTagIds = selectedTodo == null
         ? const <String>[]
         : widget.controller.tagIdsForTodo(selectedTodo.id);
@@ -756,7 +919,7 @@ class _TodoPanelState extends State<TodoPanel> {
           _CollapseIntent: CallbackAction<_CollapseIntent>(
             onInvoke: (_) {
               if (isDrawerOpen) {
-                _closeActiveDrawer();
+                unawaited(_requestCloseActiveDrawer());
               } else {
                 widget.onCollapse();
               }
@@ -771,7 +934,11 @@ class _TodoPanelState extends State<TodoPanel> {
           ),
           _NewTodoIntent: CallbackAction<_NewTodoIntent>(
             onInvoke: (_) {
-              _openTodoCreate();
+              if (_contentKind == _PanelContentKind.notes) {
+                _openNoteCreate();
+              } else {
+                _openTodoCreate();
+              }
               return null;
             },
           ),
@@ -813,7 +980,12 @@ class _TodoPanelState extends State<TodoPanel> {
                         ExcludeFocus(
                           excluding: isDrawerOpen,
                           child: AnimatedBuilder(
-                            animation: widget.controller,
+                            animation: widget.noteController == null
+                                ? widget.controller
+                                : Listenable.merge(<Listenable>[
+                                    widget.controller,
+                                    widget.noteController!,
+                                  ]),
                             builder: (context, _) {
                               final selectedTags = widget.controller.tags
                                   .where(
@@ -830,11 +1002,33 @@ class _TodoPanelState extends State<TodoPanel> {
                                     activeCount: widget.controller.activeCount,
                                     archivedCount:
                                         widget.controller.archivedCount,
+                                    notesSelected:
+                                        _contentKind == _PanelContentKind.notes,
+                                    noteArchived: _noteArchived,
+                                    noteActiveCount:
+                                        widget.noteController?.activeCount ?? 0,
+                                    noteArchivedCount:
+                                        widget.noteController?.archivedCount ??
+                                        0,
                                     onToggleArchive: _toggleArchiveScope,
+                                    onToggleNoteArchive: _toggleNoteArchive,
                                     onOpenStickyBoards: _openStickyBoards,
                                     onOpenSettings: _openSettings,
                                     onCollapse: widget.onCollapse,
                                   ),
+                                  if (widget.noteController != null)
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        20,
+                                        0,
+                                        20,
+                                        12,
+                                      ),
+                                      child: _ContentSwitcher(
+                                        selected: _contentKind,
+                                        onSelected: _selectContentKind,
+                                      ),
+                                    ),
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(
                                       20,
@@ -858,14 +1052,25 @@ class _TodoPanelState extends State<TodoPanel> {
                                                 },
                                                 decoration: InputDecoration(
                                                   hintText:
-                                                      _scope ==
-                                                          TodoListScope.active
-                                                      ? context
-                                                            .l10n
-                                                            .searchTodosHint
-                                                      : context
-                                                            .l10n
-                                                            .searchArchiveHint,
+                                                      _contentKind ==
+                                                          _PanelContentKind
+                                                              .notes
+                                                      ? (_noteArchived
+                                                            ? context
+                                                                  .l10n
+                                                                  .searchNoteArchiveHint
+                                                            : context
+                                                                  .l10n
+                                                                  .searchNotesHint)
+                                                      : (_scope ==
+                                                                TodoListScope
+                                                                    .active
+                                                            ? context
+                                                                  .l10n
+                                                                  .searchTodosHint
+                                                            : context
+                                                                  .l10n
+                                                                  .searchArchiveHint),
                                                   prefixIcon: const Icon(
                                                     Icons.search_rounded,
                                                     size: 19,
@@ -900,16 +1105,32 @@ class _TodoPanelState extends State<TodoPanel> {
                                                       .length,
                                               onPressed: _openTagFilter,
                                             ),
-                                            if (_scope ==
-                                                TodoListScope.active) ...[
+                                            if ((_contentKind ==
+                                                        _PanelContentKind
+                                                            .todos &&
+                                                    _scope ==
+                                                        TodoListScope.active) ||
+                                                (_contentKind ==
+                                                        _PanelContentKind
+                                                            .notes &&
+                                                    !_noteArchived)) ...[
                                               const SizedBox(width: 9),
                                               SizedBox(
                                                 height: 42,
                                                 child: FilledButton.tonalIcon(
-                                                  key: const Key(
-                                                    'add-todo-button',
+                                                  key: Key(
+                                                    _contentKind ==
+                                                            _PanelContentKind
+                                                                .notes
+                                                        ? 'add-note-button'
+                                                        : 'add-todo-button',
                                                   ),
-                                                  onPressed: _openTodoCreate,
+                                                  onPressed:
+                                                      _contentKind ==
+                                                          _PanelContentKind
+                                                              .notes
+                                                      ? _openNoteCreate
+                                                      : _openTodoCreate,
                                                   style: FilledButton.styleFrom(
                                                     padding:
                                                         const EdgeInsets.symmetric(
@@ -921,7 +1142,15 @@ class _TodoPanelState extends State<TodoPanel> {
                                                     size: 18,
                                                   ),
                                                   label: Text(
-                                                    context.l10n.newTodoAction,
+                                                    _contentKind ==
+                                                            _PanelContentKind
+                                                                .notes
+                                                        ? context
+                                                              .l10n
+                                                              .newNoteAction
+                                                        : context
+                                                              .l10n
+                                                              .newTodoAction,
                                                   ),
                                                 ),
                                               ),
@@ -931,7 +1160,8 @@ class _TodoPanelState extends State<TodoPanel> {
                                       ],
                                     ),
                                   ),
-                                  if (widget.controller.error != null)
+                                  if (_contentKind == _PanelContentKind.todos &&
+                                      widget.controller.error != null)
                                     _ErrorBanner(
                                       message: context.l10n
                                           .messageForStorageFailure(
@@ -939,23 +1169,34 @@ class _TodoPanelState extends State<TodoPanel> {
                                           ),
                                       onDismiss: widget.controller.dismissError,
                                     ),
-                                  AnimatedBuilder(
-                                    animation: widget.stickyBoardController,
-                                    builder: (context, _) {
-                                      final error =
-                                          widget.stickyBoardController.error;
-                                      if (error == null) {
-                                        return const SizedBox.shrink();
-                                      }
-                                      return _ErrorBanner(
-                                        message: context.l10n
-                                            .messageForStorageFailure(error),
-                                        onDismiss: widget
-                                            .stickyBoardController
-                                            .dismissError,
-                                      );
-                                    },
-                                  ),
+                                  if (_contentKind == _PanelContentKind.notes &&
+                                      widget.noteController?.error != null)
+                                    _ErrorBanner(
+                                      message: context.l10n
+                                          .messageForStorageFailure(
+                                            widget.noteController!.error!,
+                                          ),
+                                      onDismiss:
+                                          widget.noteController!.dismissError,
+                                    ),
+                                  if (_contentKind == _PanelContentKind.todos)
+                                    AnimatedBuilder(
+                                      animation: widget.stickyBoardController,
+                                      builder: (context, _) {
+                                        final error =
+                                            widget.stickyBoardController.error;
+                                        if (error == null) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        return _ErrorBanner(
+                                          message: context.l10n
+                                              .messageForStorageFailure(error),
+                                          onDismiss: widget
+                                              .stickyBoardController
+                                              .dismissError,
+                                        );
+                                      },
+                                    ),
                                   Divider(
                                     height: 1,
                                     thickness: 1,
@@ -964,18 +1205,32 @@ class _TodoPanelState extends State<TodoPanel> {
                                         : Colors.black.withValues(alpha: 0.055),
                                   ),
                                   Expanded(
-                                    child: _TodoList(
-                                      controller: widget.controller,
-                                      scope: _scope,
-                                      query: _query,
-                                      selectedTagIds: effectiveSelectedTagIds,
-                                      onClearTagFilters: _clearTagFilters,
-                                      onOpenTagManagement: _openTagManagement,
-                                      onOpenDetails: _openTodoDetails,
-                                      onEditTodo: _openTodoEdit,
-                                      onDeleteTodo:
-                                          _deleteArchivedTodoPermanently,
-                                    ),
+                                    child:
+                                        _contentKind == _PanelContentKind.notes
+                                        ? NotePanelContent(
+                                            controller: widget.noteController!,
+                                            archived: _noteArchived,
+                                            query: _query,
+                                            availableTags:
+                                                widget.controller.tags,
+                                            selectedTagIds:
+                                                effectiveSelectedTagIds,
+                                            onOpen: _openNote,
+                                          )
+                                        : _TodoList(
+                                            controller: widget.controller,
+                                            scope: _scope,
+                                            query: _query,
+                                            selectedTagIds:
+                                                effectiveSelectedTagIds,
+                                            onClearTagFilters: _clearTagFilters,
+                                            onOpenTagManagement:
+                                                _openTagManagement,
+                                            onOpenDetails: _openTodoDetails,
+                                            onEditTodo: _openTodoEdit,
+                                            onDeleteTodo:
+                                                _deleteArchivedTodoPermanently,
+                                          ),
                                   ),
                                 ],
                               );
@@ -997,7 +1252,8 @@ class _TodoPanelState extends State<TodoPanel> {
                                 child: GestureDetector(
                                   key: const Key('panel-drawer-dismiss'),
                                   behavior: HitTestBehavior.opaque,
-                                  onTap: _closeActiveDrawer,
+                                  onTap: () =>
+                                      unawaited(_requestCloseActiveDrawer()),
                                   child: ColoredBox(
                                     color: Colors.black.withValues(
                                       alpha: isDark ? 0.22 : 0.12,
@@ -1177,7 +1433,7 @@ class _TodoPanelState extends State<TodoPanel> {
                                           }
                                         },
                                         onOpenTagAssignment:
-                                            _openTagAssignmentFromTodo,
+                                            _openTagAssignmentFromEditor,
                                         onSave: (title, content, tagIds) {
                                           if (todoEditorMode ==
                                               TodoEditorDrawerMode.create) {
@@ -1222,11 +1478,67 @@ class _TodoPanelState extends State<TodoPanel> {
                               ),
                             ),
                           ),
-                        if (hasTodoDrawer && hasTagDrawer)
+                        if (hasNoteDrawer)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: _noteDrawerHeight,
+                            child: IgnorePointer(
+                              key: const Key('note-drawer-pointer'),
+                              ignoring: !isNoteDrawerOpen,
+                              child: ExcludeFocus(
+                                excluding: !isNoteDrawerOpen,
+                                child: ExcludeSemantics(
+                                  excluding: !isNoteDrawerOpen,
+                                  child: AnimatedSlide(
+                                    key: const Key('note-drawer-slide'),
+                                    duration: reduceMotion
+                                        ? Duration.zero
+                                        : _drawerSlideDuration,
+                                    curve: Curves.easeOutCubic,
+                                    offset: isNoteDrawerVisible
+                                        ? Offset.zero
+                                        : const Offset(0, 1),
+                                    child: FocusTraversalGroup(
+                                      child: NoteEditorDrawer(
+                                        key: _noteEditorKey,
+                                        item: selectedNote,
+                                        availableTags: widget.controller.tags,
+                                        assignedTagIds: noteEditorTagIds,
+                                        isOpen: isNoteDrawerOpen,
+                                        onOpenTagAssignment:
+                                            _openTagAssignmentFromEditor,
+                                        onSave:
+                                            ({
+                                              id,
+                                              required title,
+                                              required content,
+                                              required tagIds,
+                                            }) {
+                                              return widget.noteController!
+                                                  .save(
+                                                    id: id,
+                                                    title: title,
+                                                    content: content,
+                                                    tagIds: tagIds,
+                                                  );
+                                            },
+                                        onClose: _closeActiveDrawer,
+                                        closeFocusNode:
+                                            _noteDrawerCloseFocusNode,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if ((hasTodoDrawer || hasNoteDrawer) && hasTagDrawer)
                           Positioned.fill(
                             child: IgnorePointer(
                               key: const Key('todo-context-scrim-pointer'),
-                              ignoring: !isTodoContextOverlayOpen,
+                              ignoring: !isEditorContextOverlayOpen,
                               child: ExcludeSemantics(
                                 child: AnimatedOpacity(
                                   key: const Key('todo-context-scrim'),
@@ -1234,7 +1546,7 @@ class _TodoPanelState extends State<TodoPanel> {
                                       ? Duration.zero
                                       : _drawerScrimDuration,
                                   curve: Curves.easeOut,
-                                  opacity: isTodoContextOverlayOpen ? 1 : 0,
+                                  opacity: isEditorContextOverlayOpen ? 1 : 0,
                                   child: GestureDetector(
                                     key: const Key('todo-context-dismiss'),
                                     behavior: HitTestBehavior.opaque,
@@ -1290,6 +1602,16 @@ class _TodoPanelState extends State<TodoPanel> {
                                               'tag-management-drawer-content',
                                             ),
                                             controller: widget.controller,
+                                            additionalUsageCounts:
+                                                widget.noteController
+                                                    ?.tagUsageCountsFor(
+                                                      widget.controller.tags
+                                                          .map((tag) => tag.id),
+                                                    ) ??
+                                                const <String, int>{},
+                                            onTagDeleted: widget
+                                                .noteController
+                                                ?.removeTag,
                                             isOpen: isTagManagementOpen,
                                             borderOnLeft: !tagDrawerOnLeft,
                                             onClose: _closeActiveDrawer,
@@ -1302,9 +1624,9 @@ class _TodoPanelState extends State<TodoPanel> {
                                               'tag-assignment-drawer-content',
                                             ),
                                             controller: widget.controller,
-                                            selectedTagIds: _todoEditorTagIds,
+                                            selectedTagIds: assignmentTagIds,
                                             borderOnLeft: !tagDrawerOnLeft,
-                                            onToggled: _toggleTodoEditorTag,
+                                            onToggled: _toggleEditorTag,
                                             onManageTags:
                                                 _openTagManagementFromTagAssignment,
                                             onClose: _closeActiveDrawer,
@@ -1318,6 +1640,15 @@ class _TodoPanelState extends State<TodoPanel> {
                                           controller: widget.controller,
                                           selectedTagIds: _selectedTagIds,
                                           borderOnLeft: !tagDrawerOnLeft,
+                                          usageCounts:
+                                              _contentKind ==
+                                                  _PanelContentKind.notes
+                                              ? widget.noteController
+                                                    ?.tagUsageCountsFor(
+                                                      widget.controller.tags
+                                                          .map((tag) => tag.id),
+                                                    )
+                                              : null,
                                           onToggled: _toggleTagFilter,
                                           onClear: _clearTagFilters,
                                           onManageTags: _openTagManagement,
@@ -1345,12 +1676,102 @@ class _TodoPanelState extends State<TodoPanel> {
   }
 }
 
+class _ContentSwitcher extends StatelessWidget {
+  const _ContentSwitcher({required this.selected, required this.onSelected});
+
+  final _PanelContentKind selected;
+  final ValueChanged<_PanelContentKind> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: onSurface.withValues(alpha: 0.035),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: onSurface.withValues(alpha: 0.07)),
+      ),
+      child: Row(
+        children: <Widget>[
+          _ContentSwitcherButton(
+            key: const Key('todo-tab'),
+            label: context.l10n.todoTabLabel,
+            selected: selected == _PanelContentKind.todos,
+            onPressed: () => onSelected(_PanelContentKind.todos),
+          ),
+          const SizedBox(width: 3),
+          _ContentSwitcherButton(
+            key: const Key('note-tab'),
+            label: context.l10n.notesTabLabel,
+            selected: selected == _PanelContentKind.notes,
+            onPressed: () => onSelected(_PanelContentKind.notes),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContentSwitcherButton extends StatelessWidget {
+  const _ContentSwitcherButton({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+    super.key,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: Material(
+          color: selected
+              ? theme.colorScheme.primary.withValues(alpha: 0.13)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(8),
+            hoverColor: theme.colorScheme.primary.withValues(alpha: 0.06),
+            child: Center(
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: selected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.62),
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PanelHeader extends StatelessWidget {
   const _PanelHeader({
     required this.scope,
     required this.activeCount,
     required this.archivedCount,
+    required this.notesSelected,
+    required this.noteArchived,
+    required this.noteActiveCount,
+    required this.noteArchivedCount,
     required this.onToggleArchive,
+    required this.onToggleNoteArchive,
     required this.onOpenStickyBoards,
     required this.onOpenSettings,
     required this.onCollapse,
@@ -1359,7 +1780,12 @@ class _PanelHeader extends StatelessWidget {
   final TodoListScope scope;
   final int activeCount;
   final int archivedCount;
+  final bool notesSelected;
+  final bool noteArchived;
+  final int noteActiveCount;
+  final int noteArchivedCount;
   final VoidCallback onToggleArchive;
+  final VoidCallback onToggleNoteArchive;
   final VoidCallback onOpenStickyBoards;
   final VoidCallback onOpenSettings;
   final VoidCallback onCollapse;
@@ -1368,7 +1794,14 @@ class _PanelHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     final localizations = context.l10n;
-    final statusText = scope == TodoListScope.archived
+    final archiveSelected = notesSelected
+        ? noteArchived
+        : scope == TodoListScope.archived;
+    final statusText = notesSelected
+        ? noteArchived
+              ? '${localizations.archiveScopeLabel} · $noteArchivedCount'
+              : localizations.noteCountLabel(noteActiveCount)
+        : scope == TodoListScope.archived
         ? '${localizations.archiveScopeLabel} · $archivedCount'
         : activeCount == 0
         ? localizations.allClearToday
@@ -1389,30 +1822,31 @@ class _PanelHeader extends StatelessWidget {
             ),
           ),
           Semantics(
-            selected: scope == TodoListScope.archived,
+            selected: archiveSelected,
             child: IconButton(
               key: const Key('archive-scope-button'),
-              tooltip: scope == TodoListScope.archived
+              tooltip: archiveSelected
                   ? localizations.activeScopeLabel
                   : localizations.archiveScopeLabel,
-              onPressed: onToggleArchive,
-              color: scope == TodoListScope.archived
+              onPressed: notesSelected ? onToggleNoteArchive : onToggleArchive,
+              color: archiveSelected
                   ? Theme.of(context).colorScheme.primary
                   : null,
               icon: Icon(
-                scope == TodoListScope.archived
+                archiveSelected
                     ? Icons.archive_rounded
                     : Icons.archive_outlined,
                 size: 19,
               ),
             ),
           ),
-          IconButton(
-            key: const Key('sticky-boards-button'),
-            tooltip: localizations.stickyBoardsTooltip,
-            onPressed: onOpenStickyBoards,
-            icon: const Icon(Icons.sticky_note_2_outlined, size: 19),
-          ),
+          if (!notesSelected)
+            IconButton(
+              key: const Key('sticky-boards-button'),
+              tooltip: localizations.stickyBoardsTooltip,
+              onPressed: onOpenStickyBoards,
+              icon: const Icon(Icons.sticky_note_2_outlined, size: 19),
+            ),
           IconButton(
             key: const Key('settings-button'),
             tooltip: localizations.settingsTooltip,

@@ -52,6 +52,8 @@ class TodoViewModel extends ChangeNotifier {
   final TagIdGenerator _tagIdGenerator;
   final FirstRunWorkspaceSeeder? _firstRunWorkspaceSeeder;
 
+  static const String untitledFallback = 'Untitled todo';
+
   List<TodoItem> _items = const <TodoItem>[];
   Map<String, TodoItem> _itemsById = const <String, TodoItem>{};
   List<TodoItem> _activeViewItems = const <TodoItem>[];
@@ -190,9 +192,12 @@ class TodoViewModel extends ChangeNotifier {
     Iterable<String> tagIds = const <String>[],
   }) {
     final normalizedTitle = title.trim();
-    if (normalizedTitle.isEmpty) {
+    if (normalizedTitle.isEmpty && content.trim().isEmpty) {
       return Future<TodoItem?>.value(null);
     }
+    final resolvedTitle = normalizedTitle.isEmpty
+        ? untitledFallback
+        : normalizedTitle;
 
     final todoId = _idGenerator();
     return _enqueueTodoAndTagMutation(() async {
@@ -205,7 +210,7 @@ class TodoViewModel extends ChangeNotifier {
       }
       final createdItem = TodoItem(
         id: todoId,
-        title: normalizedTitle,
+        title: resolvedTitle,
         content: content,
         createdAt: _clock().toUtc(),
       );
@@ -262,9 +267,12 @@ class TodoViewModel extends ChangeNotifier {
     Iterable<String>? tagIds,
   }) {
     final normalizedTitle = title.trim();
-    if (normalizedTitle.isEmpty) {
+    if (normalizedTitle.isEmpty && content.trim().isEmpty) {
       return Future<bool>.value(false);
     }
+    final resolvedTitle = normalizedTitle.isEmpty
+        ? untitledFallback
+        : normalizedTitle;
 
     return _enqueueTodoAndTagMutation(() async {
       final existingIndex = _items.indexWhere((item) => item.id == id);
@@ -283,7 +291,7 @@ class TodoViewModel extends ChangeNotifier {
       }
 
       final todoChanged =
-          existingItem.title != normalizedTitle ||
+          existingItem.title != resolvedTitle ||
           existingItem.content != content;
       final tagsChanged = !listEquals(tagIdsForTodo(id), normalizedTagIds);
       if (!todoChanged && !tagsChanged) {
@@ -293,7 +301,7 @@ class TodoViewModel extends ChangeNotifier {
       final updatedItems = List<TodoItem>.of(_items);
       if (todoChanged) {
         updatedItems[existingIndex] = existingItem.withDetails(
-          title: normalizedTitle,
+          title: resolvedTitle,
           content: content,
         );
       }

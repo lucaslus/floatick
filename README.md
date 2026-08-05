@@ -2,12 +2,12 @@
   <img
     src="./docs/assets/floatick-product-hero-v5.png"
     width="100%"
-    alt="Floatick floating todo list, Markdown editor, tags, and settings for macOS"
+    alt="Floatick floating workspace for macOS with an editor, tags, Sticky Boards, and settings"
   />
-  <h1>Floatick — Floating Todo List for macOS</h1>
-  <p><strong>An open-source, local-first macOS todo app and lightweight task manager.</strong></p>
+  <h1>Floatick — Floating Todos and Notes for macOS</h1>
+  <p><strong>An open-source, local-first macOS app for lightweight tasks and notes.</strong></p>
   <p>
-    Capture and organize tasks one click away—without an account or cloud service.
+    Capture tasks and thoughts one click away—without an account or cloud service.
   </p>
   <p>
     <a href="https://github.com/lucaslus/floatick/actions/workflows/ci.yml">
@@ -24,19 +24,21 @@
   </p>
 </div>
 
-Floatick is an offline-friendly desktop todo app that rests above your workspace
-as a small, draggable icon. Click it and the icon expands into a focused todo
-panel; collapse it and the icon returns to the same anchor. The panel chooses
+Floatick is an offline-friendly desktop todo and notes app that rests above your
+workspace as a small, draggable icon. Click it and the icon expands into a
+focused panel; collapse it and the icon returns to the same anchor. The panel chooses
 its expansion direction from the available screen space, so it stays useful
 near any display edge.
 
-## A focused macOS task manager
+## A focused macOS space for tasks and notes
 
 - **Always within reach** — drag the floating icon anywhere, then click to open.
 - **Fast task flow** — create, edit, complete, search, archive, restore, and
   organize tasks in automatic daily sections.
-- **Local by default** — no account, cloud service, or telemetry. Your todo data
-  remains in `~/.floatick`.
+- **Lightweight notes** — capture ideas, logs, and snippets with search, pinning,
+  archiving, shared tags, autosave, and Markdown preview.
+- **Local by default** — no account, cloud service, or telemetry. Your todo and
+  note data remains in `~/.floatick`.
 - **Made for macOS** — transparent AppKit window behavior, keyboard shortcuts,
   context-menu Quit, and support for Reduce Motion.
 - **Comfortable in any workspace** — system, light, and dark themes with English
@@ -70,10 +72,12 @@ Only download Floatick from this repository's Releases page.
 | Action | How |
 | --- | --- |
 | Reposition Floatick | Drag the floating icon |
-| Open the todo list | Click the floating icon |
+| Open Floatick | Click the floating icon |
 | Collapse the panel | Click the collapse button or press `Esc` |
 | Create a todo | Press `⌘N`, or use the input at the top |
-| Search | Press `⌘F` |
+| Switch between todos and notes | Use the tabs at the top of the panel |
+| Create a note | Open Notes and choose New |
+| Search the current workspace | Press `⌘F` |
 | Edit a todo | Hover over the item and choose Edit |
 | Complete a todo | Select its checkbox |
 | Archive or restore | Use the action at the end of the item |
@@ -86,11 +90,13 @@ Floatick creates its working directory on first launch:
 | Path | Purpose |
 | --- | --- |
 | `~/.floatick/todos.json` | Todos, completion state, and archive state |
+| `~/.floatick/notes.json` | Notes, tags, pinning, and archive state |
+| `~/.floatick/tags.json` | Reusable tags shared by todos and notes |
 | `~/.floatick/settings.json` | Theme and language preferences |
 
 Sparkle stores the automatic-update preference in standard macOS application
 preferences. Floatick does not require an account and does not upload your todo
-data. Network access is used only to check for and download application updates.
+or note data. Network access is used only to check for and download application updates.
 
 ## Development
 
@@ -135,7 +141,7 @@ the macOS system boundaries that remain in Draft acceptance.
 lib/
   app/          App composition and themes
   core/         Shared platform, storage, and UI primitives
-  features/     Todo, settings, and update features
+  features/     Todo, notes, settings, and update features
   l10n/         English and Simplified Chinese resources
 macos/Runner/   AppKit window shell and Sparkle integration
 test/           Repository, ViewModel, and widget tests
@@ -144,7 +150,7 @@ tool/           Icon and release tooling
 ```
 
 Flutter owns product UI and state. A small AppKit shell owns macOS-specific
-window behavior and Sparkle. Todo data never crosses the platform channel.
+window behavior and Sparkle. Product data never crosses the platform channel.
 See [Architecture](./docs/ARCHITECTURE.md) for the dependency boundaries.
 
 ## Development and release model

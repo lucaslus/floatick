@@ -1,4 +1,4 @@
-import 'package:floatick/features/todos/presentation/widgets/todo_markdown.dart';
+import 'package:floatick/core/ui/floatick_markdown.dart';
 import 'package:floatick/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,7 +16,7 @@ void main() {
           body: SizedBox(
             width: 400,
             height: 300,
-            child: TodoMarkdownContent(
+            child: FloatickMarkdownContent(
               content: '![Release diagram](https://example.com/diagram.png)',
             ),
           ),

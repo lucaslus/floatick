@@ -41,14 +41,21 @@ void main() {
     expect(controller.activeCount, 1);
   });
 
-  test('blank titles are ignored', () async {
-    await controller.load();
-    final didAdd = await controller.add('   ', content: 'Not enough');
+  test(
+    'content-only todos use the untitled fallback and empty drafts are ignored',
+    () async {
+      await controller.load();
+      final didAdd = await controller.add('   ', content: 'Not enough');
 
-    expect(didAdd, isFalse);
-    expect(controller.items, isEmpty);
-    expect(repository.saveCount, 0);
-  });
+      expect(didAdd, isTrue);
+      expect(controller.items.single.title, TodoViewModel.untitledFallback);
+      expect(repository.saveCount, 1);
+
+      expect(await controller.add('  ', content: '\n  '), isFalse);
+      expect(controller.items, hasLength(1));
+      expect(repository.saveCount, 1);
+    },
+  );
 
   test('duplicate generated ids are rejected without persisting', () async {
     repository.savedItems = <TodoItem>[
@@ -229,28 +236,31 @@ void main() {
     expect(repository.savedItems.single, controller.items.single);
   });
 
-  test('updateDetails rejects blank titles and keeps existing data', () async {
-    repository.savedItems = <TodoItem>[
-      TodoItem(
+  test(
+    'updateDetails uses the untitled fallback when the title is blank',
+    () async {
+      repository.savedItems = <TodoItem>[
+        TodoItem(
+          id: 'existing',
+          title: 'Original title',
+          content: 'Original content',
+          createdAt: DateTime.parse(firstDate),
+        ),
+      ];
+      await controller.load();
+
+      final didUpdate = await controller.updateDetails(
         id: 'existing',
-        title: 'Original title',
-        content: 'Original content',
-        createdAt: DateTime.parse(firstDate),
-      ),
-    ];
-    await controller.load();
+        title: ' ',
+        content: 'Changed content',
+      );
 
-    final didUpdate = await controller.updateDetails(
-      id: 'existing',
-      title: ' ',
-      content: 'Changed content',
-    );
-
-    expect(didUpdate, isFalse);
-    expect(controller.items.single.title, 'Original title');
-    expect(controller.items.single.content, 'Original content');
-    expect(repository.saveCount, 0);
-  });
+      expect(didUpdate, isTrue);
+      expect(controller.items.single.title, TodoViewModel.untitledFallback);
+      expect(controller.items.single.content, 'Changed content');
+      expect(repository.saveCount, 1);
+    },
+  );
 
   test('a failed rename keeps the original title', () async {
     repository.savedItems = <TodoItem>[

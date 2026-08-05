@@ -6,7 +6,7 @@ import '../../../todos/domain/todo_tag.dart';
 import '../../../todos/presentation/todo_clipboard_controller.dart';
 import '../../../todos/presentation/widgets/floatick_tag_chip.dart';
 import '../../../todos/presentation/widgets/todo_copy_button.dart';
-import '../../../todos/presentation/widgets/todo_markdown.dart';
+import '../../../../core/ui/floatick_markdown.dart';
 
 class StickyBoardTodoDetails extends StatefulWidget {
   const StickyBoardTodoDetails({
@@ -113,7 +113,7 @@ class _StickyBoardTodoDetailsState extends State<StickyBoardTodoDetails> {
         Expanded(
           child: item.content.trim().isEmpty
               ? _EmptyStickyBoardTodoContent(onSurface: onSurface)
-              : TodoMarkdownContent(
+              : FloatickMarkdownContent(
                   key: const Key('sticky-board-details-markdown'),
                   content: item.content,
                 ),

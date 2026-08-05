@@ -361,16 +361,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get todoTitleLabel => '标题';
 
   @override
-  String get todoTitleFieldHint => '要完成什么？';
+  String get todoTitleFieldHint => '标题';
 
   @override
   String get todoContentLabel => '内容';
 
   @override
   String get todoContentFieldHint => '使用 Markdown 添加更多说明…';
-
-  @override
-  String get markdownSupportedHint => '支持 Markdown · ⌘ Return 保存';
 
   @override
   String get markdownWriteLabel => '编辑';
@@ -409,7 +406,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get markdownPreviewEmptyMessage => '暂无可预览内容';
 
   @override
-  String get markdownImageBlockedMessage => '待办详情中暂不显示图片。';
+  String get markdownImageBlockedMessage => '预览中暂不显示图片。';
 
   @override
   String get viewTodoDetailsTooltip => '查看详情';
@@ -443,9 +440,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get markCompleteTooltip => '标记为已完成';
-
-  @override
-  String get todoTitleRequiredHint => '待办内容不能为空';
 
   @override
   String get editTooltip => '编辑';
@@ -497,6 +491,98 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get emptyTodosMessage => '在上方随时添加新事项';
+
+  @override
+  String get todoTabLabel => '待办';
+
+  @override
+  String get notesTabLabel => '笔记';
+
+  @override
+  String noteCountLabel(int count) {
+    return '$count 条笔记';
+  }
+
+  @override
+  String get searchNotesHint => '搜索笔记';
+
+  @override
+  String get searchNoteArchiveHint => '搜索笔记归档';
+
+  @override
+  String get newNoteAction => '新建';
+
+  @override
+  String get newNoteDrawerTitle => '新建笔记';
+
+  @override
+  String get editNoteDrawerTitle => '编辑笔记';
+
+  @override
+  String get closeNoteDrawerTooltip => '关闭笔记抽屉';
+
+  @override
+  String get noteTitleHint => '标题';
+
+  @override
+  String get noteTitleLabel => '标题';
+
+  @override
+  String get noteContentLabel => '内容';
+
+  @override
+  String get noteContentHint => '先记下来，稍后再整理…';
+
+  @override
+  String get noteAutoSaving => '正在自动保存…';
+
+  @override
+  String get noteAutoSaved => '已自动保存';
+
+  @override
+  String get noteAutoSaveFailed => '自动保存失败，请重试';
+
+  @override
+  String get noteEmptyDraftHint => '空白笔记不会保存';
+
+  @override
+  String get finishNoteAction => '完成';
+
+  @override
+  String get pinnedNotesLabel => '置顶';
+
+  @override
+  String get recentNotesLabel => '最近编辑';
+
+  @override
+  String get noteWithoutContent => '暂无正文';
+
+  @override
+  String get pinNoteTooltip => '置顶笔记';
+
+  @override
+  String get unpinNoteTooltip => '取消置顶';
+
+  @override
+  String get archiveNoteTooltip => '归档笔记';
+
+  @override
+  String get restoreNoteTooltip => '恢复笔记';
+
+  @override
+  String get deleteNoteTooltip => '永久删除笔记';
+
+  @override
+  String get emptyNotesTitle => '写下第一条笔记';
+
+  @override
+  String get emptyNotesMessage => '灵感、日报和小技巧，都可以随手记在这里';
+
+  @override
+  String get emptyNoteArchiveTitle => '笔记归档还是空的';
+
+  @override
+  String get emptyNoteArchiveMessage => '归档的笔记会保存在这里';
 
   @override
   String get todayLabel => '今天';

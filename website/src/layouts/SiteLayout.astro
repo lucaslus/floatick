@@ -41,8 +41,8 @@ const softwareId = new URL('/#software', Astro.site).href;
 const webpageId = `${canonicalUrl.href}#webpage`;
 const socialImageAlt =
   lang === 'en'
-    ? 'Floatick floating todo list for macOS with tags, Sticky Boards, and Markdown notes'
-    : 'Floatick macOS 悬浮待办清单，展示标签、便利板与 Markdown 内容';
+    ? 'Floatick floating todos and notes for macOS with shared tags, Sticky Boards, and Markdown'
+    : 'Floatick macOS 悬浮 Todo 与笔记，展示共享标签、便利板与 Markdown 内容';
 
 const websiteSchema = {
   '@type': 'WebSite',
@@ -81,12 +81,12 @@ const softwareSchema = {
   '@type': 'SoftwareApplication',
   '@id': softwareId,
   name: 'Floatick',
-  alternateName: 'Floatick Todo',
+  alternateName: 'Floatick Todo & Notes',
   description,
   applicationCategory: 'ProductivityApplication',
-  applicationSubCategory: 'Todo List Application',
+  applicationSubCategory: 'Todo List and Note-taking Application',
   operatingSystem: 'macOS 10.15 or later',
-  softwareVersion: '0.3.2',
+  softwareVersion: '0.3.3',
   isAccessibleForFree: true,
   url: canonicalUrl.href,
   downloadUrl: latestDownloadUrl,
@@ -102,6 +102,8 @@ const softwareSchema = {
   featureList: [
     'Floating desktop todo list',
     'Local-first task storage',
+    'Lightweight local notes',
+    'Shared tags for todos and notes',
     'Markdown task notes',
     'Color-coded tags and filtering',
     'Pinnable Sticky Boards',

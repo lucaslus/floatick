@@ -44,6 +44,8 @@ type TaskPreview = {
 
 type ProductSceneCopy = {
   remaining: string;
+  todosTab: string;
+  notesTab: string;
   search: string;
   newTodo: string;
   today: string;
@@ -51,9 +53,7 @@ type ProductSceneCopy = {
   boardTitle: string;
   boardCount: string;
   drawerTitle: string;
-  titleLabel: string;
   titleValue: string;
-  contentLabel: string;
   contentValue: string;
   save: string;
 };
@@ -139,6 +139,8 @@ const PRODUCT_FRAME = {
 
 const DEFAULT_COPY: ProductSceneCopy = {
   remaining: '3 tasks remaining',
+  todosTab: 'Todos',
+  notesTab: 'Notes',
   search: 'Search todos',
   newTodo: 'New',
   today: 'Today',
@@ -150,9 +152,7 @@ const DEFAULT_COPY: ProductSceneCopy = {
   boardTitle: 'This week',
   boardCount: '3 todos',
   drawerTitle: 'New todo',
-  titleLabel: 'Title',
   titleValue: 'Prepare tomorrow’s top task',
-  contentLabel: 'Content',
   contentValue: 'Add a short note so the next step is clear.',
   save: 'Add todo',
 };
@@ -187,6 +187,8 @@ function dataValue(stage: HTMLElement, key: keyof DOMStringMap, fallback: string
 function readSceneCopy(stage: HTMLElement): ProductSceneCopy {
   return {
     remaining: dataValue(stage, 'remaining', DEFAULT_COPY.remaining),
+    todosTab: dataValue(stage, 'todosTab', DEFAULT_COPY.todosTab),
+    notesTab: dataValue(stage, 'notesTab', DEFAULT_COPY.notesTab),
     search: dataValue(stage, 'search', DEFAULT_COPY.search),
     newTodo: dataValue(stage, 'newTodo', DEFAULT_COPY.newTodo),
     today: dataValue(stage, 'today', DEFAULT_COPY.today),
@@ -222,9 +224,7 @@ function readSceneCopy(stage: HTMLElement): ProductSceneCopy {
     boardTitle: dataValue(stage, 'boardTitle', DEFAULT_COPY.boardTitle),
     boardCount: dataValue(stage, 'boardCount', DEFAULT_COPY.boardCount),
     drawerTitle: dataValue(stage, 'drawerTitle', DEFAULT_COPY.drawerTitle),
-    titleLabel: dataValue(stage, 'titleLabel', DEFAULT_COPY.titleLabel),
     titleValue: dataValue(stage, 'titleValue', DEFAULT_COPY.titleValue),
-    contentLabel: dataValue(stage, 'contentLabel', DEFAULT_COPY.contentLabel),
     contentValue: dataValue(stage, 'contentValue', DEFAULT_COPY.contentValue),
     save: dataValue(stage, 'save', DEFAULT_COPY.save),
   };
@@ -673,32 +673,60 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
     roundedRect(
       context,
       58,
-      232,
+      218,
+      886,
+      88,
+      24,
+      COLORS.panelDark,
+      COLORS.line,
+    );
+    roundedRect(
+      context,
+      64,
+      224,
+      431,
+      76,
+      20,
+      'rgba(45, 212, 199, 0.16)',
+    );
+    context.font =
+      '720 28px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    context.textAlign = 'center';
+    context.fillStyle = COLORS.accent;
+    context.fillText(copy.todosTab, 279, 273);
+    context.fillStyle = COLORS.textMuted;
+    context.fillText(copy.notesTab, 716, 273);
+    context.textAlign = 'start';
+
+    roundedRect(
+      context,
+      58,
+      336,
       626,
       104,
       27,
       COLORS.panelRaised,
       COLORS.line,
     );
-    drawSearchIcon(context, 103, 279, 14);
+    drawSearchIcon(context, 103, 383, 14);
     context.fillStyle = COLORS.textMuted;
     context.font =
       '540 30px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.search, 151, 291);
+    context.fillText(copy.search, 151, 395);
 
     roundedRect(
       context,
       704,
-      232,
+      336,
       104,
       104,
       27,
       COLORS.panelRaised,
       COLORS.line,
     );
-    drawTagIcon(context, 756, 284, 34, COLORS.textSoft);
+    drawTagIcon(context, 756, 388, 34, COLORS.textSoft);
 
-    roundedRect(context, 826, 232, 118, 104, 34, '#34554f');
+    roundedRect(context, 826, 336, 118, 104, 34, '#34554f');
     context.fillStyle = COLORS.text;
     context.font =
       '720 28px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
@@ -706,7 +734,7 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
       context,
       copy.newTodo,
       885,
-      284,
+      388,
       18,
       10,
       COLORS.text,
@@ -716,12 +744,12 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
     context.fillStyle = COLORS.textMuted;
     context.font =
       '700 26px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.today, 64, 416);
+    context.fillText(copy.today, 64, 520);
     context.fillStyle = '#526467';
-    context.fillRect(156, 399, 788, 2);
+    context.fillRect(156, 503, 788, 2);
 
     const tagColors = [COLORS.accent, COLORS.blue, COLORS.purple];
-    const taskStarts = [456, 718, 980];
+    const taskStarts = [560, 818, 1076];
     copy.tasks.forEach((task, index) => {
       const y = taskStarts[index];
       const completed = index === 1;
@@ -870,45 +898,30 @@ function createDrawerTexture(copy: ProductSceneCopy) {
     context.fillStyle = 'rgba(205, 229, 226, 0.14)';
     context.fillRect(0, 118, 720, 2);
 
-    context.fillStyle = COLORS.textMuted;
-    context.font =
-      '680 23px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.titleLabel, 48, 184);
+    drawTagIcon(context, 70, 174, 30, COLORS.textSoft);
     roundedRect(
       context,
       48,
-      210,
+      212,
       624,
-      110,
+      534,
       22,
       '#162426',
       'rgba(45, 212, 199, 0.62)',
     );
     context.fillStyle = COLORS.textSoft;
     context.font =
-      '590 27px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.titleValue, 74, 276);
+      '700 31px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    context.fillText(copy.titleValue, 74, 282);
 
-    context.fillStyle = COLORS.textMuted;
-    context.font =
-      '680 23px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.contentLabel, 48, 386);
-    roundedRect(
-      context,
-      48,
-      412,
-      624,
-      334,
-      22,
-      '#162426',
-      COLORS.line,
-    );
+    context.fillStyle = 'rgba(205, 229, 226, 0.18)';
+    context.fillRect(74, 322, 572, 2);
     context.fillStyle = COLORS.textSoft;
     context.font =
       '540 25px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
     const words = copy.contentValue.split(' ');
     let line = '';
-    let lineY = 466;
+    let lineY = 378;
     words.forEach((word) => {
       const nextLine = `${line}${word} `;
       if (context.measureText(nextLine).width > 540 && line) {

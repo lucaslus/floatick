@@ -767,7 +767,7 @@ abstract class AppLocalizations {
   /// No description provided for @todoTitleFieldHint.
   ///
   /// In en, this message translates to:
-  /// **'What needs to be done?'**
+  /// **'Title'**
   String get todoTitleFieldHint;
 
   /// No description provided for @todoContentLabel.
@@ -781,12 +781,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add notes with Markdown…'**
   String get todoContentFieldHint;
-
-  /// No description provided for @markdownSupportedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Markdown supported · ⌘ Return saves'**
-  String get markdownSupportedHint;
 
   /// No description provided for @markdownWriteLabel.
   ///
@@ -863,7 +857,7 @@ abstract class AppLocalizations {
   /// No description provided for @markdownImageBlockedMessage.
   ///
   /// In en, this message translates to:
-  /// **'Images are not displayed in todo details.'**
+  /// **'Images are not displayed in previews.'**
   String get markdownImageBlockedMessage;
 
   /// No description provided for @viewTodoDetailsTooltip.
@@ -931,12 +925,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark complete'**
   String get markCompleteTooltip;
-
-  /// No description provided for @todoTitleRequiredHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Todo title cannot be empty'**
-  String get todoTitleRequiredHint;
 
   /// No description provided for @editTooltip.
   ///
@@ -1039,6 +1027,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a new item above whenever you like'**
   String get emptyTodosMessage;
+
+  /// No description provided for @todoTabLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Todos'**
+  String get todoTabLabel;
+
+  /// No description provided for @notesTabLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notesTabLabel;
+
+  /// No description provided for @noteCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 note} other{{count} notes}}'**
+  String noteCountLabel(int count);
+
+  /// No description provided for @searchNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search notes'**
+  String get searchNotesHint;
+
+  /// No description provided for @searchNoteArchiveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search note archive'**
+  String get searchNoteArchiveHint;
+
+  /// No description provided for @newNoteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newNoteAction;
+
+  /// No description provided for @newNoteDrawerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New note'**
+  String get newNoteDrawerTitle;
+
+  /// No description provided for @editNoteDrawerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note'**
+  String get editNoteDrawerTitle;
+
+  /// No description provided for @closeNoteDrawerTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Close note drawer'**
+  String get closeNoteDrawerTooltip;
+
+  /// No description provided for @noteTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get noteTitleHint;
+
+  /// No description provided for @noteTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get noteTitleLabel;
+
+  /// No description provided for @noteContentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get noteContentLabel;
+
+  /// No description provided for @noteContentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture it now, organize it later…'**
+  String get noteContentHint;
+
+  /// No description provided for @noteAutoSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving automatically…'**
+  String get noteAutoSaving;
+
+  /// No description provided for @noteAutoSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved automatically'**
+  String get noteAutoSaved;
+
+  /// No description provided for @noteAutoSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Autosave failed. Try again.'**
+  String get noteAutoSaveFailed;
+
+  /// No description provided for @noteEmptyDraftHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Blank notes are not saved'**
+  String get noteEmptyDraftHint;
+
+  /// No description provided for @finishNoteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get finishNoteAction;
+
+  /// No description provided for @pinnedNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get pinnedNotesLabel;
+
+  /// No description provided for @recentNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently edited'**
+  String get recentNotesLabel;
+
+  /// No description provided for @noteWithoutContent.
+  ///
+  /// In en, this message translates to:
+  /// **'No content yet'**
+  String get noteWithoutContent;
+
+  /// No description provided for @pinNoteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin note'**
+  String get pinNoteTooltip;
+
+  /// No description provided for @unpinNoteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin note'**
+  String get unpinNoteTooltip;
+
+  /// No description provided for @archiveNoteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive note'**
+  String get archiveNoteTooltip;
+
+  /// No description provided for @restoreNoteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore note'**
+  String get restoreNoteTooltip;
+
+  /// No description provided for @deleteNoteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete note permanently'**
+  String get deleteNoteTooltip;
+
+  /// No description provided for @emptyNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Write your first note'**
+  String get emptyNotesTitle;
+
+  /// No description provided for @emptyNotesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture ideas, daily updates, and useful tips here'**
+  String get emptyNotesMessage;
+
+  /// No description provided for @emptyNoteArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Note archive is empty'**
+  String get emptyNoteArchiveTitle;
+
+  /// No description provided for @emptyNoteArchiveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived notes will appear here'**
+  String get emptyNoteArchiveMessage;
 
   /// No description provided for @todayLabel.
   ///
