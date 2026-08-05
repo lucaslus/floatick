@@ -2,12 +2,12 @@
   <img
     src="./docs/assets/floatick-product-hero-v5.png"
     width="100%"
-    alt="Floatick macOS 悬浮待办、Markdown 编辑器、标签与设置"
+    alt="Floatick macOS 悬浮工作区，展示编辑器、标签、便利板与设置"
   />
-  <h1>Floatick — macOS 悬浮待办清单</h1>
-  <p><strong>一款开源、仅存本地的 macOS 待办应用与轻量任务管理工具。</strong></p>
+  <h1>Floatick — macOS 悬浮 Todo 与笔记</h1>
+  <p><strong>一款开源、本地优先的 macOS 轻量 Todo 与笔记应用。</strong></p>
   <p>
-    无需账号或云服务，让任务记录与整理始终触手可及。
+    无需账号或云服务，让任务和想法始终触手可及。
   </p>
   <p>
     <a href="https://github.com/lucaslus/floatick/actions/workflows/ci.yml">
@@ -24,16 +24,18 @@
   </p>
 </div>
 
-Floatick 是一款支持离线使用的 macOS 桌面待办应用。它平时以一个小巧、
-可拖动的图标悬浮在工作区上方；点击图标会展开专注的待办面板，收起后则会准确
+Floatick 是一款支持离线使用的 macOS 桌面 Todo 与笔记应用。它平时以一个小巧、
+可拖动的图标悬浮在工作区上方；点击图标会展开专注的面板，收起后则会准确
 回到原来的锚点。面板还会根据图标附近的屏幕空间自动选择展开方向，因此放在
 屏幕边缘也能自然使用。
 
-## 专注而轻量的 macOS 任务管理工具
+## 专注而轻量的 macOS Todo 与笔记空间
 
 - **随时可用**——图标可以拖到任意位置，点击即可展开。
 - **完整待办流程**——支持创建、编辑、完成、搜索、归档和恢复，并按天自动分组。
-- **默认仅存本地**——不需要账号、云服务或遥测，待办数据保存在 `~/.floatick`。
+- **轻量笔记空间**——记录灵感、日志和片段，支持搜索、置顶、归档、共享标签、
+  自动保存与 Markdown 预览。
+- **默认仅存本地**——不需要账号、云服务或遥测，Todo 与笔记数据保存在 `~/.floatick`。
 - **贴合 macOS**——使用 AppKit 管理透明悬浮窗口，支持快捷键、右键退出和
   “减少动态效果”。
 - **适应不同工作环境**——支持跟随系统、浅色和深色主题，以及英文和简体中文。
@@ -64,10 +66,12 @@ Floatick 目前仍处于早期预览阶段，下载包暂未使用 Apple Develop
 | 操作 | 使用方式 |
 | --- | --- |
 | 调整位置 | 拖动悬浮图标 |
-| 展开待办列表 | 点击悬浮图标 |
+| 展开 Floatick | 点击悬浮图标 |
 | 收起面板 | 点击收起按钮或按 `Esc` |
 | 创建待办 | 按 `⌘N`，或使用顶部输入框 |
-| 搜索 | 按 `⌘F` |
+| 切换 Todo 与笔记 | 使用面板顶部的标签页 |
+| 创建笔记 | 打开 Notes 并点击新建 |
+| 搜索当前空间 | 按 `⌘F` |
 | 编辑待办 | 将鼠标悬浮到待办上并点击编辑 |
 | 完成待办 | 点击待办前的复选框 |
 | 归档或恢复 | 使用待办末尾的操作按钮 |
@@ -80,10 +84,12 @@ Floatick 第一次启动时会自动创建工作目录：
 | 路径 | 用途 |
 | --- | --- |
 | `~/.floatick/todos.json` | 待办、完成状态与归档状态 |
+| `~/.floatick/notes.json` | 笔记、标签、置顶与归档状态 |
+| `~/.floatick/tags.json` | Todo 与笔记共享的可复用标签 |
 | `~/.floatick/settings.json` | 主题与语言设置 |
 
 Sparkle 会将自动更新偏好保存在 macOS 标准应用偏好中。Floatick 不需要账号，
-也不会上传待办数据；网络访问仅用于检查和下载应用更新。
+也不会上传 Todo 或笔记数据；网络访问仅用于检查和下载应用更新。
 
 ## 本地开发
 
@@ -128,7 +134,7 @@ Release 应用位于
 lib/
   app/          应用装配与主题
   core/         共享的平台、存储和 UI 基元
-  features/     Todo、设置和更新功能
+  features/     Todo、笔记、设置和更新功能
   l10n/         英文与简体中文资源
 macos/Runner/   AppKit 窗口外壳与 Sparkle 集成
 test/           Repository、ViewModel 和 Widget 测试
@@ -137,7 +143,7 @@ tool/           图标与发布工具
 ```
 
 Flutter 负责产品 UI 和状态；轻量 AppKit 外壳负责 macOS 专属窗口行为与
-Sparkle。待办数据不会经过平台通道。依赖边界详见
+Sparkle。产品数据不会经过平台通道。依赖边界详见
 [架构说明](./docs/ARCHITECTURE.md)。
 
 ## 开发与发布模型

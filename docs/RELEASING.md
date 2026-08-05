@@ -88,6 +88,8 @@ Download the DMG from the Draft Release and verify at least:
 - floating icon drag, expand direction, collapse position, and right-click
   Quit work;
 - create, edit, complete, search, archive, and restore work;
+- switch to Notes, then create, edit, search, pin, tag, archive, restore, and
+  relaunch with note content preserved;
 - Chinese, English, system/light/dark themes, and Settings persistence work;
 - relaunch preserves `~/.floatick` data;
 - before the first stable release, manual update checks show the compact

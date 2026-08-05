@@ -33,6 +33,10 @@ lib/
     storage/
     ui/
   features/
+    notes/
+      data/
+      domain/
+      presentation/
     settings/
       data/
       domain/
@@ -63,16 +67,16 @@ tool/
 - `l10n`: English source copy, Simplified Chinese translations, and generated
   Flutter localization accessors.
 - `macos/Runner`: transparent floating window behavior and the Sparkle update
-  service; todo data does not cross either platform channel.
+  service; todo and note data does not cross either platform channel.
 
 ## State and persistence
 
-`TodoViewModel`, `SettingsViewModel`, and `UpdateViewModel` own presentation
-state. Repositories own file I/O, JSON compatibility, or typed platform-channel
+`TodoViewModel`, `NoteViewModel`, `SettingsViewModel`, and `UpdateViewModel` own
+presentation state. Repositories own file I/O, JSON compatibility, or typed platform-channel
 boundaries. Repositories are constructor-injected so state behavior can be
 tested without touching the user's home directory or launching Sparkle.
 
-Todo data and Floatick-owned interface settings only use `~/.floatick`.
+Todo data, note data, shared tags, and Floatick-owned interface settings only use `~/.floatick`.
 Repositories create it on first load and never read or write another hidden
 application directory. Sparkle owns its automatic-check preference in the
 standard macOS application `UserDefaults`; Floatick does not duplicate that
@@ -84,9 +88,9 @@ channel to a typed, informational state in Settings; other connectivity
 failures remain recoverable errors. Sparkle still owns appcast parsing,
 signature validation, download, and installation once the feed is available.
 
-Writes are serialized by `TodoViewModel` to prevent overlapping mutations from
-losing updates. A write failure leaves the last persisted in-memory state
-unchanged and exposes a recoverable UI error.
+Writes are serialized by `TodoViewModel` and `NoteViewModel` to prevent
+overlapping mutations from losing updates. A write failure leaves the last
+persisted in-memory state unchanged and exposes a recoverable UI error.
 
 ## Testing
 

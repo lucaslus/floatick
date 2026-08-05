@@ -10,8 +10,10 @@ const { locale } = Astro.props;
 const demoCopy = {
   en: {
     ariaLabel:
-      'Interactive three-dimensional Floatick workspace with a todo list, a Sticky Board, an editor, and the floating icon',
+      'Interactive three-dimensional Floatick workspace with Todos and Notes tabs, a Sticky Board, an editor, and the floating icon',
     remaining: '3 tasks remaining',
+    todosTab: 'Todos',
+    notesTab: 'Notes',
     search: 'Search todos',
     newTodo: 'New',
     today: 'Today',
@@ -23,17 +25,17 @@ const demoCopy = {
     boardTitle: 'This week',
     boardCount: '3 todos',
     drawerTitle: 'New todo',
-    titleLabel: 'Title',
     titleValue: 'Prepare tomorrow’s top task',
-    contentLabel: 'Content',
     contentValue: 'Add a short note so the next step is clear.',
     save: 'Add todo',
     fallback: 'Floatick product preview',
   },
   zh: {
     ariaLabel:
-      'Floatick 的交互式三维工作台，包含待办列表、便利板、编辑器和圆形悬浮图标',
+      'Floatick 的交互式三维工作台，包含 Todo 与 Notes 标签页、便利板、编辑器和圆形悬浮图标',
     remaining: '还有 3 项待完成',
+    todosTab: '待办',
+    notesTab: '笔记',
     search: '搜索待办',
     newTodo: '新建',
     today: '今天',
@@ -45,9 +47,7 @@ const demoCopy = {
     boardTitle: '本周计划',
     boardCount: '3 项待办',
     drawerTitle: '新建待办',
-    titleLabel: '标题',
     titleValue: '确定明天最重要的一件事',
-    contentLabel: '内容',
     contentValue: '补充一句简短说明，让下一步足够清晰。',
     save: '添加待办',
     fallback: 'Floatick 产品预览',
@@ -61,6 +61,8 @@ const copy = demoCopy[locale];
   class="product-hero-stage"
   data-product-scene
   data-remaining={copy.remaining}
+  data-todos-tab={copy.todosTab}
+  data-notes-tab={copy.notesTab}
   data-search={copy.search}
   data-new-todo={copy.newTodo}
   data-today={copy.today}
@@ -76,9 +78,7 @@ const copy = demoCopy[locale];
   data-board-title={copy.boardTitle}
   data-board-count={copy.boardCount}
   data-drawer-title={copy.drawerTitle}
-  data-title-label={copy.titleLabel}
   data-title-value={copy.titleValue}
-  data-content-label={copy.contentLabel}
   data-content-value={copy.contentValue}
   data-save={copy.save}
   role="img"

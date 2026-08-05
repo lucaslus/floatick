@@ -33,6 +33,8 @@ tool/test/run_ui_tests.sh
 | 双击详情、完成、归档、恢复、搜索 | Integration |
 | 退出前后的本地 JSON 持久化 | Integration |
 | Tag 创建、Todo 关联、多选 OR 筛选和清空 | Integration |
+| Notes 切换、创建、标签入口与空草稿处理 | Widget |
+| Note 搜索、置顶、归档、恢复、共享标签与失败回滚 | Unit + Widget |
 | Sticky Board 创建、添加现有 Todo、Pin/Unpin | Integration |
 | 置顶、登录启动、主题等设置与原生调用边界 | Integration |
 | 悬浮图标的 macOS Accessibility button/press contract | XCTest |

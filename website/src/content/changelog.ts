@@ -82,6 +82,22 @@ export const changelogCopy: Record<Locale, ChangelogCopy> = {
 export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
   en: [
     {
+      version: 'v0.3.3',
+      date: 'August 5, 2026',
+      dateTime: '2026-08-05',
+      title: 'Lightweight notes beside your todos',
+      summary:
+        'This release adds a focused Notes workspace for ideas, logs, snippets, and other details that are not tasks.',
+      highlights: [
+        'Switch between Todos and Notes inside the same floating panel.',
+        'Search, pin, archive, restore, and automatically save local notes.',
+        'Reuse the same colored tags across todos and notes.',
+        'Edit titles and Markdown content in one continuous document surface.',
+      ],
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.3',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.2...v0.3.3',
+    },
+    {
       version: 'v0.3.2',
       date: 'July 31, 2026',
       dateTime: '2026-07-31',
@@ -160,6 +176,22 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
     },
   ],
   zh: [
+    {
+      version: 'v0.3.3',
+      date: '2026 年 8 月 5 日',
+      dateTime: '2026-08-05',
+      title: 'Todo 旁边的轻量笔记',
+      summary:
+        '这个版本新增独立的 Notes 空间，用来记录灵感、日志、片段，以及那些并不是任务的内容。',
+      highlights: [
+        '在同一个悬浮面板中随时切换 Todo 与 Notes。',
+        '搜索、置顶、归档、恢复并自动保存本地笔记。',
+        'Todo 与笔记复用同一套彩色标签。',
+        '在一体式文档区域中编辑标题与 Markdown 内容。',
+      ],
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.3',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.2...v0.3.3',
+    },
     {
       version: 'v0.3.2',
       date: '2026 年 7 月 31 日',
