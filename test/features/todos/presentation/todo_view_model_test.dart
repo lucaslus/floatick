@@ -179,6 +179,49 @@ void main() {
     },
   );
 
+  test(
+    'itemsForView filters active doing todos and caches by progress',
+    () async {
+      repository.savedItems = <TodoItem>[
+        TodoItem(
+          id: 'doing',
+          title: 'Review the release',
+          createdAt: DateTime.parse('2026-07-23T12:00:00.000Z'),
+          startedAt: DateTime.parse('2026-07-23T12:30:00.000Z'),
+        ),
+        TodoItem(
+          id: 'todo',
+          title: 'Prepare notes',
+          createdAt: DateTime.parse('2026-07-23T11:00:00.000Z'),
+        ),
+        TodoItem(
+          id: 'completed',
+          title: 'Completed work',
+          createdAt: DateTime.parse('2026-07-23T10:00:00.000Z'),
+          startedAt: DateTime.parse('2026-07-23T10:30:00.000Z'),
+          completedAt: DateTime.parse('2026-07-23T11:30:00.000Z'),
+        ),
+      ];
+      await controller.load();
+
+      final allItems = controller.itemsForView(archived: false, query: '');
+      final doingItems = controller.itemsForView(
+        archived: false,
+        query: '',
+        progressFilter: TodoProgressFilter.doing,
+      );
+      final equivalentDoingItems = controller.itemsForView(
+        archived: false,
+        query: '',
+        progressFilter: TodoProgressFilter.doing,
+      );
+
+      expect(doingItems.map((item) => item.id), <String>['doing']);
+      expect(identical(doingItems, equivalentDoingItems), isTrue);
+      expect(identical(allItems, doingItems), isFalse);
+    },
+  );
+
   test('rename trims and persists the updated title', () async {
     repository.savedItems = <TodoItem>[
       TodoItem(

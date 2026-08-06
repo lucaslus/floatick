@@ -524,192 +524,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTooltip;
 
-  /// No description provided for @stickyBoardsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Sticky Boards'**
-  String get stickyBoardsTitle;
-
-  /// No description provided for @stickyBoardsTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Open Sticky Boards'**
-  String get stickyBoardsTooltip;
-
-  /// No description provided for @closeStickyBoardsTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Close Sticky Boards'**
-  String get closeStickyBoardsTooltip;
-
-  /// No description provided for @backToStickyBoardsTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Back to Sticky Boards'**
-  String get backToStickyBoardsTooltip;
-
-  /// No description provided for @searchOrCreateStickyBoardHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search or create a sticky board'**
-  String get searchOrCreateStickyBoardHint;
-
-  /// No description provided for @createStickyBoardTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Create sticky board'**
-  String get createStickyBoardTooltip;
-
-  /// No description provided for @stickyBoardNameRequiredMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a sticky board name.'**
-  String get stickyBoardNameRequiredMessage;
-
-  /// No description provided for @stickyBoardNameTooLongMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Use no more than {maxLength} characters.'**
-  String stickyBoardNameTooLongMessage(int maxLength);
-
-  /// No description provided for @duplicateStickyBoardNameMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'A sticky board with this name already exists.'**
-  String get duplicateStickyBoardNameMessage;
-
-  /// No description provided for @stickyBoardNotFoundMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'This sticky board no longer exists.'**
-  String get stickyBoardNotFoundMessage;
-
-  /// No description provided for @stickyBoardStorageFailureMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t save sticky board changes.'**
-  String get stickyBoardStorageFailureMessage;
-
-  /// No description provided for @stickyBoardTodoCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 todo} other{{count} todos}}'**
-  String stickyBoardTodoCount(int count);
-
-  /// No description provided for @emptyStickyBoardsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Create your first sticky board'**
-  String get emptyStickyBoardsTitle;
-
-  /// No description provided for @emptyStickyBoardsMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Group related todos without moving or duplicating them.'**
-  String get emptyStickyBoardsMessage;
-
-  /// No description provided for @noMatchingStickyBoardsMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'No matching sticky boards. Press Return to create this one.'**
-  String get noMatchingStickyBoardsMessage;
-
-  /// No description provided for @renameStickyBoardTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Rename sticky board'**
-  String get renameStickyBoardTooltip;
-
-  /// No description provided for @deleteStickyBoardTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete sticky board'**
-  String get deleteStickyBoardTooltip;
-
-  /// No description provided for @deleteStickyBoardTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete this sticky board?'**
-  String get deleteStickyBoardTitle;
-
-  /// No description provided for @deleteStickyBoardMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Its todos will stay safely in All Todos.'**
-  String get deleteStickyBoardMessage;
-
-  /// No description provided for @keepStickyBoardAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep sticky board'**
-  String get keepStickyBoardAction;
-
-  /// No description provided for @pinStickyBoardTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Pin to desktop'**
-  String get pinStickyBoardTooltip;
-
-  /// No description provided for @unpinStickyBoardTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Unpin from desktop'**
-  String get unpinStickyBoardTooltip;
-
-  /// No description provided for @stickyBoardPinnedLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Pinned'**
-  String get stickyBoardPinnedLabel;
-
-  /// No description provided for @addExistingTodoAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Add existing'**
-  String get addExistingTodoAction;
-
-  /// No description provided for @addExistingTodoTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add existing todos'**
-  String get addExistingTodoTitle;
-
-  /// No description provided for @searchTodosToAddHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search todos to add'**
-  String get searchTodosToAddHint;
-
-  /// No description provided for @noTodosAvailableForBoardMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'No todos are available to add.'**
-  String get noTodosAvailableForBoardMessage;
-
-  /// No description provided for @emptyPinnedStickyBoardMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'No todos on this board.'**
-  String get emptyPinnedStickyBoardMessage;
-
-  /// No description provided for @newTodoInStickyBoardAction.
-  ///
-  /// In en, this message translates to:
-  /// **'New todo'**
-  String get newTodoInStickyBoardAction;
-
-  /// No description provided for @removeFromStickyBoardTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove from sticky board'**
-  String get removeFromStickyBoardTooltip;
-
-  /// No description provided for @stickyBoardDeleteKeepsTodosHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Deleting a sticky board never deletes its todos.'**
-  String get stickyBoardDeleteKeepsTodosHint;
-
   /// No description provided for @collapseTooltip.
   ///
   /// In en, this message translates to:
@@ -919,6 +733,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Doing'**
   String get doingStatus;
+
+  /// No description provided for @filterDoingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show doing todos'**
+  String get filterDoingTooltip;
+
+  /// No description provided for @clearDoingFilterTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all todos'**
+  String get clearDoingFilterTooltip;
+
+  /// No description provided for @emptyDoingTodosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing in progress'**
+  String get emptyDoingTodosTitle;
+
+  /// No description provided for @emptyDoingTodosMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a todo when you\'re ready to focus'**
+  String get emptyDoingTodosMessage;
 
   /// No description provided for @startDoingTooltip.
   ///
@@ -1159,12 +997,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pinned'**
   String get pinnedNotesLabel;
-
-  /// No description provided for @recentNotesLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Recently edited'**
-  String get recentNotesLabel;
 
   /// No description provided for @noteWithoutContent.
   ///

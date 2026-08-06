@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
-import 'floatick_hover_motion.dart';
 
 const _editorDrawerRadius = Radius.circular(22);
 
@@ -243,7 +242,7 @@ class FloatickDocumentEditor extends StatelessWidget {
               final hasFocus =
                   titleFocusNode.hasFocus || contentFocusNode.hasFocus;
               final borderColor = hasFocus
-                  ? theme.colorScheme.primary
+                  ? theme.colorScheme.primary.withValues(alpha: 0.38)
                   : theme.colorScheme.onSurface.withValues(
                       alpha: theme.brightness == Brightness.dark ? 0.08 : 0.06,
                     );
@@ -257,10 +256,7 @@ class FloatickDocumentEditor extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: inputDecorationTheme.fillColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: borderColor,
-                    width: hasFocus ? 1.5 : 1,
-                  ),
+                  border: Border.all(color: borderColor, width: 1),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -359,13 +355,12 @@ class FloatickEditorModeSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       key: controlKey,
-      height: 30,
-      padding: const EdgeInsets.all(2),
+      height: 28,
+      padding: EdgeInsets.zero,
       decoration: BoxDecoration(
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.055),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(9),
       ),
       child: Row(
@@ -441,32 +436,28 @@ class _EditorModeButton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      child: FloatickHoverMotion(
-        hoverScale: FloatickMotion.controlHoverScale,
-        pressedScale: FloatickMotion.controlPressedScale,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(7),
-          child: AnimatedContainer(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 140),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 9),
-            decoration: BoxDecoration(
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(7),
+        child: AnimatedContainer(
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 130),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 9),
+          decoration: BoxDecoration(
+            color: selected
+                ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
               color: selected
-                  ? theme.colorScheme.surface.withValues(alpha: 0.92)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(7),
-            ),
-            child: Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: selected
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.52),
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              ),
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.52),
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
         ),

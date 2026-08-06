@@ -41,8 +41,8 @@ const softwareId = new URL('/#software', Astro.site).href;
 const webpageId = `${canonicalUrl.href}#webpage`;
 const socialImageAlt =
   lang === 'en'
-    ? 'Floatick floating todos and notes for macOS with shared tags, Sticky Boards, and Markdown'
-    : 'Floatick macOS 悬浮 Todo 与笔记，展示共享标签、便利板与 Markdown 内容';
+    ? 'Floatick floating todos and notes for macOS with shared tags and Markdown'
+    : 'Floatick macOS 悬浮 Todo 与笔记，展示共享标签与 Markdown 内容';
 
 const websiteSchema = {
   '@type': 'WebSite',
@@ -106,7 +106,6 @@ const softwareSchema = {
     'Shared tags for todos and notes',
     'Markdown task notes',
     'Color-coded tags and filtering',
-    'Pinnable Sticky Boards',
     'One-click Markdown copy',
   ],
   offers: {

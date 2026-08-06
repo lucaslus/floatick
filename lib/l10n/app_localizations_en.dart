@@ -251,117 +251,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTooltip => 'Settings';
 
   @override
-  String get stickyBoardsTitle => 'Sticky Boards';
-
-  @override
-  String get stickyBoardsTooltip => 'Open Sticky Boards';
-
-  @override
-  String get closeStickyBoardsTooltip => 'Close Sticky Boards';
-
-  @override
-  String get backToStickyBoardsTooltip => 'Back to Sticky Boards';
-
-  @override
-  String get searchOrCreateStickyBoardHint => 'Search or create a sticky board';
-
-  @override
-  String get createStickyBoardTooltip => 'Create sticky board';
-
-  @override
-  String get stickyBoardNameRequiredMessage => 'Enter a sticky board name.';
-
-  @override
-  String stickyBoardNameTooLongMessage(int maxLength) {
-    return 'Use no more than $maxLength characters.';
-  }
-
-  @override
-  String get duplicateStickyBoardNameMessage =>
-      'A sticky board with this name already exists.';
-
-  @override
-  String get stickyBoardNotFoundMessage =>
-      'This sticky board no longer exists.';
-
-  @override
-  String get stickyBoardStorageFailureMessage =>
-      'Couldn\'t save sticky board changes.';
-
-  @override
-  String stickyBoardTodoCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count todos',
-      one: '1 todo',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get emptyStickyBoardsTitle => 'Create your first sticky board';
-
-  @override
-  String get emptyStickyBoardsMessage =>
-      'Group related todos without moving or duplicating them.';
-
-  @override
-  String get noMatchingStickyBoardsMessage =>
-      'No matching sticky boards. Press Return to create this one.';
-
-  @override
-  String get renameStickyBoardTooltip => 'Rename sticky board';
-
-  @override
-  String get deleteStickyBoardTooltip => 'Delete sticky board';
-
-  @override
-  String get deleteStickyBoardTitle => 'Delete this sticky board?';
-
-  @override
-  String get deleteStickyBoardMessage =>
-      'Its todos will stay safely in All Todos.';
-
-  @override
-  String get keepStickyBoardAction => 'Keep sticky board';
-
-  @override
-  String get pinStickyBoardTooltip => 'Pin to desktop';
-
-  @override
-  String get unpinStickyBoardTooltip => 'Unpin from desktop';
-
-  @override
-  String get stickyBoardPinnedLabel => 'Pinned';
-
-  @override
-  String get addExistingTodoAction => 'Add existing';
-
-  @override
-  String get addExistingTodoTitle => 'Add existing todos';
-
-  @override
-  String get searchTodosToAddHint => 'Search todos to add';
-
-  @override
-  String get noTodosAvailableForBoardMessage =>
-      'No todos are available to add.';
-
-  @override
-  String get emptyPinnedStickyBoardMessage => 'No todos on this board.';
-
-  @override
-  String get newTodoInStickyBoardAction => 'New todo';
-
-  @override
-  String get removeFromStickyBoardTooltip => 'Remove from sticky board';
-
-  @override
-  String get stickyBoardDeleteKeepsTodosHint =>
-      'Deleting a sticky board never deletes its todos.';
-
-  @override
   String get collapseTooltip => 'Collapse (Esc)';
 
   @override
@@ -466,6 +355,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get doingStatus => 'Doing';
+
+  @override
+  String get filterDoingTooltip => 'Show doing todos';
+
+  @override
+  String get clearDoingFilterTooltip => 'Show all todos';
+
+  @override
+  String get emptyDoingTodosTitle => 'Nothing in progress';
+
+  @override
+  String get emptyDoingTodosMessage =>
+      'Start a todo when you\'re ready to focus';
 
   @override
   String get startDoingTooltip => 'Start doing';
@@ -594,9 +496,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pinnedNotesLabel => 'Pinned';
-
-  @override
-  String get recentNotesLabel => 'Recently edited';
 
   @override
   String get noteWithoutContent => 'No content yet';

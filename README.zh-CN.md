@@ -2,7 +2,7 @@
   <img
     src="./docs/assets/floatick-product-hero-v5.png"
     width="100%"
-    alt="Floatick macOS 悬浮工作区，展示编辑器、标签、便利板与设置"
+    alt="Floatick macOS 悬浮工作区，展示 Todo、笔记、标签与设置"
   />
   <h1>Floatick — macOS 悬浮 Todo 与笔记</h1>
   <p><strong>一款开源、本地优先的 macOS 轻量 Todo 与笔记应用。</strong></p>

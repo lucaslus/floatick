@@ -27,7 +27,6 @@ class TodoListRow extends StatefulWidget {
     this.onToggleTag,
     this.onOpenTagManagement,
     this.onOpenTagAssignment,
-    this.onRemoveFromStickyBoard,
     this.onDeletePermanently,
     this.showArchiveAction = true,
     this.compact = false,
@@ -57,7 +56,6 @@ class TodoListRow extends StatefulWidget {
   final Future<bool> Function(String tagId)? onToggleTag;
   final VoidCallback? onOpenTagManagement;
   final VoidCallback? onOpenTagAssignment;
-  final VoidCallback? onRemoveFromStickyBoard;
   final VoidCallback? onDeletePermanently;
   final bool showArchiveAction;
   final bool compact;
@@ -156,7 +154,6 @@ class _TodoListRowState extends State<TodoListRow> {
       todoId: widget.item.id,
       archivedScope: widget.archivedScope,
       showArchiveAction: widget.showArchiveAction,
-      showRemoveFromStickyBoard: widget.onRemoveFromStickyBoard != null,
     );
     if (!mounted || action == null) {
       return;
@@ -177,9 +174,6 @@ class _TodoListRowState extends State<TodoListRow> {
         return;
       case TodoActionsSheetAction.archive:
         widget.onArchive();
-        return;
-      case TodoActionsSheetAction.removeFromStickyBoard:
-        widget.onRemoveFromStickyBoard?.call();
         return;
       case TodoActionsSheetAction.restore:
         widget.onRestore();
@@ -339,6 +333,9 @@ class _TodoListRowState extends State<TodoListRow> {
                                       alpha: item.isCompleted ? 0.45 : 0.91,
                                     ),
                                     fontSize: widget.compact ? 12.5 : 13.5,
+                                    fontWeight: item.isCompleted
+                                        ? FontWeight.w400
+                                        : FontWeight.w500,
                                     height: 1.3,
                                     decoration: item.isCompleted
                                         ? TextDecoration.lineThrough
@@ -365,9 +362,8 @@ class _TodoListRowState extends State<TodoListRow> {
                                   'toggle-doing-todo-${widget.item.id}',
                                 ),
                                 visible:
-                                    !item.isCompleted &&
-                                    (showContextActions || isDoing),
-                                tooltip: isDoing
+                                    !item.isCompleted && showContextActions,
+                                semanticLabel: isDoing
                                     ? localizations.stopDoingTooltip
                                     : localizations.startDoingTooltip,
                                 onPressed: widget.onToggleDoing!,
@@ -376,11 +372,6 @@ class _TodoListRowState extends State<TodoListRow> {
                                     : Icons.play_arrow_rounded,
                                 foregroundColor: isDoing
                                     ? theme.colorScheme.primary
-                                    : null,
-                                backgroundColor: isDoing
-                                    ? theme.colorScheme.primary.withValues(
-                                        alpha: isDark ? 0.12 : 0.09,
-                                      )
                                     : null,
                               ),
                             TodoCopyButton(
@@ -396,6 +387,8 @@ class _TodoListRowState extends State<TodoListRow> {
                                 'more-todo-${widget.item.id}',
                               ),
                               visible: showContextActions,
+                              semanticLabel:
+                                  localizations.moreTodoActionsTooltip,
                               tooltip: localizations.moreTodoActionsTooltip,
                               onPressed: () => unawaited(_showActions()),
                               icon: Icons.more_horiz_rounded,
@@ -438,8 +431,9 @@ class _TodoListRowState extends State<TodoListRow> {
                         ),
                         key: ValueKey<String>('todo-time-${widget.item.id}'),
                         style: TextStyle(
-                          color: onSurface.withValues(alpha: 0.35),
+                          color: onSurface.withValues(alpha: 0.45),
                           fontSize: 10.5,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -495,8 +489,10 @@ class _ExternalTagAssignment extends StatelessWidget {
             onPressed: onPressed,
             padding: EdgeInsets.zero,
             icon: Icon(
-              assignedTags.isEmpty ? Icons.sell_outlined : Icons.sell_rounded,
-              size: 13,
+              assignedTags.isEmpty
+                  ? Icons.local_offer_outlined
+                  : Icons.local_offer_rounded,
+              size: 12,
               color: assignedTags.isEmpty
                   ? null
                   : Theme.of(context).colorScheme.primary,
@@ -543,7 +539,7 @@ class _DoingStatusChip extends StatelessWidget {
             context.l10n.doingStatus,
             style: TextStyle(
               color: color,
-              fontSize: 8.75,
+              fontSize: 9.25,
               fontWeight: FontWeight.w600,
               height: 1,
             ),
@@ -589,20 +585,20 @@ class _ReadOnlyTodoTags extends StatelessWidget {
 class _HoverAction extends StatelessWidget {
   const _HoverAction({
     required this.visible,
-    required this.tooltip,
+    required this.semanticLabel,
     required this.onPressed,
     required this.icon,
     this.foregroundColor,
-    this.backgroundColor,
+    this.tooltip,
     super.key,
   });
 
   final bool visible;
-  final String tooltip;
+  final String semanticLabel;
   final VoidCallback onPressed;
   final IconData icon;
   final Color? foregroundColor;
-  final Color? backgroundColor;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -618,15 +614,22 @@ class _HoverAction extends StatelessWidget {
           ignoring: !visible,
           child: ExcludeFocus(
             excluding: !visible,
-            child: IconButton(
-              tooltip: tooltip,
-              onPressed: onPressed,
-              padding: EdgeInsets.zero,
-              style: backgroundColor == null
-                  ? null
-                  : IconButton.styleFrom(backgroundColor: backgroundColor),
-              icon: Icon(icon, size: 17, color: foregroundColor),
-            ),
+            child: tooltip == null
+                ? Semantics(
+                    button: true,
+                    label: semanticLabel,
+                    child: IconButton(
+                      onPressed: onPressed,
+                      padding: EdgeInsets.zero,
+                      icon: Icon(icon, size: 17, color: foregroundColor),
+                    ),
+                  )
+                : IconButton(
+                    tooltip: tooltip,
+                    onPressed: onPressed,
+                    padding: EdgeInsets.zero,
+                    icon: Icon(icon, size: 17, color: foregroundColor),
+                  ),
           ),
         ),
       ),

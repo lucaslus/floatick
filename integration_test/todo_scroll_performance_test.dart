@@ -7,10 +7,6 @@ import 'package:floatick/features/settings/data/settings_repository.dart';
 import 'package:floatick/features/settings/domain/app_settings.dart';
 import 'package:floatick/features/settings/domain/login_item_status.dart';
 import 'package:floatick/features/settings/presentation/settings_view_model.dart';
-import 'package:floatick/features/sticky_boards/data/sticky_board_repository.dart';
-import 'package:floatick/features/sticky_boards/domain/sticky_board_workspace.dart';
-import 'package:floatick/features/sticky_boards/presentation/sticky_board_view_model.dart';
-import 'package:floatick/features/sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import 'package:floatick/features/todos/data/tag_repository.dart';
 import 'package:floatick/features/todos/data/todo_repository.dart';
 import 'package:floatick/features/todos/domain/tag_workspace.dart';
@@ -62,25 +58,15 @@ void main() {
     final updateController = UpdateViewModel(
       updateRepository: _BenchmarkUpdateRepository(),
     );
-    final stickyBoardController = StickyBoardViewModel(
-      repository: _BenchmarkStickyBoardRepository(),
-    );
     final windowBridge = _BenchmarkWindowBridge();
-    final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
-      boardController: stickyBoardController,
-      todoController: todoController,
-      windowBridge: windowBridge,
-    );
     addTearDown(todoController.dispose);
     addTearDown(settingsController.dispose);
     addTearDown(updateController.dispose);
-    addTearDown(stickyBoardController.dispose);
 
     await Future.wait<void>(<Future<void>>[
       todoController.load(),
       settingsController.load(),
       updateController.load(),
-      stickyBoardController.load(),
     ]);
     await tester.pumpWidget(
       MaterialApp(
@@ -94,12 +80,8 @@ void main() {
             controller: todoController,
             settingsController: settingsController,
             updateController: updateController,
-            stickyBoardController: stickyBoardController,
-            stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
             windowBridge: windowBridge,
             expansionAnchor: WindowExpansionAnchor.topRight,
-            stickyBoardRequest: null,
-            stickyBoardRequestSerial: 0,
             onCollapse: () {},
           ),
         ),
@@ -190,17 +172,6 @@ class _BenchmarkUpdateRepository implements UpdateRepository {
   Future<void> checkForUpdates() async {}
 }
 
-class _BenchmarkStickyBoardRepository implements StickyBoardRepository {
-  @override
-  String get storagePath => '/tmp/floatick-scroll-benchmark/sticky_boards.json';
-
-  @override
-  Future<StickyBoardWorkspace> load() async => StickyBoardWorkspace.empty();
-
-  @override
-  Future<void> save(StickyBoardWorkspace workspace) async {}
-}
-
 class _BenchmarkWindowBridge implements WindowBridge {
   @override
   void setExpandRequestHandler(ExpandRequestHandler? handler) {}
@@ -230,13 +201,4 @@ class _BenchmarkWindowBridge implements WindowBridge {
 
   @override
   Future<void> setAlwaysOnTop(bool alwaysOnTop) async {}
-
-  @override
-  Future<void> configureBorderlessSecondaryWindow(
-    int viewId, {
-    bool positionAdjacentToMainWindow = false,
-  }) async {}
-
-  @override
-  Future<void> revealBorderlessSecondaryWindow(int viewId) async {}
 }

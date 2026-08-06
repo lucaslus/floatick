@@ -106,51 +106,6 @@
     }
   },
   "settingsTooltip": "Settings",
-  "stickyBoardsTitle": "Sticky Boards",
-  "stickyBoardsTooltip": "Open Sticky Boards",
-  "closeStickyBoardsTooltip": "Close Sticky Boards",
-  "backToStickyBoardsTooltip": "Back to Sticky Boards",
-  "searchOrCreateStickyBoardHint": "Search or create a sticky board",
-  "createStickyBoardTooltip": "Create sticky board",
-  "stickyBoardNameRequiredMessage": "Enter a sticky board name.",
-  "stickyBoardNameTooLongMessage": "Use no more than {maxLength} characters.",
-  "@stickyBoardNameTooLongMessage": {
-    "placeholders": {
-      "maxLength": {
-        "type": "int"
-      }
-    }
-  },
-  "duplicateStickyBoardNameMessage": "A sticky board with this name already exists.",
-  "stickyBoardNotFoundMessage": "This sticky board no longer exists.",
-  "stickyBoardStorageFailureMessage": "Couldn't save sticky board changes.",
-  "stickyBoardTodoCount": "{count, plural, =1{1 todo} other{{count} todos}}",
-  "@stickyBoardTodoCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "emptyStickyBoardsTitle": "Create your first sticky board",
-  "emptyStickyBoardsMessage": "Group related todos without moving or duplicating them.",
-  "noMatchingStickyBoardsMessage": "No matching sticky boards. Press Return to create this one.",
-  "renameStickyBoardTooltip": "Rename sticky board",
-  "deleteStickyBoardTooltip": "Delete sticky board",
-  "deleteStickyBoardTitle": "Delete this sticky board?",
-  "deleteStickyBoardMessage": "Its todos will stay safely in All Todos.",
-  "keepStickyBoardAction": "Keep sticky board",
-  "pinStickyBoardTooltip": "Pin to desktop",
-  "unpinStickyBoardTooltip": "Unpin from desktop",
-  "stickyBoardPinnedLabel": "Pinned",
-  "addExistingTodoAction": "Add existing",
-  "addExistingTodoTitle": "Add existing todos",
-  "searchTodosToAddHint": "Search todos to add",
-  "noTodosAvailableForBoardMessage": "No todos are available to add.",
-  "emptyPinnedStickyBoardMessage": "No todos on this board.",
-  "newTodoInStickyBoardAction": "New todo",
-  "removeFromStickyBoardTooltip": "Remove from sticky board",
-  "stickyBoardDeleteKeepsTodosHint": "Deleting a sticky board never deletes its todos.",
   "collapseTooltip": "Collapse (Esc)",
   "activeScopeLabel": "Todos",
   "archiveScopeLabel": "Archive",
@@ -186,6 +141,10 @@
   "completedStatus": "Completed",
   "incompleteStatus": "Incomplete",
   "doingStatus": "Doing",
+  "filterDoingTooltip": "Show doing todos",
+  "clearDoingFilterTooltip": "Show all todos",
+  "emptyDoingTodosTitle": "Nothing in progress",
+  "emptyDoingTodosMessage": "Start a todo when you're ready to focus",
   "startDoingTooltip": "Start doing",
   "stopDoingTooltip": "Return to todo",
   "markIncompleteTooltip": "Mark incomplete",
@@ -233,7 +192,6 @@
   "noteEmptyDraftHint": "Blank notes are not saved",
   "finishNoteAction": "Done",
   "pinnedNotesLabel": "Pinned",
-  "recentNotesLabel": "Recently edited",
   "noteWithoutContent": "No content yet",
   "pinNoteTooltip": "Pin note",
   "unpinNoteTooltip": "Unpin note",

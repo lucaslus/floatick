@@ -2,7 +2,7 @@
   <img
     src="./docs/assets/floatick-product-hero-v5.png"
     width="100%"
-    alt="Floatick floating workspace for macOS with an editor, tags, Sticky Boards, and settings"
+    alt="Floatick floating workspace for macOS with todos, notes, tags, and settings"
   />
   <h1>Floatick — Floating Todos and Notes for macOS</h1>
   <p><strong>An open-source, local-first macOS app for lightweight tasks and notes.</strong></p>

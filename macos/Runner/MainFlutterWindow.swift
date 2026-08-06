@@ -1,6 +1,5 @@
 import Cocoa
 import FlutterMacOS
-import multiview_desktop
 
 final class MainFlutterWindow: NSWindow {
   private enum Layout {
@@ -54,9 +53,6 @@ final class MainFlutterWindow: NSWindow {
   private var appliedAlwaysOnTop: Bool?
   private var preferredAppearance = PreferredAppearance.system
   private var isCollapseRequestPending = false
-  private var secondaryWindowKeyObserver: NSObjectProtocol?
-  private let configuredSecondaryWindows = NSHashTable<NSWindow>.weakObjects()
-  private let initialSecondaryWindows = NSHashTable<NSWindow>.weakObjects()
 
   override var canBecomeKey: Bool { true }
   override var canBecomeMain: Bool { true }
@@ -119,7 +115,7 @@ final class MainFlutterWindow: NSWindow {
       project: nil,
       allowHeadlessExecution: true
     )
-    MultiviewDesktopPlugin.prepareEngine(engine, window: self)
+    engine.run(withEntrypoint: nil)
     let flutterViewController = FlutterViewController(
       engine: engine,
       nibName: nil,
@@ -138,7 +134,6 @@ final class MainFlutterWindow: NSWindow {
     configureWindowChannel(for: flutterViewController)
     configureUpdateService(for: flutterViewController)
     configureLoginItemService(for: flutterViewController)
-    observeInitialSecondaryWindowPresentation()
 
     let origin = restoredCollapsedOrigin() ?? defaultCollapsedOrigin()
     collapsedOrigin = clampedOrigin(
@@ -300,274 +295,11 @@ final class MainFlutterWindow: NSWindow {
         }
         self.setAlwaysOnTop(alwaysOnTop)
         result(nil)
-      case "configureBorderlessSecondaryWindow":
-        guard
-          let arguments = call.arguments as? [String: Any],
-          let viewIdentifier = (arguments["viewId"] as? NSNumber)?.int64Value,
-          let positionAdjacentToMainWindow =
-            arguments["positionAdjacentToMainWindow"] as? Bool
-        else {
-          result(
-            FlutterError(
-              code: "invalid_argument",
-              message:
-                "configureBorderlessSecondaryWindow expects a view ID and positioning preference.",
-              details: nil
-            )
-          )
-          return
-        }
-        guard self.configureBorderlessSecondaryWindow(
-          viewIdentifier: viewIdentifier,
-          positionAdjacentToMainWindow: positionAdjacentToMainWindow
-        ) else {
-          result(
-            FlutterError(
-              code: "window_unavailable",
-              message: "The secondary Flutter window could not be found.",
-              details: viewIdentifier
-            )
-          )
-          return
-        }
-        result(nil)
-      case "revealBorderlessSecondaryWindow":
-        guard
-          let viewIdentifier = (call.arguments as? NSNumber)?.int64Value
-        else {
-          result(
-            FlutterError(
-              code: "invalid_argument",
-              message:
-                "revealBorderlessSecondaryWindow expects a view ID.",
-              details: nil
-            )
-          )
-          return
-        }
-        guard self.revealBorderlessSecondaryWindow(
-          viewIdentifier: viewIdentifier
-        ) else {
-          result(
-            FlutterError(
-              code: "window_unavailable",
-              message:
-                "The configured secondary Flutter window could not be found.",
-              details: viewIdentifier
-            )
-          )
-          return
-        }
-        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }
     }
     windowChannel = channel
-  }
-
-  private func configureBorderlessSecondaryWindow(
-    viewIdentifier: Int64,
-    positionAdjacentToMainWindow: Bool
-  ) -> Bool {
-    guard
-      let targetWindow = NSApp.windows.first(where: { window in
-        guard
-          window !== self,
-          let controller = self.flutterViewController(in: window)
-        else {
-          return false
-        }
-        return controller.viewIdentifier == viewIdentifier
-      }),
-      let flutterViewController = flutterViewController(in: targetWindow)
-    else {
-      return false
-    }
-
-    targetWindow.alphaValue = 0
-    configureTransparentRoundedWindow(
-      targetWindow,
-      flutterViewController: flutterViewController
-    )
-    let existingFrame = targetWindow.frame
-    targetWindow.styleMask = [.borderless, .resizable]
-    targetWindow.setFrame(existingFrame, display: false)
-    targetWindow.preservesContentDuringLiveResize = true
-    targetWindow.contentView?.layerContentsRedrawPolicy = .onSetNeedsDisplay
-    targetWindow.contentView?.layerContentsPlacement = .scaleAxesIndependently
-    targetWindow.appearance = preferredAppearance.nativeAppearance
-    if positionAdjacentToMainWindow {
-      positionSecondaryWindowAdjacentToMainWindow(targetWindow)
-    }
-    if isExpanded {
-      DispatchQueue.main.async { [weak self] in
-        guard let self, self.isExpanded else {
-          return
-        }
-        self.activateAndFocusFlutterContent()
-      }
-    }
-    configuredSecondaryWindows.add(targetWindow)
-    return true
-  }
-
-  private func revealBorderlessSecondaryWindow(
-    viewIdentifier: Int64
-  ) -> Bool {
-    guard
-      let targetWindow = NSApp.windows.first(where: { window in
-        guard
-          window !== self,
-          let controller = self.flutterViewController(in: window)
-        else {
-          return false
-        }
-        return controller.viewIdentifier == viewIdentifier
-      }),
-      configuredSecondaryWindows.contains(targetWindow)
-    else {
-      return false
-    }
-
-    targetWindow.displayIfNeeded()
-    targetWindow.alphaValue = 1
-    targetWindow.orderFrontRegardless()
-    return true
-  }
-
-  private func observeInitialSecondaryWindowPresentation() {
-    secondaryWindowKeyObserver = NotificationCenter.default.addObserver(
-      forName: NSWindow.didBecomeKeyNotification,
-      object: nil,
-      queue: .main
-    ) { [weak self] notification in
-      guard
-        let self,
-        let targetWindow = notification.object as? NSWindow,
-        targetWindow !== self,
-        !self.configuredSecondaryWindows.contains(targetWindow),
-        let flutterViewController = self.flutterViewController(
-          in: targetWindow
-        )
-      else {
-        return
-      }
-
-      // multiview_desktop orders a new NSWindow on screen before Dart can
-      // apply its WindowOptions. Keep that initial native surface invisible;
-      // the coordinator reveals it only after configuration, positioning and
-      // Flutter's first completed frame.
-      self.initialSecondaryWindows.add(targetWindow)
-      targetWindow.alphaValue = 0
-      self.configureTransparentRoundedWindow(
-        targetWindow,
-        flutterViewController: flutterViewController
-      )
-      DispatchQueue.main.async { [weak self, weak targetWindow] in
-        guard let self, let targetWindow else {
-          return
-        }
-        defer {
-          self.initialSecondaryWindows.remove(targetWindow)
-        }
-        guard self.isExpanded else {
-          return
-        }
-        // Creating a pinned board briefly makes its hidden native window key.
-        // Restore the main window so that this programmatic handoff is not
-        // mistaken for an outside click.
-        self.activateAndFocusFlutterContent()
-      }
-    }
-  }
-
-  private func configureTransparentRoundedWindow(
-    _ targetWindow: NSWindow,
-    flutterViewController: FlutterViewController
-  ) {
-    targetWindow.backgroundColor = .clear
-    targetWindow.isOpaque = false
-    targetWindow.hasShadow = false
-    targetWindow.invalidateShadow()
-    targetWindow.contentView?.wantsLayer = true
-    targetWindow.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
-    targetWindow.contentView?.layer?.isOpaque = false
-    configureRoundedFlutterSurface(
-      in: flutterViewController,
-      cornerRadius: 22
-    )
-  }
-
-  private func positionSecondaryWindowAdjacentToMainWindow(
-    _ targetWindow: NSWindow
-  ) {
-    let mainFrame = frame
-    let targetSize = targetWindow.frame.size
-    let targetScreen = screen(
-      containing: NSPoint(x: mainFrame.midX, y: mainFrame.midY)
-    )
-    let visibleFrame = targetScreen.visibleFrame.insetBy(
-      dx: Layout.screenPadding,
-      dy: Layout.screenPadding
-    )
-    let gap: CGFloat = 12
-    let rightOriginX = mainFrame.maxX + gap
-    let leftOriginX = mainFrame.minX - targetSize.width - gap
-    let fitsOnRight = rightOriginX + targetSize.width <= visibleFrame.maxX
-    let fitsOnLeft = leftOriginX >= visibleFrame.minX
-
-    let originX: CGFloat
-    if fitsOnRight && !fitsOnLeft {
-      originX = rightOriginX
-    } else if fitsOnLeft && !fitsOnRight {
-      originX = leftOriginX
-    } else if visibleFrame.maxX - mainFrame.maxX >=
-      mainFrame.minX - visibleFrame.minX
-    {
-      originX = rightOriginX
-    } else {
-      originX = leftOriginX
-    }
-
-    let centeredOriginY = mainFrame.midY - targetSize.height / 2
-    let maximumX = max(
-      visibleFrame.minX,
-      visibleFrame.maxX - targetSize.width
-    )
-    let maximumY = max(
-      visibleFrame.minY,
-      visibleFrame.maxY - targetSize.height
-    )
-    targetWindow.setFrameOrigin(
-      NSPoint(
-        x: min(max(originX, visibleFrame.minX), maximumX),
-        y: min(max(centeredOriginY, visibleFrame.minY), maximumY)
-      )
-    )
-  }
-
-  private func flutterViewController(
-    in window: NSWindow
-  ) -> FlutterViewController? {
-    return flutterViewController(in: window.contentViewController)
-  }
-
-  private func flutterViewController(
-    in controller: NSViewController?
-  ) -> FlutterViewController? {
-    guard let controller else {
-      return nil
-    }
-    if let flutterViewController = controller as? FlutterViewController {
-      return flutterViewController
-    }
-    for child in controller.children {
-      if let flutterViewController = flutterViewController(in: child) {
-        return flutterViewController
-      }
-    }
-    return nil
   }
 
   private func configureRoundedFlutterSurface(
@@ -611,12 +343,6 @@ final class MainFlutterWindow: NSWindow {
     let nativeAppearance = preference.nativeAppearance
     appearance = nativeAppearance
     collapsedIconPanel?.appearance = nativeAppearance
-    for window in NSApp.windows where window !== self {
-      guard flutterViewController(in: window) != nil else {
-        continue
-      }
-      window.appearance = nativeAppearance
-    }
   }
 
   private func configureUpdateService(
@@ -713,12 +439,6 @@ final class MainFlutterWindow: NSWindow {
   }
 
   private func requestCollapseIfNeeded() {
-    if
-      let keyWindow = NSApp.keyWindow,
-      initialSecondaryWindows.contains(keyWindow)
-    {
-      return
-    }
     guard
       isExpanded,
       !isKeyWindow,

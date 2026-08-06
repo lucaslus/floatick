@@ -227,6 +227,43 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('toggle-doing-todo-todo')),
+        matching: find.byIcon(Icons.play_arrow_rounded),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('toggle-doing-todo-doing'))),
+      tester.getSize(find.byKey(const Key('toggle-doing-todo-todo'))),
+    );
+    final doingAction = tester.widget<IconButton>(
+      find.descendant(
+        of: find.byKey(const Key('toggle-doing-todo-doing')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    final todoAction = tester.widget<IconButton>(
+      find.descendant(
+        of: find.byKey(const Key('toggle-doing-todo-todo')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(doingAction.style, isNull);
+    expect(todoAction.style, isNull);
+    expect(doingAction.tooltip, isNull);
+    expect(todoAction.tooltip, isNull);
+
+    final doingActionOpacity = find.descendant(
+      of: find.byKey(const Key('toggle-doing-todo-doing')),
+      matching: find.byType(AnimatedOpacity),
+    );
+    expect(tester.widget<AnimatedOpacity>(doingActionOpacity).opacity, 0);
+    expect(
+      find.byKey(const Key('toggle-doing-todo-doing')).hitTestable(),
+      findsNothing,
+    );
 
     final rowSurface = tester.widget<AnimatedContainer>(
       find.byKey(const Key('todo-row-surface-doing')),
@@ -239,8 +276,25 @@ void main() {
       tester.getSize(find.byKey(const Key('todo-row-surface-todo'))),
     );
 
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer();
+    await mouse.moveTo(
+      tester.getCenter(find.byKey(const Key('todo-row-surface-doing'))),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.widget<AnimatedOpacity>(doingActionOpacity).opacity, 1);
+    expect(
+      find.byKey(const Key('toggle-doing-todo-doing')).hitTestable(),
+      findsOneWidget,
+    );
+
     await tester.tap(find.byKey(const Key('toggle-doing-todo-doing')));
     expect(doingToggleCount, 1);
+
+    await mouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
+    expect(tester.widget<AnimatedOpacity>(doingActionOpacity).opacity, 0);
   });
 
   testWidgets('external tag action bypasses the inline assignment menu', (

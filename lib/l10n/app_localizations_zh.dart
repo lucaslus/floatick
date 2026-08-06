@@ -237,103 +237,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsTooltip => '设置';
 
   @override
-  String get stickyBoardsTitle => '便利板';
-
-  @override
-  String get stickyBoardsTooltip => '打开便利板';
-
-  @override
-  String get closeStickyBoardsTooltip => '关闭便利板';
-
-  @override
-  String get backToStickyBoardsTooltip => '返回便利板';
-
-  @override
-  String get searchOrCreateStickyBoardHint => '搜索或创建便利板';
-
-  @override
-  String get createStickyBoardTooltip => '创建便利板';
-
-  @override
-  String get stickyBoardNameRequiredMessage => '请输入便利板名称。';
-
-  @override
-  String stickyBoardNameTooLongMessage(int maxLength) {
-    return '名称最多 $maxLength 个字符。';
-  }
-
-  @override
-  String get duplicateStickyBoardNameMessage => '已经存在同名便利板。';
-
-  @override
-  String get stickyBoardNotFoundMessage => '这个便利板已不存在。';
-
-  @override
-  String get stickyBoardStorageFailureMessage => '无法保存便利板修改。';
-
-  @override
-  String stickyBoardTodoCount(int count) {
-    return '$count 项待办';
-  }
-
-  @override
-  String get emptyStickyBoardsTitle => '创建第一个便利板';
-
-  @override
-  String get emptyStickyBoardsMessage => '无需移动或复制待办，也能把相关事项放在一起。';
-
-  @override
-  String get noMatchingStickyBoardsMessage => '没有匹配的便利板，按 Return 可直接创建。';
-
-  @override
-  String get renameStickyBoardTooltip => '重命名便利板';
-
-  @override
-  String get deleteStickyBoardTooltip => '删除便利板';
-
-  @override
-  String get deleteStickyBoardTitle => '删除这个便利板？';
-
-  @override
-  String get deleteStickyBoardMessage => '其中的待办仍会安全保留在全部待办中。';
-
-  @override
-  String get keepStickyBoardAction => '保留便利板';
-
-  @override
-  String get pinStickyBoardTooltip => '固定到桌面';
-
-  @override
-  String get unpinStickyBoardTooltip => '取消桌面固定';
-
-  @override
-  String get stickyBoardPinnedLabel => '已固定';
-
-  @override
-  String get addExistingTodoAction => '添加现有待办';
-
-  @override
-  String get addExistingTodoTitle => '添加现有待办';
-
-  @override
-  String get searchTodosToAddHint => '搜索可添加的待办';
-
-  @override
-  String get noTodosAvailableForBoardMessage => '暂无可添加的待办。';
-
-  @override
-  String get emptyPinnedStickyBoardMessage => '这个便利板还没有待办。';
-
-  @override
-  String get newTodoInStickyBoardAction => '新建待办';
-
-  @override
-  String get removeFromStickyBoardTooltip => '从便利板移除';
-
-  @override
-  String get stickyBoardDeleteKeepsTodosHint => '删除便利板不会删除其中的待办。';
-
-  @override
   String get collapseTooltip => '收起（Esc）';
 
   @override
@@ -437,6 +340,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get doingStatus => '进行中';
+
+  @override
+  String get filterDoingTooltip => '只看进行中的待办';
+
+  @override
+  String get clearDoingFilterTooltip => '显示全部待办';
+
+  @override
+  String get emptyDoingTodosTitle => '暂无进行中的待办';
+
+  @override
+  String get emptyDoingTodosMessage => '开始一项待办，进入专注状态';
 
   @override
   String get startDoingTooltip => '开始进行';
@@ -559,9 +474,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pinnedNotesLabel => '置顶';
-
-  @override
-  String get recentNotesLabel => '最近编辑';
 
   @override
   String get noteWithoutContent => '暂无正文';

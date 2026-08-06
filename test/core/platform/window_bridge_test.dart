@@ -12,44 +12,6 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
-  test('configures the requested secondary window as borderless', () async {
-    final calls = <MethodCall>[];
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) async {
-          calls.add(call);
-          return null;
-        });
-    final bridge = MethodChannelWindowBridge();
-
-    await bridge.configureBorderlessSecondaryWindow(
-      42,
-      positionAdjacentToMainWindow: true,
-    );
-
-    expect(calls, hasLength(1));
-    expect(calls.single.method, 'configureBorderlessSecondaryWindow');
-    expect(calls.single.arguments, <String, Object>{
-      'viewId': 42,
-      'positionAdjacentToMainWindow': true,
-    });
-  });
-
-  test('reveals a configured secondary window', () async {
-    final calls = <MethodCall>[];
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) async {
-          calls.add(call);
-          return null;
-        });
-    final bridge = MethodChannelWindowBridge();
-
-    await bridge.revealBorderlessSecondaryWindow(42);
-
-    expect(calls, hasLength(1));
-    expect(calls.single.method, 'revealBorderlessSecondaryWindow');
-    expect(calls.single.arguments, 42);
-  });
-
   test('coordinates the fixed main window and native floating icon', () async {
     final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

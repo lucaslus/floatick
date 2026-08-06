@@ -8,8 +8,6 @@ import '../core/ui/floatick_surface_metrics.dart';
 import '../features/notes/presentation/note_view_model.dart';
 import '../features/settings/domain/app_settings.dart';
 import '../features/settings/presentation/settings_view_model.dart';
-import '../features/sticky_boards/presentation/sticky_board_view_model.dart';
-import '../features/sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import '../features/todos/presentation/todo_panel.dart';
 import '../features/todos/presentation/todo_view_model.dart';
 import '../features/updates/presentation/update_view_model.dart';
@@ -22,8 +20,6 @@ class FloatickApp extends StatelessWidget {
     this.noteController,
     required this.settingsController,
     required this.updateController,
-    required this.stickyBoardController,
-    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
     this.locale,
     super.key,
@@ -33,8 +29,6 @@ class FloatickApp extends StatelessWidget {
   final NoteViewModel? noteController;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
-  final StickyBoardViewModel stickyBoardController;
-  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
   final Locale? locale;
 
@@ -67,8 +61,6 @@ class FloatickApp extends StatelessWidget {
             noteController: noteController,
             settingsController: settingsController,
             updateController: updateController,
-            stickyBoardController: stickyBoardController,
-            stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
             windowBridge: windowBridge,
           ),
         );
@@ -83,8 +75,6 @@ class _FloatickShell extends StatefulWidget {
     required this.noteController,
     required this.settingsController,
     required this.updateController,
-    required this.stickyBoardController,
-    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
   });
 
@@ -92,8 +82,6 @@ class _FloatickShell extends StatefulWidget {
   final NoteViewModel? noteController;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
-  final StickyBoardViewModel stickyBoardController;
-  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
 
   @override
@@ -116,8 +104,6 @@ class _FloatickShellState extends State<_FloatickShell> {
   bool? _lastSyncedAlwaysOnTop;
   int? _lastSyncedFloatingIconCount;
   WindowExpansionAnchor _expansionAnchor = WindowExpansionAnchor.topRight;
-  StickyBoardMainWindowRequest? _stickyBoardRequest;
-  int _stickyBoardRequestSerial = 0;
   Future<void>? _rendererWarmUpFuture;
   Future<void>? _panelPreparationFuture;
 
@@ -128,15 +114,12 @@ class _FloatickShellState extends State<_FloatickShell> {
     widget.windowBridge.setCollapseRequestHandler(_handleNativeCollapseRequest);
     widget.controller.addListener(_handleTodoStateChanged);
     widget.settingsController.addListener(_handleSettingsChanged);
-    widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
-      _handleStickyBoardWindowRequest,
-    );
     unawaited(_syncPreferredLanguage());
     unawaited(_syncPreferredTheme());
     unawaited(_syncAlwaysOnTop());
     unawaited(_syncFloatingIconCount());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_preparePanelAndRestorePinnedBoards());
+      unawaited(_ensurePanelPrepared());
     });
   }
 
@@ -166,13 +149,6 @@ class _FloatickShellState extends State<_FloatickShell> {
       _hasSyncedPreferredLanguage = false;
       _hasSyncedAlwaysOnTop = false;
     }
-    if (oldWidget.stickyBoardWindowCoordinator !=
-        widget.stickyBoardWindowCoordinator) {
-      oldWidget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
-      widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
-        _handleStickyBoardWindowRequest,
-      );
-    }
     if (!_hasSyncedPreferredLanguage) {
       unawaited(_syncPreferredLanguage());
     }
@@ -193,16 +169,7 @@ class _FloatickShellState extends State<_FloatickShell> {
     widget.windowBridge.setCollapseRequestHandler(null);
     widget.controller.removeListener(_handleTodoStateChanged);
     widget.settingsController.removeListener(_handleSettingsChanged);
-    widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
     super.dispose();
-  }
-
-  void _handleStickyBoardWindowRequest(StickyBoardMainWindowRequest request) {
-    setState(() {
-      _stickyBoardRequest = request;
-      _stickyBoardRequestSerial += 1;
-    });
-    unawaited(_setExpanded(true));
   }
 
   void _handleSettingsChanged() {
@@ -229,14 +196,6 @@ class _FloatickShellState extends State<_FloatickShell> {
       debugPrint('Floatick could not warm up the renderer: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
-  }
-
-  Future<void> _preparePanelAndRestorePinnedBoards() async {
-    await _ensurePanelPrepared();
-    if (!mounted) {
-      return;
-    }
-    await widget.stickyBoardWindowCoordinator.restorePinnedBoards();
   }
 
   Future<void> _ensurePanelPrepared() {
@@ -370,7 +329,6 @@ class _FloatickShellState extends State<_FloatickShell> {
     }
     if (_isExpanded == expanded) {
       if (expanded) {
-        unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
         try {
           await widget.windowBridge.setExpanded(true, animated: false);
         } on Object catch (error, stackTrace) {
@@ -395,7 +353,6 @@ class _FloatickShellState extends State<_FloatickShell> {
         if (!mounted) {
           return;
         }
-        unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
         final expansionAnchor =
             requestedAnchor ??
             await widget.windowBridge.preferredExpansionAnchor();
@@ -479,13 +436,8 @@ class _FloatickShellState extends State<_FloatickShell> {
                             noteController: widget.noteController,
                             settingsController: widget.settingsController,
                             updateController: widget.updateController,
-                            stickyBoardController: widget.stickyBoardController,
-                            stickyBoardWindowCoordinator:
-                                widget.stickyBoardWindowCoordinator,
                             windowBridge: widget.windowBridge,
                             expansionAnchor: _expansionAnchor,
-                            stickyBoardRequest: _stickyBoardRequest,
-                            stickyBoardRequestSerial: _stickyBoardRequestSerial,
                             onCollapse: () => unawaited(_setExpanded(false)),
                           ),
                         ),

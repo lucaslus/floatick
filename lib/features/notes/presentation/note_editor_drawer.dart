@@ -339,6 +339,9 @@ class NoteEditorDrawerState extends State<NoteEditorDrawer> {
                   onPressed: _isSaving
                       ? null
                       : () => unawaited(_closeAfterFlush()),
+                  style: TextButton.styleFrom(
+                    foregroundColor: onSurface.withValues(alpha: 0.68),
+                  ),
                   child: Text(context.l10n.finishNoteAction),
                 ),
               ],

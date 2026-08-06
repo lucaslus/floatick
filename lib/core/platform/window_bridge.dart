@@ -36,13 +36,6 @@ abstract interface class WindowBridge {
   Future<void> setPreferredTheme(String themePreference);
 
   Future<void> setAlwaysOnTop(bool alwaysOnTop);
-
-  Future<void> configureBorderlessSecondaryWindow(
-    int viewId, {
-    bool positionAdjacentToMainWindow = false,
-  });
-
-  Future<void> revealBorderlessSecondaryWindow(int viewId);
 }
 
 class MethodChannelWindowBridge implements WindowBridge {
@@ -118,28 +111,6 @@ class MethodChannelWindowBridge implements WindowBridge {
   @override
   Future<void> setAlwaysOnTop(bool alwaysOnTop) {
     return _channel.invokeMethod<void>('setAlwaysOnTop', alwaysOnTop);
-  }
-
-  @override
-  Future<void> configureBorderlessSecondaryWindow(
-    int viewId, {
-    bool positionAdjacentToMainWindow = false,
-  }) {
-    return _channel.invokeMethod<void>(
-      'configureBorderlessSecondaryWindow',
-      <String, Object>{
-        'viewId': viewId,
-        'positionAdjacentToMainWindow': positionAdjacentToMainWindow,
-      },
-    );
-  }
-
-  @override
-  Future<void> revealBorderlessSecondaryWindow(int viewId) {
-    return _channel.invokeMethod<void>(
-      'revealBorderlessSecondaryWindow',
-      viewId,
-    );
   }
 
   Future<void> _handleNativeMethod(MethodCall call) async {

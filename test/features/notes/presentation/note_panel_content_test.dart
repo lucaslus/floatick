@@ -8,6 +8,81 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('note list groups active notes by their last edited date', (
+    WidgetTester tester,
+  ) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final olderDay = today.subtract(const Duration(days: 3));
+    final controller = NoteViewModel(
+      repository: _MemoryNoteRepository(<NoteItem>[
+        _note(id: 'today-new', day: today, hour: 15),
+        _note(id: 'today-old', day: today, hour: 9),
+        _note(id: 'previous-day', day: yesterday, hour: 16),
+        _note(id: 'older', day: olderDay, hour: 12),
+      ]),
+    );
+    await controller.load();
+
+    await tester.pumpWidget(
+      _NotePanelTestApp(controller: controller, archived: false),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Yesterday'), findsOneWidget);
+    final context = tester.element(find.byType(NotePanelContent));
+    expect(
+      find.text(MaterialLocalizations.of(context).formatFullDate(olderDay)),
+      findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(find.text('Today New')).dy,
+      lessThan(tester.getTopLeft(find.text('Today Old')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Today Old')).dy,
+      lessThan(tester.getTopLeft(find.text('Previous Day')).dy),
+    );
+  });
+
+  testWidgets('archived notes are grouped by archive date', (
+    WidgetTester tester,
+  ) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final editedDay = today.subtract(const Duration(days: 10));
+    final controller = NoteViewModel(
+      repository: _MemoryNoteRepository(<NoteItem>[
+        _note(
+          id: 'archived-today',
+          day: editedDay,
+          hour: 8,
+          archivedAt: today.add(const Duration(hours: 14)),
+        ),
+        _note(
+          id: 'archived-yesterday',
+          day: editedDay,
+          hour: 9,
+          archivedAt: yesterday.add(const Duration(hours: 11)),
+        ),
+      ]),
+    );
+    await controller.load();
+
+    await tester.pumpWidget(
+      _NotePanelTestApp(controller: controller, archived: true),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Yesterday'), findsOneWidget);
+    expect(find.text('Archived Today'), findsOneWidget);
+    expect(find.text('Archived Yesterday'), findsOneWidget);
+  });
+
   testWidgets('note list shows shared tags and applies the tag filter', (
     WidgetTester tester,
   ) async {
@@ -78,6 +153,56 @@ void main() {
       findsOneWidget,
     );
   });
+}
+
+NoteItem _note({
+  required String id,
+  required DateTime day,
+  required int hour,
+  DateTime? archivedAt,
+}) {
+  final timestamp = DateTime(day.year, day.month, day.day, hour);
+  return NoteItem(
+    id: id,
+    title: id
+        .split('-')
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' '),
+    content: '',
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    archivedAt: archivedAt,
+  );
+}
+
+class _NotePanelTestApp extends StatelessWidget {
+  const _NotePanelTestApp({required this.controller, required this.archived});
+
+  final NoteViewModel controller;
+  final bool archived;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: SizedBox(
+          width: 440,
+          height: 600,
+          child: NotePanelContent(
+            controller: controller,
+            archived: archived,
+            query: '',
+            availableTags: const <TodoTag>[],
+            selectedTagIds: const <String>{},
+            onOpen: (_) {},
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _MemoryNoteRepository implements NoteRepository {

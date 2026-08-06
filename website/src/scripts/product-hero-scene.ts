@@ -50,8 +50,6 @@ type ProductSceneCopy = {
   newTodo: string;
   today: string;
   tasks: [TaskPreview, TaskPreview, TaskPreview];
-  boardTitle: string;
-  boardCount: string;
   drawerTitle: string;
   titleValue: string;
   contentValue: string;
@@ -86,7 +84,6 @@ const COLORS = {
   blue: '#5b8ff9',
   purple: '#8a72eb',
   orange: '#ff8550',
-  board: '#48528a',
 } as const;
 
 const TEXTURE_PIXEL_RATIO = 1.5;
@@ -149,8 +146,6 @@ const DEFAULT_COPY: ProductSceneCopy = {
     { title: 'Review the launch checklist', tag: 'Work', time: '11:30' },
     { title: 'Write down one good idea', tag: 'Ideas', time: '16:20' },
   ],
-  boardTitle: 'This week',
-  boardCount: '3 todos',
   drawerTitle: 'New todo',
   titleValue: 'Prepare tomorrow’s top task',
   contentValue: 'Add a short note so the next step is clear.',
@@ -161,8 +156,6 @@ const mountedStages = new WeakSet<HTMLElement>();
 
 const PANEL_LAYOUT = {
   main: new Vector3(-0.38, -0.06, 0.48),
-  boardCollapsed: new Vector3(-1.68, -2.62, -0.12),
-  boardExpanded: new Vector3(-4.8, -1.72, 1.16),
   drawerCollapsed: new Vector3(0.9, 0.98, -0.28),
   drawerExpanded: new Vector3(4.8, 0.7, 1.02),
 } as const;
@@ -221,8 +214,6 @@ function readSceneCopy(stage: HTMLElement): ProductSceneCopy {
         time: dataValue(stage, 'taskThreeTime', DEFAULT_COPY.tasks[2].time),
       },
     ],
-    boardTitle: dataValue(stage, 'boardTitle', DEFAULT_COPY.boardTitle),
-    boardCount: dataValue(stage, 'boardCount', DEFAULT_COPY.boardCount),
     drawerTitle: dataValue(stage, 'drawerTitle', DEFAULT_COPY.drawerTitle),
     titleValue: dataValue(stage, 'titleValue', DEFAULT_COPY.titleValue),
     contentValue: dataValue(stage, 'contentValue', DEFAULT_COPY.contentValue),
@@ -410,38 +401,6 @@ function drawArchiveIcon(
   context.moveTo(-6, 1);
   context.lineTo(0, 7);
   context.lineTo(6, 1);
-  context.stroke();
-  context.restore();
-}
-
-function drawStickyBoardIcon(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number,
-) {
-  const half = size / 2;
-  const fold = size * 0.28;
-  context.save();
-  context.translate(x, y);
-  context.strokeStyle = COLORS.textSoft;
-  context.lineWidth = 4;
-  context.lineCap = 'round';
-  context.lineJoin = 'round';
-  context.beginPath();
-  context.moveTo(-half, -half);
-  context.lineTo(half, -half);
-  context.lineTo(half, half - fold);
-  context.lineTo(half - fold, half);
-  context.lineTo(-half, half);
-  context.closePath();
-  context.moveTo(half - fold, half);
-  context.lineTo(half - fold, half - fold);
-  context.lineTo(half, half - fold);
-  context.moveTo(-half + 8, -5);
-  context.lineTo(half - 9, -5);
-  context.moveTo(-half + 8, 7);
-  context.lineTo(half - 16, 7);
   context.stroke();
   context.restore();
 }
@@ -665,8 +624,7 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
 
     context.globalAlpha = 0.72;
     drawArchiveIcon(context, 688, 94, 32);
-    drawStickyBoardIcon(context, 766, 94, 32);
-    drawSettingsIcon(context, 844, 94, 15);
+    drawSettingsIcon(context, 805, 94, 15);
     drawCollapseIcon(context, 922, 94, 12);
     context.globalAlpha = 1;
 
@@ -821,61 +779,6 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
         context.globalAlpha = 1;
       }
     });
-    context.restore();
-  });
-}
-
-function createBoardTexture(copy: ProductSceneCopy) {
-  return createCanvasTexture(760, 560, (context) => {
-    context.save();
-    const gradient = context.createLinearGradient(0, 0, 760, 560);
-    gradient.addColorStop(0, '#56609a');
-    gradient.addColorStop(1, COLORS.board);
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, 760, 560);
-
-    context.fillStyle = COLORS.text;
-    context.font =
-      '760 40px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.boardTitle, 48, 76);
-
-    context.strokeStyle = 'rgba(238, 242, 255, 0.16)';
-    context.lineWidth = 2;
-    context.beginPath();
-    context.moveTo(0, 118);
-    context.lineTo(760, 118);
-    context.stroke();
-
-    copy.tasks.slice(0, 2).forEach((task, index) => {
-      const y = 166 + index * 104;
-      const completed = index === 1;
-      roundedRect(
-        context,
-        48,
-        y,
-        42,
-        42,
-        12,
-        completed ? COLORS.accent : 'transparent',
-        completed ? COLORS.accent : 'rgba(235, 240, 255, 0.48)',
-      );
-      if (completed) drawCheckmark(context, 59, y + 12, 21, COLORS.ink);
-      context.fillStyle = completed
-        ? 'rgba(238, 242, 255, 0.55)'
-        : '#f5f6ff';
-      context.font =
-        '650 29px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-      context.fillText(task.title, 116, y + 31);
-      if (completed) {
-        const textWidth = Math.min(520, context.measureText(task.title).width);
-        context.fillRect(116, y + 18, textWidth, 3);
-      }
-    });
-
-    context.fillStyle = 'rgba(239, 241, 255, 0.62)';
-    context.font =
-      '680 25px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.boardCount, 48, 506);
     context.restore();
   });
 }
@@ -1384,25 +1287,6 @@ function buildProductScene(
   mainPanel.group.rotation.set(0.018, -0.06, -0.012);
   productContent.add(mainPanel.group);
 
-  const boardPanel = createPanel(
-    3.65,
-    2.72,
-    0.46,
-    0.28,
-    COLORS.board,
-    createBoardTexture(copy),
-    disposables,
-  );
-  boardPanel.group.position.copy(
-    reducedMotion ? PANEL_LAYOUT.boardExpanded : PANEL_LAYOUT.boardCollapsed,
-  );
-  boardPanel.group.rotation.set(
-    -0.025,
-    reducedMotion ? 0.22 : 0.015,
-    reducedMotion ? 0.035 : -0.018,
-  );
-  productContent.add(boardPanel.group);
-
   const drawerPanel = createPanel(
     3.55,
     5.32,
@@ -1522,7 +1406,6 @@ function buildProductScene(
   let isDisposed = false;
   let isExpanded = reducedMotion;
   const clock = new Clock();
-  const animatedBoardTarget = new Vector3();
   const animatedDrawerTarget = new Vector3();
 
   const render = () => {
@@ -1580,30 +1463,14 @@ function buildProductScene(
     mainPanel.group.position.y =
       PANEL_LAYOUT.main.y + Math.sin(elapsed * 0.72) * 0.035;
 
-    const boardTarget = isExpanded
-      ? PANEL_LAYOUT.boardExpanded
-      : PANEL_LAYOUT.boardCollapsed;
     const drawerTarget = isExpanded
       ? PANEL_LAYOUT.drawerExpanded
       : PANEL_LAYOUT.drawerCollapsed;
-    animatedBoardTarget.copy(boardTarget);
     animatedDrawerTarget.copy(drawerTarget);
     if (isExpanded) {
-      animatedBoardTarget.y += Math.sin(elapsed * 0.82 + 1.4) * 0.045;
       animatedDrawerTarget.y += Math.sin(elapsed * 0.68 + 2.2) * 0.04;
     }
-    boardPanel.group.position.lerp(animatedBoardTarget, 0.075);
     drawerPanel.group.position.lerp(animatedDrawerTarget, 0.075);
-    boardPanel.group.rotation.y = MathUtils.lerp(
-      boardPanel.group.rotation.y,
-      isExpanded ? 0.22 : 0.015,
-      0.075,
-    );
-    boardPanel.group.rotation.z = MathUtils.lerp(
-      boardPanel.group.rotation.z,
-      isExpanded ? 0.035 : -0.018,
-      0.075,
-    );
     drawerPanel.group.rotation.y = MathUtils.lerp(
       drawerPanel.group.rotation.y,
       isExpanded ? -0.22 : -0.02,

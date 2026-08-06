@@ -26,6 +26,8 @@ enum TagMutationResult {
   storageFailure,
 }
 
+enum TodoProgressFilter { all, doing }
+
 class TodoViewModel extends ChangeNotifier {
   TodoViewModel({
     required TodoRepository todoRepository,
@@ -66,6 +68,7 @@ class TodoViewModel extends ChangeNotifier {
   bool? _cachedViewArchived;
   String? _cachedViewQuery;
   Set<String> _cachedViewTagIds = const <String>{};
+  TodoProgressFilter? _cachedViewProgressFilter;
   List<TodoItem>? _cachedViewItems;
   TagWorkspace _tagWorkspace = TagWorkspace.empty();
   Map<String, int> _tagUsageCounts = const <String, int>{};
@@ -118,12 +121,14 @@ class TodoViewModel extends ChangeNotifier {
     required bool archived,
     required String query,
     Set<String> selectedTagIds = const <String>{},
+    TodoProgressFilter progressFilter = TodoProgressFilter.all,
   }) {
     final normalizedQuery = query.trim().toLowerCase();
     if (_cachedViewItems != null &&
         _cachedViewArchived == archived &&
         _cachedViewQuery == normalizedQuery &&
-        setEquals(_cachedViewTagIds, selectedTagIds)) {
+        setEquals(_cachedViewTagIds, selectedTagIds) &&
+        _cachedViewProgressFilter == progressFilter) {
       return _cachedViewItems!;
     }
 
@@ -140,11 +145,16 @@ class TodoViewModel extends ChangeNotifier {
           (_normalizedTagNamesByTodoId[item.id] ?? const <String>[]).any(
             (name) => name.contains(normalizedQuery),
           );
-      return matchesTag && matchesQuery;
+      final matchesProgress = switch (progressFilter) {
+        TodoProgressFilter.all => true,
+        TodoProgressFilter.doing => item.isDoing,
+      };
+      return matchesTag && matchesQuery && matchesProgress;
     }).toList();
     _cachedViewArchived = archived;
     _cachedViewQuery = normalizedQuery;
     _cachedViewTagIds = Set<String>.unmodifiable(selectedTagIds);
+    _cachedViewProgressFilter = progressFilter;
     _cachedViewItems = List<TodoItem>.unmodifiable(visibleItems);
     return _cachedViewItems!;
   }
@@ -736,6 +746,7 @@ class TodoViewModel extends ChangeNotifier {
     _cachedViewArchived = null;
     _cachedViewQuery = null;
     _cachedViewTagIds = const <String>{};
+    _cachedViewProgressFilter = null;
     _cachedViewItems = null;
   }
 

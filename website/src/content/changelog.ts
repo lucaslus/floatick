@@ -147,11 +147,10 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
       version: 'v0.2.0',
       date: 'July 28, 2026',
       dateTime: '2026-07-28',
-      title: 'Sticky Boards, details, and reusable tags',
+      title: 'Todo details and reusable tags',
       summary:
-        'This release adds desktop boards, Markdown details, and reusable colored tags.',
+        'This release adds Markdown details, reusable colored tags, and more macOS controls.',
       highlights: [
-        'Create and pin color-coded Sticky Boards without duplicating todos.',
         'Add Markdown content and open todo details with a double click.',
         'Create, edit, search, and combine multiple color-coded tags.',
         'Choose appearance, always-on-top behavior, and open-at-login settings.',
@@ -242,11 +241,10 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
       version: 'v0.2.0',
       date: '2026 年 7 月 28 日',
       dateTime: '2026-07-28',
-      title: '便利板、Todo 详情与可复用标签',
+      title: 'Todo 详情与可复用标签',
       summary:
-        '这个版本增加了桌面便利板、Markdown 详情和彩色标签。',
+        '这个版本增加了 Markdown 详情、可复用彩色标签和更多 macOS 设置。',
       highlights: [
-        '创建并固定彩色便利板，同时不复制 Todo 数据。',
         '为 Todo 添加 Markdown 内容，并通过双击查看详情。',
         '创建、编辑、搜索并组合多个彩色标签。',
         '设置外观、始终置顶与登录时启动。',

@@ -15,9 +15,6 @@ import '../../notes/presentation/note_panel_content.dart';
 import '../../notes/presentation/note_view_model.dart';
 import '../../settings/presentation/settings_drawer.dart';
 import '../../settings/presentation/settings_view_model.dart';
-import '../../sticky_boards/presentation/sticky_board_drawers.dart';
-import '../../sticky_boards/presentation/sticky_board_view_model.dart';
-import '../../sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import '../../updates/presentation/update_view_model.dart';
 import '../domain/todo_item.dart';
 import 'tag_filter_drawer.dart';
@@ -29,9 +26,7 @@ import 'widgets/todo_list_row.dart';
 
 const double _settingsDrawerWidth = 268;
 const double _tagDrawerWidth = 292;
-const double _stickyBoardDrawerWidth = 336;
-const double _todoDrawerHeight = 520;
-const double _noteDrawerHeight = 590;
+const double _editorDrawerHeight = 590;
 const Duration _drawerSlideDuration = Duration(milliseconds: 220);
 const Duration _drawerScrimDuration = Duration(milliseconds: 160);
 const Duration _scrollHoverResumeDelay = Duration(milliseconds: 120);
@@ -47,9 +42,6 @@ enum _TodoPanelDrawerMode {
   tagFilter,
   tagAssignment,
   tagManagement,
-  stickyBoardManagement,
-  stickyBoardDetail,
-  stickyBoardTodoPicker,
   createTodo,
   todoDetails,
   editTodo,
@@ -57,13 +49,7 @@ enum _TodoPanelDrawerMode {
   editNote,
 }
 
-enum _TodoPanelDrawerFamily {
-  settings,
-  tags,
-  stickyBoards,
-  todoEditor,
-  noteEditor,
-}
+enum _TodoPanelDrawerFamily { settings, tags, todoEditor, noteEditor }
 
 class TodoPanel extends StatefulWidget {
   const TodoPanel({
@@ -71,12 +57,8 @@ class TodoPanel extends StatefulWidget {
     this.noteController,
     required this.settingsController,
     required this.updateController,
-    required this.stickyBoardController,
-    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
     required this.expansionAnchor,
-    required this.stickyBoardRequest,
-    required this.stickyBoardRequestSerial,
     required this.onCollapse,
     super.key,
   });
@@ -85,12 +67,8 @@ class TodoPanel extends StatefulWidget {
   final NoteViewModel? noteController;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
-  final StickyBoardViewModel stickyBoardController;
-  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
   final WindowExpansionAnchor expansionAnchor;
-  final StickyBoardMainWindowRequest? stickyBoardRequest;
-  final int stickyBoardRequestSerial;
   final VoidCallback onCollapse;
 
   @override
@@ -105,7 +83,6 @@ class _TodoPanelState extends State<TodoPanel> {
   final _tagFilterCloseFocusNode = FocusNode();
   final _tagAssignmentCloseFocusNode = FocusNode();
   final _tagManagementCloseFocusNode = FocusNode();
-  final _stickyBoardCloseFocusNode = FocusNode();
   final _todoDrawerCloseFocusNode = FocusNode();
   final _noteDrawerCloseFocusNode = FocusNode();
   GlobalKey<NoteEditorDrawerState> _noteEditorKey =
@@ -113,6 +90,7 @@ class _TodoPanelState extends State<TodoPanel> {
 
   _PanelContentKind _contentKind = _PanelContentKind.todos;
   TodoListScope _scope = TodoListScope.active;
+  TodoProgressFilter _progressFilter = TodoProgressFilter.all;
   bool _noteArchived = false;
   String _query = '';
   final Set<String> _selectedTagIds = <String>{};
@@ -123,32 +101,13 @@ class _TodoPanelState extends State<TodoPanel> {
   _TodoPanelDrawerMode _lastTodoDrawerMode = _TodoPanelDrawerMode.createTodo;
   _TodoPanelDrawerMode? _tagManagementReturnMode;
   _TodoPanelDrawerMode? _tagAssignmentReturnMode;
-  _TodoPanelDrawerMode? _todoDrawerReturnMode;
   Set<String> _todoEditorTagIds = <String>{};
   Set<String> _noteEditorTagIds = <String>{};
   final Set<_TodoPanelDrawerFamily> _mountedDrawerFamilies =
       <_TodoPanelDrawerFamily>{};
-  String? _selectedStickyBoardId;
-  String? _todoCreationBoardId;
-  String? _pendingCreatedTodoId;
   int _todoEditorSession = 0;
   String? _selectedNoteId;
-  int _lastHandledStickyBoardRequestSerial = -1;
   int _drawerRequestSerial = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _handleRequestedStickyBoard();
-  }
-
-  @override
-  void didUpdateWidget(covariant TodoPanel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.stickyBoardRequestSerial != widget.stickyBoardRequestSerial) {
-      _handleRequestedStickyBoard();
-    }
-  }
 
   @override
   void dispose() {
@@ -159,7 +118,6 @@ class _TodoPanelState extends State<TodoPanel> {
     _tagFilterCloseFocusNode.dispose();
     _tagAssignmentCloseFocusNode.dispose();
     _tagManagementCloseFocusNode.dispose();
-    _stickyBoardCloseFocusNode.dispose();
     _todoDrawerCloseFocusNode.dispose();
     _noteDrawerCloseFocusNode.dispose();
     super.dispose();
@@ -174,129 +132,22 @@ class _TodoPanelState extends State<TodoPanel> {
       _scope = _scope == TodoListScope.active
           ? TodoListScope.archived
           : TodoListScope.active;
-    });
-  }
-
-  void _handleRequestedStickyBoard() {
-    if (_lastHandledStickyBoardRequestSerial ==
-        widget.stickyBoardRequestSerial) {
-      return;
-    }
-    _lastHandledStickyBoardRequestSerial = widget.stickyBoardRequestSerial;
-    final request = widget.stickyBoardRequest;
-    if (request == null ||
-        widget.stickyBoardController.boardById(request.boardId) == null) {
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
+      if (_scope == TodoListScope.archived) {
+        _progressFilter = TodoProgressFilter.all;
       }
-      _openRequestedStickyBoard(request);
     });
   }
 
-  void _openRequestedStickyBoard(StickyBoardMainWindowRequest request) {
-    final boardId = request.boardId;
-    final todoId = request.todoId;
-    if (widget.stickyBoardController.boardById(boardId) == null) {
+  void _toggleDoingFilter() {
+    if (_contentKind != _PanelContentKind.todos ||
+        _scope != TodoListScope.active) {
       return;
     }
-    if (todoId != null && widget.controller.itemById(todoId) == null) {
-      return;
-    }
-
-    _selectedStickyBoardId = boardId;
-    if (_contentKind != _PanelContentKind.todos) {
-      setState(() => _contentKind = _PanelContentKind.todos);
-    }
-    if (!_mountedDrawerFamilies.contains(_TodoPanelDrawerFamily.stickyBoards)) {
-      setState(
-        () => _mountedDrawerFamilies.add(_TodoPanelDrawerFamily.stickyBoards),
-      );
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _performStickyBoardRequest(request);
-        }
-      });
-      return;
-    }
-    _performStickyBoardRequest(request);
-  }
-
-  void _performStickyBoardRequest(StickyBoardMainWindowRequest request) {
-    final todoId = request.todoId;
-    switch (request.destination) {
-      case StickyBoardMainWindowDestination.board:
-        _openStickyBoard(request.boardId);
-      case StickyBoardMainWindowDestination.todoDetails:
-        if (todoId == null) {
-          return;
-        }
-        _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
-        _showTodoDrawer(
-          _TodoPanelDrawerMode.todoDetails,
-          todoId: todoId,
-          initialTagIds: widget.controller.tagIdsForTodo(todoId),
-        );
-      case StickyBoardMainWindowDestination.todoEdit:
-        if (todoId == null) {
-          return;
-        }
-        _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
-        _showTodoDrawer(
-          _TodoPanelDrawerMode.editTodo,
-          todoId: todoId,
-          initialTagIds: widget.controller.tagIdsForTodo(todoId),
-        );
-    }
-  }
-
-  void _openStickyBoards() {
-    _selectedStickyBoardId = null;
-    _showDrawer(_TodoPanelDrawerMode.stickyBoardManagement);
-  }
-
-  void _openStickyBoard(String boardId) {
-    if (widget.stickyBoardController.boardById(boardId) == null) {
-      return;
-    }
-    if (_drawerMode == _TodoPanelDrawerMode.stickyBoardDetail) {
-      setState(() => _selectedStickyBoardId = boardId);
-      return;
-    }
-    _selectedStickyBoardId = boardId;
-    _showDrawer(_TodoPanelDrawerMode.stickyBoardDetail);
-  }
-
-  void _openStickyBoardTodoPicker() {
-    if (_selectedStickyBoardId == null) {
-      return;
-    }
-    _showDrawer(_TodoPanelDrawerMode.stickyBoardTodoPicker);
-  }
-
-  void _backToStickyBoardManagement() {
-    _showDrawer(_TodoPanelDrawerMode.stickyBoardManagement);
-  }
-
-  void _backToStickyBoardDetail() {
-    if (_selectedStickyBoardId == null) {
-      _backToStickyBoardManagement();
-      return;
-    }
-    _showDrawer(_TodoPanelDrawerMode.stickyBoardDetail);
-  }
-
-  void _toggleStickyBoardPin(String boardId) {
-    unawaited(widget.stickyBoardWindowCoordinator.togglePin(boardId));
-  }
-
-  void _deleteStickyBoard(String boardId) {
-    if (_selectedStickyBoardId == boardId) {
-      _selectedStickyBoardId = null;
-    }
-    unawaited(widget.stickyBoardWindowCoordinator.deleteBoard(boardId));
+    setState(() {
+      _progressFilter = _progressFilter == TodoProgressFilter.doing
+          ? TodoProgressFilter.all
+          : TodoProgressFilter.doing;
+    });
   }
 
   void _openTagFilter() {
@@ -311,6 +162,9 @@ class _TodoPanelState extends State<TodoPanel> {
     setState(() {
       _contentKind = kind;
       _query = '';
+      if (kind == _PanelContentKind.notes) {
+        _progressFilter = TodoProgressFilter.all;
+      }
     });
   }
 
@@ -387,12 +241,7 @@ class _TodoPanelState extends State<TodoPanel> {
     _showDrawer(_TodoPanelDrawerMode.tagManagement);
   }
 
-  void _openTodoCreate({String? stickyBoardId}) {
-    _todoCreationBoardId = stickyBoardId;
-    _pendingCreatedTodoId = null;
-    _todoDrawerReturnMode = stickyBoardId == null
-        ? null
-        : _TodoPanelDrawerMode.stickyBoardDetail;
+  void _openTodoCreate() {
     _showTodoDrawer(
       _TodoPanelDrawerMode.createTodo,
       initialTagIds: const <String>[],
@@ -401,9 +250,6 @@ class _TodoPanelState extends State<TodoPanel> {
   }
 
   void _openTodoDetails(String todoId) {
-    if (_drawerMode == _TodoPanelDrawerMode.stickyBoardDetail) {
-      _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
-    }
     _showTodoDrawer(
       _TodoPanelDrawerMode.todoDetails,
       todoId: todoId,
@@ -412,10 +258,6 @@ class _TodoPanelState extends State<TodoPanel> {
   }
 
   void _openTodoEdit(String todoId) {
-    if (_drawerMode == _TodoPanelDrawerMode.stickyBoardDetail ||
-        _todoDrawerReturnMode == _TodoPanelDrawerMode.stickyBoardDetail) {
-      _todoDrawerReturnMode = _TodoPanelDrawerMode.stickyBoardDetail;
-    }
     _showTodoDrawer(
       _TodoPanelDrawerMode.editTodo,
       todoId: todoId,
@@ -424,32 +266,8 @@ class _TodoPanelState extends State<TodoPanel> {
   }
 
   Future<void> _deleteArchivedTodoPermanently(String todoId) async {
-    final boardIds = widget.stickyBoardController.boards
-        .where(
-          (board) => widget.stickyBoardController
-              .todoIdsForBoard(board.id)
-              .contains(todoId),
-        )
-        .map((board) => board.id)
-        .toList(growable: false);
-    final removedFromBoards = await widget.stickyBoardController
-        .removeTodoFromAllBoards(todoId);
-    if (!removedFromBoards) {
-      return;
-    }
     final deleted = await widget.controller.deletePermanently(todoId);
-    if (!deleted) {
-      if (widget.controller.itemById(todoId) != null) {
-        for (final boardId in boardIds) {
-          await widget.stickyBoardController.addTodo(
-            boardId: boardId,
-            todoId: todoId,
-          );
-        }
-      }
-      return;
-    }
-    if (mounted && _selectedTodoId == todoId) {
+    if (deleted && mounted && _selectedTodoId == todoId) {
       _closeActiveDrawer();
     }
   }
@@ -459,52 +277,12 @@ class _TodoPanelState extends State<TodoPanel> {
     required String content,
     required Iterable<String> tagIds,
   }) async {
-    final boardId = _todoCreationBoardId;
-    var todoId = _pendingCreatedTodoId;
-    if (todoId == null) {
-      final todoIdsBeforeSave = widget.controller.items
-          .map((item) => item.id)
-          .toSet();
-      final item = await widget.controller.create(
-        title,
-        content: content,
-        tagIds: tagIds,
-      );
-      if (item == null) {
-        final partiallySavedItems = widget.controller.items
-            .where((item) => !todoIdsBeforeSave.contains(item.id))
-            .toList(growable: false);
-        if (partiallySavedItems.length == 1) {
-          _pendingCreatedTodoId = partiallySavedItems.single.id;
-        }
-        return false;
-      }
-      todoId = item.id;
-      _pendingCreatedTodoId = todoId;
-    } else {
-      final updated = await widget.controller.updateDetails(
-        id: todoId,
-        title: title,
-        content: content,
-        tagIds: tagIds,
-      );
-      if (!updated) {
-        return false;
-      }
-    }
-
-    if (boardId == null) {
-      _pendingCreatedTodoId = null;
-      return true;
-    }
-    final linked = await widget.stickyBoardController.addTodo(
-      boardId: boardId,
-      todoId: todoId,
+    final item = await widget.controller.create(
+      title,
+      content: content,
+      tagIds: tagIds,
     );
-    if (linked) {
-      _pendingCreatedTodoId = null;
-    }
-    return linked;
+    return item != null;
   }
 
   void _openTagAssignmentFromEditor() {
@@ -548,7 +326,6 @@ class _TodoPanelState extends State<TodoPanel> {
     _tagFilterCloseFocusNode.unfocus();
     _tagAssignmentCloseFocusNode.unfocus();
     _tagManagementCloseFocusNode.unfocus();
-    _stickyBoardCloseFocusNode.unfocus();
     _todoDrawerCloseFocusNode.unfocus();
     _noteDrawerCloseFocusNode.unfocus();
   }
@@ -602,10 +379,6 @@ class _TodoPanelState extends State<TodoPanel> {
         _TodoPanelDrawerMode.settings => _settingsCloseFocusNode,
         _TodoPanelDrawerMode.tagFilter => _tagFilterCloseFocusNode,
         _TodoPanelDrawerMode.tagAssignment => _tagAssignmentCloseFocusNode,
-        _TodoPanelDrawerMode.stickyBoardManagement ||
-        _TodoPanelDrawerMode.stickyBoardDetail ||
-        _TodoPanelDrawerMode.stickyBoardTodoPicker =>
-          _stickyBoardCloseFocusNode,
         _TodoPanelDrawerMode.none ||
         _TodoPanelDrawerMode.tagManagement ||
         _TodoPanelDrawerMode.createTodo ||
@@ -701,9 +474,6 @@ class _TodoPanelState extends State<TodoPanel> {
     final returnMode = switch (closedMode) {
       _TodoPanelDrawerMode.tagManagement => _tagManagementReturnMode,
       _TodoPanelDrawerMode.tagAssignment => _tagAssignmentReturnMode,
-      _TodoPanelDrawerMode.createTodo ||
-      _TodoPanelDrawerMode.todoDetails ||
-      _TodoPanelDrawerMode.editTodo => _todoDrawerReturnMode,
       _ => null,
     };
     _unfocusDrawerControls();
@@ -714,11 +484,6 @@ class _TodoPanelState extends State<TodoPanel> {
       }
       if (closedMode == _TodoPanelDrawerMode.tagAssignment) {
         _tagAssignmentReturnMode = null;
-      }
-      if (_isTodoDrawerMode(closedMode)) {
-        _todoDrawerReturnMode = null;
-        _todoCreationBoardId = null;
-        _pendingCreatedTodoId = null;
       }
       if (_isNoteDrawerMode(closedMode)) {
         _selectedNoteId = null;
@@ -791,10 +556,6 @@ class _TodoPanelState extends State<TodoPanel> {
       _TodoPanelDrawerMode.tagFilter ||
       _TodoPanelDrawerMode.tagAssignment ||
       _TodoPanelDrawerMode.tagManagement => _TodoPanelDrawerFamily.tags,
-      _TodoPanelDrawerMode.stickyBoardManagement ||
-      _TodoPanelDrawerMode.stickyBoardDetail ||
-      _TodoPanelDrawerMode.stickyBoardTodoPicker =>
-        _TodoPanelDrawerFamily.stickyBoards,
       _TodoPanelDrawerMode.createTodo ||
       _TodoPanelDrawerMode.todoDetails ||
       _TodoPanelDrawerMode.editTodo => _TodoPanelDrawerFamily.todoEditor,
@@ -819,16 +580,6 @@ class _TodoPanelState extends State<TodoPanel> {
         _drawerMode == _TodoPanelDrawerMode.tagManagement;
     final isTagDrawerOpen =
         isTagFilterOpen || isTagAssignmentOpen || isTagManagementOpen;
-    final isStickyBoardManagementOpen =
-        _drawerMode == _TodoPanelDrawerMode.stickyBoardManagement;
-    final isStickyBoardDetailOpen =
-        _drawerMode == _TodoPanelDrawerMode.stickyBoardDetail;
-    final isStickyBoardTodoPickerOpen =
-        _drawerMode == _TodoPanelDrawerMode.stickyBoardTodoPicker;
-    final isStickyBoardDrawerOpen =
-        isStickyBoardManagementOpen ||
-        isStickyBoardDetailOpen ||
-        isStickyBoardTodoPickerOpen;
     final isTodoDrawerOpen =
         _drawerMode == _TodoPanelDrawerMode.createTodo ||
         _drawerMode == _TodoPanelDrawerMode.todoDetails ||
@@ -841,9 +592,6 @@ class _TodoPanelState extends State<TodoPanel> {
     );
     final hasTagDrawer = _mountedDrawerFamilies.contains(
       _TodoPanelDrawerFamily.tags,
-    );
-    final hasStickyBoardDrawer = _mountedDrawerFamilies.contains(
-      _TodoPanelDrawerFamily.stickyBoards,
     );
     final hasTodoDrawer = _mountedDrawerFamilies.contains(
       _TodoPanelDrawerFamily.todoEditor,
@@ -866,11 +614,6 @@ class _TodoPanelState extends State<TodoPanel> {
             tagAssignmentOwner == _TodoPanelDrawerMode.editNote);
     final isTodoDrawerVisible = isTodoDrawerOpen || isTodoTagContext;
     final isNoteDrawerVisible = isNoteDrawerOpen || isNoteTagContext;
-    final isStickyBoardContextVisible =
-        (_todoDrawerReturnMode == _TodoPanelDrawerMode.stickyBoardDetail &&
-        (isTodoDrawerOpen || isTodoTagContext));
-    final isStickyBoardDrawerVisible =
-        isStickyBoardDrawerOpen || isStickyBoardContextVisible;
     final visibleTagDrawerMode = isTagDrawerOpen
         ? _drawerMode
         : _lastTagDrawerMode;
@@ -934,10 +677,11 @@ class _TodoPanelState extends State<TodoPanel> {
           ),
           _NewTodoIntent: CallbackAction<_NewTodoIntent>(
             onInvoke: (_) {
-              if (_contentKind == _PanelContentKind.notes) {
-                _openNoteCreate();
-              } else {
-                _openTodoCreate();
+              switch (_contentKind) {
+                case _PanelContentKind.notes:
+                  _openNoteCreate();
+                case _PanelContentKind.todos:
+                  _openTodoCreate();
               }
               return null;
             },
@@ -966,7 +710,7 @@ class _TodoPanelState extends State<TodoPanel> {
                     ),
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.12)
+                          ? Colors.white.withValues(alpha: 0.09)
                           : Colors.white.withValues(alpha: 0.86),
                     ),
                   ),
@@ -980,12 +724,11 @@ class _TodoPanelState extends State<TodoPanel> {
                         ExcludeFocus(
                           excluding: isDrawerOpen,
                           child: AnimatedBuilder(
-                            animation: widget.noteController == null
-                                ? widget.controller
-                                : Listenable.merge(<Listenable>[
-                                    widget.controller,
-                                    widget.noteController!,
-                                  ]),
+                            animation: Listenable.merge(<Listenable>[
+                              widget.controller,
+                              if (widget.noteController != null)
+                                widget.noteController!,
+                            ]),
                             builder: (context, _) {
                               final selectedTags = widget.controller.tags
                                   .where(
@@ -1002,8 +745,7 @@ class _TodoPanelState extends State<TodoPanel> {
                                     activeCount: widget.controller.activeCount,
                                     archivedCount:
                                         widget.controller.archivedCount,
-                                    notesSelected:
-                                        _contentKind == _PanelContentKind.notes,
+                                    contentKind: _contentKind,
                                     noteArchived: _noteArchived,
                                     noteActiveCount:
                                         widget.noteController?.activeCount ?? 0,
@@ -1012,23 +754,22 @@ class _TodoPanelState extends State<TodoPanel> {
                                         0,
                                     onToggleArchive: _toggleArchiveScope,
                                     onToggleNoteArchive: _toggleNoteArchive,
-                                    onOpenStickyBoards: _openStickyBoards,
                                     onOpenSettings: _openSettings,
                                     onCollapse: widget.onCollapse,
                                   ),
-                                  if (widget.noteController != null)
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        20,
-                                        0,
-                                        20,
-                                        12,
-                                      ),
-                                      child: _ContentSwitcher(
-                                        selected: _contentKind,
-                                        onSelected: _selectContentKind,
-                                      ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      20,
+                                      0,
+                                      20,
+                                      12,
                                     ),
+                                    child: _ContentSwitcher(
+                                      selected: _contentKind,
+                                      showNotes: widget.noteController != null,
+                                      onSelected: _selectContentKind,
+                                    ),
+                                  ),
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(
                                       20,
@@ -1051,29 +792,29 @@ class _TodoPanelState extends State<TodoPanel> {
                                                   );
                                                 },
                                                 decoration: InputDecoration(
-                                                  hintText:
-                                                      _contentKind ==
-                                                          _PanelContentKind
-                                                              .notes
-                                                      ? (_noteArchived
-                                                            ? context
-                                                                  .l10n
-                                                                  .searchNoteArchiveHint
-                                                            : context
-                                                                  .l10n
-                                                                  .searchNotesHint)
-                                                      : (_scope ==
-                                                                TodoListScope
-                                                                    .active
-                                                            ? context
-                                                                  .l10n
-                                                                  .searchTodosHint
-                                                            : context
-                                                                  .l10n
-                                                                  .searchArchiveHint),
+                                                  hintText: switch (_contentKind) {
+                                                    _PanelContentKind.notes =>
+                                                      _noteArchived
+                                                          ? context
+                                                                .l10n
+                                                                .searchNoteArchiveHint
+                                                          : context
+                                                                .l10n
+                                                                .searchNotesHint,
+                                                    _PanelContentKind.todos =>
+                                                      _scope ==
+                                                              TodoListScope
+                                                                  .active
+                                                          ? context
+                                                                .l10n
+                                                                .searchTodosHint
+                                                          : context
+                                                                .l10n
+                                                                .searchArchiveHint,
+                                                  },
                                                   prefixIcon: const Icon(
                                                     Icons.search_rounded,
-                                                    size: 19,
+                                                    size: 17,
                                                   ),
                                                   suffixIcon: _query.isEmpty
                                                       ? null
@@ -1099,6 +840,18 @@ class _TodoPanelState extends State<TodoPanel> {
                                               ),
                                             ),
                                             const SizedBox(width: 9),
+                                            if (_contentKind ==
+                                                    _PanelContentKind.todos &&
+                                                _scope ==
+                                                    TodoListScope.active) ...[
+                                              _DoingFilterButton(
+                                                selected:
+                                                    _progressFilter ==
+                                                    TodoProgressFilter.doing,
+                                                onPressed: _toggleDoingFilter,
+                                              ),
+                                              const SizedBox(width: 9),
+                                            ],
                                             TagFilterButton(
                                               selectedCount:
                                                   effectiveSelectedTagIds
@@ -1117,40 +870,76 @@ class _TodoPanelState extends State<TodoPanel> {
                                               const SizedBox(width: 9),
                                               SizedBox(
                                                 height: 42,
-                                                child: FilledButton.tonalIcon(
+                                                width: 42,
+                                                child: IconButton(
                                                   key: Key(
-                                                    _contentKind ==
-                                                            _PanelContentKind
-                                                                .notes
-                                                        ? 'add-note-button'
-                                                        : 'add-todo-button',
+                                                    switch (_contentKind) {
+                                                      _PanelContentKind.notes =>
+                                                        'add-note-button',
+                                                      _PanelContentKind.todos =>
+                                                        'add-todo-button',
+                                                    },
                                                   ),
                                                   onPressed:
-                                                      _contentKind ==
-                                                          _PanelContentKind
-                                                              .notes
-                                                      ? _openNoteCreate
-                                                      : _openTodoCreate,
-                                                  style: FilledButton.styleFrom(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                        ),
+                                                      switch (_contentKind) {
+                                                        _PanelContentKind
+                                                            .notes =>
+                                                          _openNoteCreate,
+                                                        _PanelContentKind
+                                                            .todos =>
+                                                          _openTodoCreate,
+                                                      },
+                                                  tooltip:
+                                                      switch (_contentKind) {
+                                                        _PanelContentKind
+                                                            .notes =>
+                                                          context
+                                                              .l10n
+                                                              .newNoteAction,
+                                                        _PanelContentKind
+                                                            .todos =>
+                                                          context
+                                                              .l10n
+                                                              .newTodoAction,
+                                                      },
+                                                  style: IconButton.styleFrom(
+                                                    foregroundColor: Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
+                                                    backgroundColor:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .primary
+                                                            .withValues(
+                                                              alpha: isDark
+                                                                  ? 0.025
+                                                                  : 0.04,
+                                                            ),
+                                                    side: BorderSide(
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .primary
+                                                          .withValues(
+                                                            alpha: isDark
+                                                                ? 0.42
+                                                                : 0.32,
+                                                          ),
+                                                    ),
+                                                    minimumSize:
+                                                        const Size.square(42),
+                                                    maximumSize:
+                                                        const Size.square(42),
+                                                    padding: EdgeInsets.zero,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                    ),
                                                   ),
                                                   icon: const Icon(
                                                     Icons.add_rounded,
-                                                    size: 18,
-                                                  ),
-                                                  label: Text(
-                                                    _contentKind ==
-                                                            _PanelContentKind
-                                                                .notes
-                                                        ? context
-                                                              .l10n
-                                                              .newNoteAction
-                                                        : context
-                                                              .l10n
-                                                              .newTodoAction,
+                                                    size: 17,
                                                   ),
                                                 ),
                                               ),
@@ -1179,24 +968,6 @@ class _TodoPanelState extends State<TodoPanel> {
                                       onDismiss:
                                           widget.noteController!.dismissError,
                                     ),
-                                  if (_contentKind == _PanelContentKind.todos)
-                                    AnimatedBuilder(
-                                      animation: widget.stickyBoardController,
-                                      builder: (context, _) {
-                                        final error =
-                                            widget.stickyBoardController.error;
-                                        if (error == null) {
-                                          return const SizedBox.shrink();
-                                        }
-                                        return _ErrorBanner(
-                                          message: context.l10n
-                                              .messageForStorageFailure(error),
-                                          onDismiss: widget
-                                              .stickyBoardController
-                                              .dismissError,
-                                        );
-                                      },
-                                    ),
                                   Divider(
                                     height: 1,
                                     thickness: 1,
@@ -1205,32 +976,32 @@ class _TodoPanelState extends State<TodoPanel> {
                                         : Colors.black.withValues(alpha: 0.055),
                                   ),
                                   Expanded(
-                                    child:
-                                        _contentKind == _PanelContentKind.notes
-                                        ? NotePanelContent(
-                                            controller: widget.noteController!,
-                                            archived: _noteArchived,
-                                            query: _query,
-                                            availableTags:
-                                                widget.controller.tags,
-                                            selectedTagIds:
-                                                effectiveSelectedTagIds,
-                                            onOpen: _openNote,
-                                          )
-                                        : _TodoList(
-                                            controller: widget.controller,
-                                            scope: _scope,
-                                            query: _query,
-                                            selectedTagIds:
-                                                effectiveSelectedTagIds,
-                                            onClearTagFilters: _clearTagFilters,
-                                            onOpenTagManagement:
-                                                _openTagManagement,
-                                            onOpenDetails: _openTodoDetails,
-                                            onEditTodo: _openTodoEdit,
-                                            onDeleteTodo:
-                                                _deleteArchivedTodoPermanently,
-                                          ),
+                                    child: switch (_contentKind) {
+                                      _PanelContentKind.notes =>
+                                        NotePanelContent(
+                                          controller: widget.noteController!,
+                                          archived: _noteArchived,
+                                          query: _query,
+                                          availableTags: widget.controller.tags,
+                                          selectedTagIds:
+                                              effectiveSelectedTagIds,
+                                          onOpen: _openNote,
+                                        ),
+                                      _PanelContentKind.todos => _TodoList(
+                                        controller: widget.controller,
+                                        scope: _scope,
+                                        query: _query,
+                                        progressFilter: _progressFilter,
+                                        selectedTagIds: effectiveSelectedTagIds,
+                                        onClearDoingFilter: _toggleDoingFilter,
+                                        onClearTagFilters: _clearTagFilters,
+                                        onOpenTagManagement: _openTagManagement,
+                                        onOpenDetails: _openTodoDetails,
+                                        onEditTodo: _openTodoEdit,
+                                        onDeleteTodo:
+                                            _deleteArchivedTodoPermanently,
+                                      ),
+                                    },
                                   ),
                                 ],
                               );
@@ -1299,104 +1070,12 @@ class _TodoPanelState extends State<TodoPanel> {
                               ),
                             ),
                           ),
-                        if (hasStickyBoardDrawer)
-                          Positioned(
-                            top: 0,
-                            left: tagDrawerOnLeft ? 0 : null,
-                            right: tagDrawerOnLeft ? null : 0,
-                            bottom: 0,
-                            width: _stickyBoardDrawerWidth,
-                            child: IgnorePointer(
-                              key: const Key('sticky-board-drawer-pointer'),
-                              ignoring: !isStickyBoardDrawerOpen,
-                              child: ExcludeSemantics(
-                                excluding: !isStickyBoardDrawerOpen,
-                                child: AnimatedSlide(
-                                  key: const Key('sticky-board-drawer-slide'),
-                                  duration: reduceMotion
-                                      ? Duration.zero
-                                      : _drawerSlideDuration,
-                                  curve: Curves.easeOutCubic,
-                                  offset: isStickyBoardDrawerVisible
-                                      ? Offset.zero
-                                      : Offset(tagDrawerOnLeft ? -1 : 1, 0),
-                                  child: FocusTraversalGroup(
-                                    child: AnimatedBuilder(
-                                      animation: Listenable.merge(<Listenable>[
-                                        widget.stickyBoardController,
-                                        widget.controller,
-                                      ]),
-                                      builder: (context, _) {
-                                        final board =
-                                            _selectedStickyBoardId == null
-                                            ? null
-                                            : widget.stickyBoardController
-                                                  .boardById(
-                                                    _selectedStickyBoardId!,
-                                                  );
-                                        if (isStickyBoardTodoPickerOpen &&
-                                            board != null) {
-                                          return StickyBoardTodoPickerDrawer(
-                                            board: board,
-                                            todoController: widget.controller,
-                                            boardController:
-                                                widget.stickyBoardController,
-                                            borderOnLeft: !tagDrawerOnLeft,
-                                            onBack: _backToStickyBoardDetail,
-                                            onClose: _closeActiveDrawer,
-                                            closeFocusNode:
-                                                _stickyBoardCloseFocusNode,
-                                          );
-                                        }
-                                        if ((isStickyBoardDetailOpen ||
-                                                isStickyBoardContextVisible) &&
-                                            board != null) {
-                                          return StickyBoardDetailDrawer(
-                                            board: board,
-                                            todoController: widget.controller,
-                                            boardController:
-                                                widget.stickyBoardController,
-                                            borderOnLeft: !tagDrawerOnLeft,
-                                            onBack:
-                                                _backToStickyBoardManagement,
-                                            onClose: _closeActiveDrawer,
-                                            onTogglePin: () =>
-                                                _toggleStickyBoardPin(board.id),
-                                            onAddExisting:
-                                                _openStickyBoardTodoPicker,
-                                            onCreateTodo: () => _openTodoCreate(
-                                              stickyBoardId: board.id,
-                                            ),
-                                            closeFocusNode:
-                                                _stickyBoardCloseFocusNode,
-                                          );
-                                        }
-                                        return StickyBoardManagementDrawer(
-                                          controller:
-                                              widget.stickyBoardController,
-                                          todoController: widget.controller,
-                                          isOpen: isStickyBoardManagementOpen,
-                                          borderOnLeft: !tagDrawerOnLeft,
-                                          onClose: _closeActiveDrawer,
-                                          onOpenBoard: _openStickyBoard,
-                                          onTogglePin: _toggleStickyBoardPin,
-                                          onDeleteBoard: _deleteStickyBoard,
-                                          closeFocusNode:
-                                              _stickyBoardCloseFocusNode,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
                         if (hasTodoDrawer)
                           Positioned(
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            height: _todoDrawerHeight,
+                            height: _editorDrawerHeight,
                             child: IgnorePointer(
                               key: const Key('todo-drawer-pointer'),
                               ignoring: !isTodoDrawerOpen,
@@ -1483,7 +1162,7 @@ class _TodoPanelState extends State<TodoPanel> {
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            height: _noteDrawerHeight,
+                            height: _editorDrawerHeight,
                             child: IgnorePointer(
                               key: const Key('note-drawer-pointer'),
                               ignoring: !isNoteDrawerOpen,
@@ -1677,23 +1356,20 @@ class _TodoPanelState extends State<TodoPanel> {
 }
 
 class _ContentSwitcher extends StatelessWidget {
-  const _ContentSwitcher({required this.selected, required this.onSelected});
+  const _ContentSwitcher({
+    required this.selected,
+    required this.showNotes,
+    required this.onSelected,
+  });
 
   final _PanelContentKind selected;
+  final bool showNotes;
   final ValueChanged<_PanelContentKind> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    return Container(
+    return SizedBox(
       height: 40,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: onSurface.withValues(alpha: 0.035),
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: onSurface.withValues(alpha: 0.07)),
-      ),
       child: Row(
         children: <Widget>[
           _ContentSwitcherButton(
@@ -1702,20 +1378,74 @@ class _ContentSwitcher extends StatelessWidget {
             selected: selected == _PanelContentKind.todos,
             onPressed: () => onSelected(_PanelContentKind.todos),
           ),
-          const SizedBox(width: 3),
-          _ContentSwitcherButton(
-            key: const Key('note-tab'),
-            label: context.l10n.notesTabLabel,
-            selected: selected == _PanelContentKind.notes,
-            onPressed: () => onSelected(_PanelContentKind.notes),
-          ),
+          if (showNotes) ...[
+            const SizedBox(width: 3),
+            _ContentSwitcherButton(
+              key: const Key('note-tab'),
+              label: context.l10n.notesTabLabel,
+              selected: selected == _PanelContentKind.notes,
+              onPressed: () => onSelected(_PanelContentKind.notes),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _ContentSwitcherButton extends StatelessWidget {
+class _DoingFilterButton extends StatelessWidget {
+  const _DoingFilterButton({required this.selected, required this.onPressed});
+
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.colorScheme.primary;
+    return Semantics(
+      selected: selected,
+      child: SizedBox.square(
+        dimension: 42,
+        child: IconButton(
+          key: const Key('doing-filter-button'),
+          tooltip: selected
+              ? context.l10n.clearDoingFilterTooltip
+              : context.l10n.filterDoingTooltip,
+          isSelected: selected,
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            minimumSize: const Size.square(42),
+            maximumSize: const Size.square(42),
+            padding: EdgeInsets.zero,
+            foregroundColor: selected
+                ? primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.62),
+            backgroundColor: selected
+                ? primary.withValues(alpha: isDark ? 0.13 : 0.10)
+                : isDark
+                ? theme.inputDecorationTheme.fillColor
+                : const Color(0xFFF0F4F2),
+            side: BorderSide(
+              color: selected
+                  ? primary.withValues(alpha: isDark ? 0.46 : 0.36)
+                  : isDark
+                  ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.045),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          icon: const Icon(Icons.timelapse_rounded, size: 17),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContentSwitcherButton extends StatefulWidget {
   const _ContentSwitcherButton({
     required this.label,
     required this.selected,
@@ -1728,29 +1458,60 @@ class _ContentSwitcherButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
+  State<_ContentSwitcherButton> createState() => _ContentSwitcherButtonState();
+}
+
+class _ContentSwitcherButtonState extends State<_ContentSwitcherButton> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final hoverColor = widget.selected
+        ? theme.colorScheme.primary.withValues(alpha: 0.055)
+        : theme.colorScheme.onSurface.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.055 : 0.035,
+          );
     return Expanded(
       child: Semantics(
         button: true,
-        selected: selected,
+        selected: widget.selected,
         child: Material(
-          color: selected
-              ? theme.colorScheme.primary.withValues(alpha: 0.13)
-              : Colors.transparent,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(8),
-            hoverColor: theme.colorScheme.primary.withValues(alpha: 0.06),
-            child: Center(
-              child: Text(
-                label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: selected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.62),
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _isHovered = true),
+            onExit: (_) => setState(() => _isHovered = false),
+            child: AnimatedContainer(
+              key: const Key('content-tab-hover-surface'),
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              decoration: BoxDecoration(
+                color: _isHovered ? hoverColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: widget.onPressed,
+                borderRadius: BorderRadius.circular(8),
+                hoverColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                splashFactory: NoSplash.splashFactory,
+                child: Center(
+                  child: Text(
+                    widget.label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: widget.selected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.62),
+                      fontWeight: widget.selected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1766,13 +1527,12 @@ class _PanelHeader extends StatelessWidget {
     required this.scope,
     required this.activeCount,
     required this.archivedCount,
-    required this.notesSelected,
+    required this.contentKind,
     required this.noteArchived,
     required this.noteActiveCount,
     required this.noteArchivedCount,
     required this.onToggleArchive,
     required this.onToggleNoteArchive,
-    required this.onOpenStickyBoards,
     required this.onOpenSettings,
     required this.onCollapse,
   });
@@ -1780,13 +1540,12 @@ class _PanelHeader extends StatelessWidget {
   final TodoListScope scope;
   final int activeCount;
   final int archivedCount;
-  final bool notesSelected;
+  final _PanelContentKind contentKind;
   final bool noteArchived;
   final int noteActiveCount;
   final int noteArchivedCount;
   final VoidCallback onToggleArchive;
   final VoidCallback onToggleNoteArchive;
-  final VoidCallback onOpenStickyBoards;
   final VoidCallback onOpenSettings;
   final VoidCallback onCollapse;
 
@@ -1794,18 +1553,22 @@ class _PanelHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     final localizations = context.l10n;
-    final archiveSelected = notesSelected
-        ? noteArchived
-        : scope == TodoListScope.archived;
-    final statusText = notesSelected
-        ? noteArchived
-              ? '${localizations.archiveScopeLabel} · $noteArchivedCount'
-              : localizations.noteCountLabel(noteActiveCount)
-        : scope == TodoListScope.archived
-        ? '${localizations.archiveScopeLabel} · $archivedCount'
-        : activeCount == 0
-        ? localizations.allClearToday
-        : localizations.activeTodoCount(activeCount);
+    final archiveSelected = switch (contentKind) {
+      _PanelContentKind.notes => noteArchived,
+      _PanelContentKind.todos => scope == TodoListScope.archived,
+    };
+    final statusText = switch (contentKind) {
+      _PanelContentKind.notes =>
+        noteArchived
+            ? '${localizations.archiveScopeLabel} · $noteArchivedCount'
+            : localizations.noteCountLabel(noteActiveCount),
+      _PanelContentKind.todos =>
+        scope == TodoListScope.archived
+            ? '${localizations.archiveScopeLabel} · $archivedCount'
+            : activeCount == 0
+            ? localizations.allClearToday
+            : localizations.activeTodoCount(activeCount),
+    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 18, 12, 16),
       child: Row(
@@ -1816,8 +1579,9 @@ class _PanelHeader extends StatelessWidget {
             child: Text(
               statusText,
               style: TextStyle(
-                color: onSurface.withValues(alpha: 0.53),
-                fontSize: 12,
+                color: onSurface.withValues(alpha: 0.62),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -1828,7 +1592,9 @@ class _PanelHeader extends StatelessWidget {
               tooltip: archiveSelected
                   ? localizations.activeScopeLabel
                   : localizations.archiveScopeLabel,
-              onPressed: notesSelected ? onToggleNoteArchive : onToggleArchive,
+              onPressed: contentKind == _PanelContentKind.notes
+                  ? onToggleNoteArchive
+                  : onToggleArchive,
               color: archiveSelected
                   ? Theme.of(context).colorScheme.primary
                   : null,
@@ -1836,28 +1602,21 @@ class _PanelHeader extends StatelessWidget {
                 archiveSelected
                     ? Icons.archive_rounded
                     : Icons.archive_outlined,
-                size: 19,
+                size: 17,
               ),
             ),
           ),
-          if (!notesSelected)
-            IconButton(
-              key: const Key('sticky-boards-button'),
-              tooltip: localizations.stickyBoardsTooltip,
-              onPressed: onOpenStickyBoards,
-              icon: const Icon(Icons.sticky_note_2_outlined, size: 19),
-            ),
           IconButton(
             key: const Key('settings-button'),
             tooltip: localizations.settingsTooltip,
             onPressed: onOpenSettings,
-            icon: const Icon(Icons.settings_outlined, size: 19),
+            icon: const Icon(Icons.settings_outlined, size: 17),
           ),
           IconButton(
             key: const Key('collapse-button'),
             tooltip: localizations.collapseTooltip,
             onPressed: onCollapse,
-            icon: const Icon(Icons.unfold_less_rounded, size: 20),
+            icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 18),
           ),
         ],
       ),
@@ -1922,7 +1681,9 @@ class _TodoList extends StatefulWidget {
     required this.controller,
     required this.scope,
     required this.query,
+    required this.progressFilter,
     required this.selectedTagIds,
+    required this.onClearDoingFilter,
     required this.onClearTagFilters,
     required this.onOpenTagManagement,
     required this.onOpenDetails,
@@ -1933,7 +1694,9 @@ class _TodoList extends StatefulWidget {
   final TodoViewModel controller;
   final TodoListScope scope;
   final String query;
+  final TodoProgressFilter progressFilter;
   final Set<String> selectedTagIds;
+  final VoidCallback onClearDoingFilter;
   final VoidCallback onClearTagFilters;
   final VoidCallback onOpenTagManagement;
   final ValueChanged<String> onOpenDetails;
@@ -1964,9 +1727,17 @@ class _TodoListState extends State<_TodoList> {
 
     final entries = _buildEntries(context);
     if (entries.isEmpty) {
+      final hasSearchOrTagFilters =
+          widget.query.isNotEmpty || widget.selectedTagIds.isNotEmpty;
       return _EmptyList(
         scope: widget.scope,
-        hasQuery: widget.query.isNotEmpty || widget.selectedTagIds.isNotEmpty,
+        hasQuery: hasSearchOrTagFilters,
+        doingOnly:
+            widget.progressFilter == TodoProgressFilter.doing &&
+            widget.scope == TodoListScope.active,
+        onClearDoingFilter: hasSearchOrTagFilters
+            ? null
+            : widget.onClearDoingFilter,
         onClearTagFilters: widget.selectedTagIds.isEmpty
             ? null
             : widget.onClearTagFilters,
@@ -1990,6 +1761,7 @@ class _TodoListState extends State<_TodoList> {
       archived: archived,
       query: widget.query,
       selectedTagIds: widget.selectedTagIds,
+      progressFilter: archived ? TodoProgressFilter.all : widget.progressFilter,
     );
     final locale = Localizations.localeOf(context);
     final now = DateTime.now();
@@ -2164,7 +1936,7 @@ class _DateDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = Theme.of(
       context,
-    ).colorScheme.onSurface.withValues(alpha: 0.48);
+    ).colorScheme.onSurface.withValues(alpha: 0.58);
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 13, 8, 7),
       child: Row(
@@ -2177,10 +1949,6 @@ class _DateDivider extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Divider(height: 1, color: color.withValues(alpha: 0.2)),
-          ),
         ],
       ),
     );
@@ -2191,17 +1959,22 @@ class _EmptyList extends StatelessWidget {
   const _EmptyList({
     required this.scope,
     required this.hasQuery,
+    required this.doingOnly,
+    this.onClearDoingFilter,
     this.onClearTagFilters,
   });
 
   final TodoListScope scope;
   final bool hasQuery;
+  final bool doingOnly;
+  final VoidCallback? onClearDoingFilter;
   final VoidCallback? onClearTagFilters;
 
   @override
   Widget build(BuildContext context) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     final isArchive = scope == TodoListScope.archived;
+    final showDoingEmptyState = doingOnly && !hasQuery;
     final localizations = context.l10n;
     return Center(
       child: Padding(
@@ -2219,7 +1992,9 @@ class _EmptyList extends StatelessWidget {
                 borderRadius: BorderRadius.circular(19),
               ),
               child: Icon(
-                hasQuery
+                showDoingEmptyState
+                    ? Icons.timelapse_rounded
+                    : hasQuery
                     ? Icons.search_off_rounded
                     : (isArchive
                           ? Icons.inventory_2_outlined
@@ -2230,7 +2005,9 @@ class _EmptyList extends StatelessWidget {
             ),
             const SizedBox(height: 15),
             Text(
-              hasQuery
+              showDoingEmptyState
+                  ? localizations.emptyDoingTodosTitle
+                  : hasQuery
                   ? localizations.noSearchResultsTitle
                   : (isArchive
                         ? localizations.emptyArchiveTitle
@@ -2244,7 +2021,9 @@ class _EmptyList extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text(
-              hasQuery
+              showDoingEmptyState
+                  ? localizations.emptyDoingTodosMessage
+                  : hasQuery
                   ? localizations.noSearchResultsMessage
                   : (isArchive
                         ? localizations.emptyArchiveMessage
@@ -2270,6 +2049,23 @@ class _EmptyList extends StatelessWidget {
                   ),
                 ),
                 child: Text(localizations.clearTagFilterTooltip),
+              ),
+            ],
+            if (onClearDoingFilter != null && showDoingEmptyState) ...[
+              const SizedBox(height: 10),
+              TextButton(
+                key: const Key('clear-doing-filter'),
+                onPressed: onClearDoingFilter,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: Text(localizations.clearDoingFilterTooltip),
               ),
             ],
           ],

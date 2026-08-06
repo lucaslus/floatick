@@ -10,7 +10,7 @@ const { locale } = Astro.props;
 const demoCopy = {
   en: {
     ariaLabel:
-      'Interactive three-dimensional Floatick workspace with Todos and Notes tabs, a Sticky Board, an editor, and the floating icon',
+      'Interactive three-dimensional Floatick workspace with Todos and Notes tabs, an editor, and the floating icon',
     remaining: '3 tasks remaining',
     todosTab: 'Todos',
     notesTab: 'Notes',
@@ -22,8 +22,6 @@ const demoCopy = {
       { title: 'Review the launch checklist', tag: 'Work', time: '11:30' },
       { title: 'Write down one good idea', tag: 'Ideas', time: '16:20' },
     ],
-    boardTitle: 'This week',
-    boardCount: '3 todos',
     drawerTitle: 'New todo',
     titleValue: 'Prepare tomorrow’s top task',
     contentValue: 'Add a short note so the next step is clear.',
@@ -32,7 +30,7 @@ const demoCopy = {
   },
   zh: {
     ariaLabel:
-      'Floatick 的交互式三维工作台，包含 Todo 与 Notes 标签页、便利板、编辑器和圆形悬浮图标',
+      'Floatick 的交互式三维工作台，包含 Todo 与 Notes 标签页、编辑器和圆形悬浮图标',
     remaining: '还有 3 项待完成',
     todosTab: '待办',
     notesTab: '笔记',
@@ -44,8 +42,6 @@ const demoCopy = {
       { title: '检查今天的任务清单', tag: '工作', time: '11:30' },
       { title: '记录一个值得尝试的想法', tag: '灵感', time: '16:20' },
     ],
-    boardTitle: '本周计划',
-    boardCount: '3 项待办',
     drawerTitle: '新建待办',
     titleValue: '确定明天最重要的一件事',
     contentValue: '补充一句简短说明，让下一步足够清晰。',
@@ -75,8 +71,6 @@ const copy = demoCopy[locale];
   data-task-three-title={copy.tasks[2].title}
   data-task-three-tag={copy.tasks[2].tag}
   data-task-three-time={copy.tasks[2].time}
-  data-board-title={copy.boardTitle}
-  data-board-count={copy.boardCount}
   data-drawer-title={copy.drawerTitle}
   data-title-value={copy.titleValue}
   data-content-value={copy.contentValue}

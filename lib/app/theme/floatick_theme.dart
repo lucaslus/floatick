@@ -8,8 +8,9 @@ abstract final class FloatickColors {
   static const orange = Color(0xFFF17842);
   static const ink = Color(0xFF172126);
   static const mutedInk = Color(0xFF657178);
-  static const darkSurface = Color(0xFF182125);
-  static const darkSurfaceElevated = Color(0xFF222D31);
+  static const darkSurface = Color(0xFF151B1E);
+  static const darkSurfaceElevated = Color(0xFF1D2529);
+  static const darkOnSurface = Color(0xFFEEF2F1);
   static const lightSurface = Color(0xFFF9FBFA);
 }
 
@@ -25,7 +26,7 @@ ThemeData buildFloatickTheme(Brightness brightness) {
         surface: isDark
             ? FloatickColors.darkSurface
             : FloatickColors.lightSurface,
-        onSurface: isDark ? const Color(0xFFF1F5F3) : FloatickColors.ink,
+        onSurface: isDark ? FloatickColors.darkOnSurface : FloatickColors.ink,
       );
 
   return ThemeData(
@@ -91,13 +92,13 @@ ThemeData buildFloatickTheme(Brightness brightness) {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: isDark
-          ? Colors.white.withValues(alpha: 0.055)
+          ? FloatickColors.darkSurfaceElevated
           : const Color(0xFFF0F4F2),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
       hintStyle: TextStyle(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.44)
+            ? colorScheme.onSurface.withValues(alpha: 0.58)
             : FloatickColors.mutedInk,
         fontSize: 13,
       ),
@@ -109,7 +110,7 @@ ThemeData buildFloatickTheme(Brightness brightness) {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.06)
+              ? colorScheme.onSurface.withValues(alpha: 0.08)
               : Colors.black.withValues(alpha: 0.045),
         ),
       ),

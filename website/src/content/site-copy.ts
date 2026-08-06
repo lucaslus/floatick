@@ -121,7 +121,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       lang: 'en',
       title: 'Floatick — Floating Todos & Notes for macOS',
       description:
-        'A free, open-source floating todo and notes app for macOS with local storage, Markdown, shared tags, Sticky Boards, and fast desktop capture.',
+        'A free, open-source floating todo and notes app for macOS with local storage, Markdown, shared tags, and fast desktop capture.',
       canonicalPath: '/',
       alternatePath: '/zh/',
     },
@@ -175,18 +175,12 @@ export const siteCopy: Record<Locale, SiteCopy> = {
         },
         {
           number: '04',
-          title: 'Pinnable Sticky Boards',
-          body:
-            'Group existing todos on a colored board and pin it to the desktop. A board never owns or deletes its todos.',
-        },
-        {
-          number: '05',
           title: 'Pin, archive, and restore',
           body:
             'Keep useful notes pinned, move finished items into the archive, and restore them whenever they matter again.',
         },
         {
-          number: '06',
+          number: '05',
           title: 'Useful macOS controls',
           body:
             'Start at login, stay above other apps, choose a theme, and control whether outside clicks collapse the panel.',
@@ -207,9 +201,9 @@ export const siteCopy: Record<Locale, SiteCopy> = {
         },
         {
           label: 'Organize',
-          title: 'Use shared tags and Sticky Boards.',
+          title: 'Organize with shared tags.',
           body:
-            'Connect related todos and notes with tags, then group active tasks on desktop boards.',
+            'Connect related todos and notes with reusable color-coded tags, then filter by several tags at once.',
         },
         {
           label: 'Share',
@@ -278,7 +272,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       eyebrow: 'FAQ',
       title: 'Before you install.',
       body:
-        'Quick answers about notes, storage, compatibility, Sticky Boards, and Markdown copy.',
+        'Quick answers about notes, storage, compatibility, and Markdown copy.',
       items: [
         {
           question: 'What is Floatick?',
@@ -294,11 +288,6 @@ export const siteCopy: Record<Locale, SiteCopy> = {
           question: 'Can I use Floatick for quick notes?',
           answer:
             'Yes. Notes have their own searchable workspace with pinning, archiving, shared tags, automatic saving, and Markdown preview.',
-        },
-        {
-          question: 'What is a Sticky Board?',
-          answer:
-            'A Sticky Board is a colored desktop group for existing todos. You can pin it to the desktop, and deleting the board never deletes its todos.',
         },
         {
           question: 'Does Floatick support Apple silicon and Intel Macs?',
@@ -333,7 +322,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       lang: 'zh-CN',
       title: 'Floatick — 免费开源的 macOS 悬浮 Todo 与笔记',
       description:
-        '免费开源的 macOS 桌面悬浮 Todo 与轻量笔记，支持本地存储、Markdown、共享标签、便利板和快速记录。',
+        '免费开源的 macOS 桌面悬浮 Todo 与轻量笔记，支持本地存储、Markdown、共享标签和快速记录。',
       canonicalPath: '/zh/',
       alternatePath: '/',
     },
@@ -387,18 +376,12 @@ export const siteCopy: Record<Locale, SiteCopy> = {
         },
         {
           number: '04',
-          title: '可固定的便利板',
-          body:
-            '把已有 Todo 放进彩色便利板并固定在桌面。删除便利板不会删除 Todo。',
-        },
-        {
-          number: '05',
           title: '置顶、归档与恢复',
           body:
             '置顶常用笔记，把完成的内容移入归档，并在需要时随时恢复。',
         },
         {
-          number: '06',
+          number: '05',
           title: '实用的 macOS 设置',
           body:
             '支持登录时启动、置顶、主题切换，以及点击窗口外时是否自动收起。',
@@ -419,9 +402,9 @@ export const siteCopy: Record<Locale, SiteCopy> = {
         },
         {
           label: '组织',
-          title: '使用共享标签和便利板。',
+          title: '使用共享标签整理内容。',
           body:
-            '用标签连接相关 Todo 与笔记，再把活跃任务放进桌面便利板。',
+            '用可复用的彩色标签连接相关 Todo 与笔记，并按多个标签组合筛选。',
         },
         {
           label: '复制',
@@ -489,7 +472,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       eyebrow: '常见问题',
       title: '安装前，你可能想知道这些。',
       body:
-        '快速了解笔记、数据存储、系统兼容性、便利板和 Markdown 复制。',
+        '快速了解笔记、数据存储、系统兼容性和 Markdown 复制。',
       items: [
         {
           question: 'Floatick 是什么？',
@@ -505,11 +488,6 @@ export const siteCopy: Record<Locale, SiteCopy> = {
           question: '可以用 Floatick 随手记笔记吗？',
           answer:
             '可以。Notes 有独立的可搜索空间，支持置顶、归档、共享标签、自动保存和 Markdown 预览。',
-        },
-        {
-          question: '便利板是什么？',
-          answer:
-            '便利板是已有 Todo 的彩色桌面分组，可以固定在桌面。删除便利板不会删除其中的 Todo。',
         },
         {
           question: '支持 Apple 芯片和 Intel Mac 吗？',
