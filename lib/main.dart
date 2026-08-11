@@ -60,6 +60,7 @@ Future<void> main() async {
       settingsController: settingsController,
       updateController: updateController,
       windowBridge: windowBridge,
+      deadlineReminderBridge: windowBridge,
     ),
   );
 }

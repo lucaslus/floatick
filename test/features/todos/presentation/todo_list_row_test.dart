@@ -8,6 +8,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   late String clipboardText;
@@ -37,6 +38,7 @@ void main() {
     (tester) async {
       var toggleCount = 0;
       var doingToggleCount = 0;
+      var deadlineCount = 0;
       var detailsCount = 0;
       final item = TodoItem(
         id: 'aligned',
@@ -69,6 +71,7 @@ void main() {
                   onToggleDoing: () => doingToggleCount += 1,
                   onOpenDetails: () => detailsCount += 1,
                   onEdit: () {},
+                  onSetDeadline: () => deadlineCount += 1,
                   onArchive: () {},
                   onRestore: () {},
                   tags: tags,
@@ -93,6 +96,7 @@ void main() {
       for (final key in <String>[
         'toggle-todo-aligned',
         'toggle-doing-todo-aligned',
+        'deadline-todo-aligned',
         'copy-todo-aligned',
         'more-todo-aligned',
       ]) {
@@ -101,6 +105,20 @@ void main() {
           closeTo(primaryCenterY, 0.5),
         );
       }
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('toggle-doing-todo-aligned')),
+          matching: find.byIcon(Symbols.play_arrow),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('deadline-todo-aligned')),
+          matching: find.byIcon(Symbols.alarm),
+        ),
+        findsOneWidget,
+      );
 
       final tagCenterY = tester
           .getCenter(find.byKey(const Key('todo-tag-aligned-tag-work')))
@@ -114,6 +132,9 @@ void main() {
 
       await tester.tap(find.byKey(const Key('toggle-doing-todo-aligned')));
       expect(doingToggleCount, 1);
+
+      await tester.tap(find.byKey(const Key('deadline-todo-aligned')));
+      expect(deadlineCount, 1);
 
       await tester.tap(find.byKey(const Key('copy-todo-aligned')));
       await tester.pump();
@@ -230,7 +251,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const Key('toggle-doing-todo-todo')),
-        matching: find.byIcon(Icons.play_arrow_rounded),
+        matching: find.byIcon(Symbols.play_arrow),
       ),
       findsOneWidget,
     );
@@ -295,6 +316,64 @@ void main() {
     await mouse.moveTo(Offset.zero);
     await tester.pumpAndSettle();
     expect(tester.widget<AnimatedOpacity>(doingActionOpacity).opacity, 0);
+  });
+
+  testWidgets('deadline metadata does not change the todo row height', (
+    tester,
+  ) async {
+    var editDeadlineCount = 0;
+    final createdAt = DateTime.utc(2026, 8, 7, 8);
+    final plainItem = TodoItem(
+      id: 'plain',
+      title: 'Plain todo',
+      createdAt: createdAt,
+    );
+    final scheduledItem = TodoItem(
+      id: 'scheduled',
+      title: 'Scheduled todo',
+      createdAt: createdAt,
+      dueAt: DateTime.utc(2027, 8, 7, 10),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              for (final item in <TodoItem>[plainItem, scheduledItem])
+                TodoListRow(
+                  item: item,
+                  archivedScope: false,
+                  onToggle: () {},
+                  onToggleDoing: () {},
+                  onOpenDetails: () {},
+                  onEdit: () {},
+                  onSetDeadline: () => editDeadlineCount += 1,
+                  onArchive: () {},
+                  onRestore: () {},
+                  tags: const <TodoTag>[],
+                  assignedTagIds: const <String>[],
+                  onOpenTagAssignment: () {},
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('deadline-status-scheduled')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('deadline-status-scheduled')));
+    expect(editDeadlineCount, 1);
+    expect(
+      tester
+          .getSize(find.byKey(const Key('todo-row-surface-scheduled')))
+          .height,
+      tester.getSize(find.byKey(const Key('todo-row-surface-plain'))).height,
+    );
   });
 
   testWidgets('external tag action bypasses the inline assignment menu', (

@@ -77,4 +77,114 @@ void main() {
 
     expect(collapseRequestCount, 1);
   });
+
+  test('sends reminder payloads and decodes native actions', () async {
+    final calls = <MethodCall>[];
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return null;
+    });
+    final bridge = MethodChannelWindowBridge();
+    final actions = <DeadlineReminderAction>[];
+    bridge.setDeadlineReminderActionHandler(actions.add);
+
+    await bridge.showDeadlineReminder(
+      const DeadlineReminderPayload(
+        notificationId: 'todo-1:deadline:1',
+        todoId: 'todo-1',
+        title: 'Ship release',
+        dueLabel: 'Aug 7 · 18:00',
+        isOverdue: true,
+        isAdvanceReminder: false,
+        tagLabel: 'floatick',
+      ),
+    );
+    await messenger.handlePlatformMessage(
+      channel.name,
+      channel.codec.encodeMethodCall(
+        const MethodCall('deadlineReminderAction', <String, Object>{
+          'todoId': 'todo-1',
+          'action': 'open',
+        }),
+      ),
+      null,
+    );
+
+    expect(calls.single.method, 'showDeadlineReminder');
+    expect(calls.single.arguments, <String, Object>{
+      'notificationId': 'todo-1:deadline:1',
+      'todoId': 'todo-1',
+      'title': 'Ship release',
+      'dueLabel': 'Aug 7 · 18:00',
+      'isOverdue': true,
+      'isAdvanceReminder': false,
+      'tagLabel': 'floatick',
+    });
+    expect(actions.single.kind, DeadlineReminderActionKind.open);
+    expect(actions.single.todoId, 'todo-1');
+  });
+
+  test('synchronizes native schedules and decodes delivery events', () async {
+    final calls = <MethodCall>[];
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return null;
+    });
+    final bridge = MethodChannelWindowBridge();
+    final deliveries = <DeadlineReminderDelivery>[];
+    bridge.setDeadlineReminderDeliveryHandler(deliveries.add);
+    final triggerAt = DateTime.utc(2026, 8, 7, 10);
+
+    await bridge
+        .synchronizeScheduledDeadlineReminders(<ScheduledDeadlineReminder>[
+          ScheduledDeadlineReminder(
+            notificationId: 'todo-1:deadline:1',
+            triggerAt: triggerAt,
+            deliveryKind: DeadlineReminderDeliveryKind.deadline,
+            payload: const DeadlineReminderPayload(
+              notificationId: 'todo-1:deadline:1',
+              todoId: 'todo-1',
+              title: 'Ship release',
+              dueLabel: 'Aug 7 · 18:00',
+              isOverdue: false,
+              isAdvanceReminder: false,
+            ),
+          ),
+        ]);
+    await messenger.handlePlatformMessage(
+      channel.name,
+      channel.codec.encodeMethodCall(
+        const MethodCall('deadlineReminderDelivered', <String, Object>{
+          'notificationId': 'todo-1:deadline:1',
+          'todoId': 'todo-1',
+          'deliveryKind': 'deadline',
+        }),
+      ),
+      null,
+    );
+
+    expect(calls.single.method, 'synchronizeScheduledDeadlineReminders');
+    expect(calls.single.arguments, <Map<String, Object>>[
+      <String, Object>{
+        'notificationId': 'todo-1:deadline:1',
+        'triggerAtMilliseconds': triggerAt.millisecondsSinceEpoch,
+        'deliveryKind': 'deadline',
+        'payload': <String, Object>{
+          'notificationId': 'todo-1:deadline:1',
+          'todoId': 'todo-1',
+          'title': 'Ship release',
+          'dueLabel': 'Aug 7 · 18:00',
+          'isOverdue': false,
+          'isAdvanceReminder': false,
+        },
+      },
+    ]);
+    expect(deliveries.single.notificationId, 'todo-1:deadline:1');
+    expect(deliveries.single.todoId, 'todo-1');
+    expect(deliveries.single.kind, DeadlineReminderDeliveryKind.deadline);
+  });
 }

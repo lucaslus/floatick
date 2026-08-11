@@ -82,6 +82,26 @@ void main() {
     expect(item.isDoing, isFalse);
   });
 
+  test(
+    'deadline and reminder delivery state round-trip through JSON',
+    () async {
+      final item = TodoItem(
+        id: 'scheduled',
+        title: 'Ship release',
+        createdAt: DateTime.utc(2026, 8, 7, 9),
+        dueAt: DateTime.utc(2026, 8, 7, 10),
+        reminderAt: DateTime.utc(2026, 8, 7, 9, 50),
+        notifyAtDeadline: false,
+        reminderNotifiedAt: DateTime.utc(2026, 8, 7, 9, 50),
+        snoozedUntil: DateTime.utc(2026, 8, 7, 10, 10),
+      );
+
+      await repository.save(<TodoItem>[item]);
+
+      expect(await repository.load(), <TodoItem>[item]);
+    },
+  );
+
   test('damaged storage is reported and left unchanged', () async {
     await repository.rootDirectory.create(recursive: true);
     final file = File(repository.storagePath);

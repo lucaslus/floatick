@@ -1,0 +1,217 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation "Primary navigation" [ref=e3]:
+      - link "Floatick home" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: Floatick
+      - generic [ref=e6]:
+        - link "Features" [ref=e7] [cursor=pointer]:
+          - /url: "#features"
+        - link "Workflow" [ref=e8] [cursor=pointer]:
+          - /url: "#workflow"
+        - link "Privacy" [ref=e9] [cursor=pointer]:
+          - /url: "#privacy"
+        - link "Changelog" [ref=e10] [cursor=pointer]:
+          - /url: /changelog/
+      - generic [ref=e11]:
+        - link "View Floatick on GitHub" [ref=e12] [cursor=pointer]:
+          - /url: https://github.com/lucaslushuo/floatick
+        - link "Read in Chinese" [ref=e14] [cursor=pointer]:
+          - /url: /zh/
+          - generic [ref=e16]: 中文
+        - link "Download" [ref=e17] [cursor=pointer]:
+          - /url: https://github.com/lucaslushuo/floatick/releases/latest/download/Floatick-macos-universal.dmg
+  - main [ref=e20]:
+    - generic [ref=e21]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: Floating todo list for macOS · Local-first · Open source
+        - heading "Your next task, always one click away." [level=1] [ref=e31]:
+          - generic [ref=e32]: Your next task,
+          - generic [ref=e33]: always one click away.
+        - paragraph [ref=e34]: Floatick lives on your Mac as a small, draggable icon. Click to capture a todo, add notes or tags, then collapse it back to the desktop.
+        - generic [ref=e35]:
+          - link "Download for macOS" [ref=e36] [cursor=pointer]:
+            - /url: https://github.com/lucaslushuo/floatick/releases/latest/download/Floatick-macos-universal.dmg
+          - link "Explore on GitHub" [ref=e39] [cursor=pointer]:
+            - /url: https://github.com/lucaslushuo/floatick
+        - paragraph [ref=e40]: macOS 10.15+ · Apple silicon and Intel
+      - img "Interactive three-dimensional Floatick workspace with a todo list, a Sticky Board, an editor, and the floating icon" [ref=e41]
+    - region "Product facts" [ref=e45]:
+      - generic [ref=e46]:
+        - strong [ref=e47]: Free
+        - generic [ref=e48]: No account or subscription
+      - generic [ref=e49]:
+        - strong [ref=e50]: Open source
+        - generic [ref=e51]: MIT-licensed on GitHub
+      - generic [ref=e52]:
+        - strong [ref=e53]: Local-first
+        - generic [ref=e54]: Todos stay on your Mac
+      - generic [ref=e55]:
+        - strong [ref=e56]: Maintained
+        - generic [ref=e57]: New releases and fixes
+    - generic [ref=e58]:
+      - generic [ref=e59]:
+        - paragraph [ref=e60]: Core features
+        - heading "Everything you need, close to the desktop." [level=2] [ref=e61]
+        - paragraph [ref=e62]: Capture, organize, and revisit todos without keeping a full-size task manager open.
+      - generic [ref=e63]:
+        - article [ref=e64]:
+          - generic [ref=e65]: "01"
+          - heading "A draggable desktop icon" [level=3] [ref=e66]
+          - paragraph [ref=e67]: Place Floatick anywhere. It opens toward available screen space and collapses back to the same spot.
+        - article [ref=e68]:
+          - generic [ref=e69]: "02"
+          - heading "Titles and Markdown notes" [level=3] [ref=e70]
+          - paragraph [ref=e71]: Keep the list short with titles, then open Markdown details when a task needs more context.
+        - article [ref=e72]:
+          - generic [ref=e73]: "03"
+          - heading "Tags and combined filters" [level=3] [ref=e74]
+          - paragraph [ref=e75]: Create colored tags, assign more than one, and filter the list by several tags at once.
+        - article [ref=e76]:
+          - generic [ref=e77]: "04"
+          - heading "Pinnable Sticky Boards" [level=3] [ref=e78]
+          - paragraph [ref=e79]: Group existing todos on a colored board and pin it to the desktop. A board never owns or deletes its todos.
+        - article [ref=e80]:
+          - generic [ref=e81]: "05"
+          - heading "Archive and restore" [level=3] [ref=e82]
+          - paragraph [ref=e83]: Move finished work out of the main list, search the archive, and restore a todo when you need it again.
+        - article [ref=e84]:
+          - generic [ref=e85]: "06"
+          - heading "Useful macOS controls" [level=3] [ref=e86]
+          - paragraph [ref=e87]: Start at login, stay above other apps, choose a theme, and control whether outside clicks collapse the panel.
+    - generic [ref=e89]:
+      - generic [ref=e90]:
+        - paragraph [ref=e91]: From capture to action
+        - heading "Start with a title. Add context when you need it." [level=2] [ref=e92]
+        - paragraph [ref=e93]: A todo can stay one line or grow into a complete Markdown brief.
+      - list [ref=e94]:
+        - listitem [ref=e95]:
+          - generic [ref=e96]: "01"
+          - generic [ref=e97]:
+            - paragraph [ref=e98]: Capture
+            - heading "Create a todo from the desktop." [level=3] [ref=e99]
+            - paragraph [ref=e100]: Open Floatick, add a title, and get back to what you were doing.
+        - listitem [ref=e101]:
+          - generic [ref=e102]: "02"
+          - generic [ref=e103]:
+            - paragraph [ref=e104]: Organize
+            - heading "Use tags and Sticky Boards." [level=3] [ref=e105]
+            - paragraph [ref=e106]: Group related work without moving or duplicating the original todo.
+        - listitem [ref=e107]:
+          - generic [ref=e108]: "03"
+          - generic [ref=e109]:
+            - paragraph [ref=e110]: Share
+            - heading "Copy the whole task as Markdown." [level=3] [ref=e111]
+            - paragraph [ref=e112]: Send the title and notes to a document, teammate, or chat in one paste.
+    - generic [ref=e113]:
+      - generic [ref=e114]:
+        - paragraph [ref=e115]: One-click Markdown
+        - heading "Copy the whole todo." [level=2] [ref=e116]
+        - paragraph [ref=e117]: Copy the title and notes together, ready to paste into a document, message, or AI agent.
+      - generic [ref=e118]:
+        - article [ref=e119]:
+          - paragraph [ref=e120]: Todo
+          - heading "Prepare tomorrow’s project brief" [level=3] [ref=e123]
+          - paragraph [ref=e124]: Summarize the goal, the open questions, and the first action to take.
+          - generic [ref=e125]:
+            - generic [ref=e126]: planning
+            - generic [ref=e127]: tomorrow
+        - article [ref=e130]:
+          - generic [ref=e131]:
+            - paragraph [ref=e132]: Copied as Markdown
+            - generic [ref=e133]: MD
+          - generic [ref=e134]: "# Prepare tomorrow’s project brief Summarize the goal, the open questions, and the first action to take."
+    - generic [ref=e136]:
+      - generic [ref=e137]:
+        - paragraph [ref=e138]: Local-first
+        - heading "Stored on your Mac." [level=2] [ref=e139]
+        - paragraph [ref=e140]: Floatick saves todos and settings as readable files in ~/.floatick. No account is required.
+      - generic [ref=e141]:
+        - paragraph [ref=e142]: Working directory
+        - code [ref=e143]: ~/.floatick
+        - list [ref=e144]:
+          - listitem [ref=e145]: Your todo data stays in a folder you can inspect and back up.
+          - listitem [ref=e146]: No sign-up, cloud workspace, or telemetry.
+          - listitem [ref=e147]: Floatick connects to the network only to check for app updates.
+    - generic [ref=e148]:
+      - generic [ref=e149]:
+        - paragraph [ref=e150]: Changelog
+        - heading "See what changed." [level=2] [ref=e151]
+        - paragraph [ref=e152]: Each release lists its new features, fixes, and behavior changes.
+        - link "Read the full changelog" [ref=e153] [cursor=pointer]:
+          - /url: /changelog/
+          - text: Read the full changelog
+          - generic [ref=e154]: ↗
+      - article [ref=e155]:
+        - generic [ref=e156]:
+          - generic [ref=e157]: Latest release
+          - time [ref=e158]: July 29, 2026
+        - strong [ref=e159]: v0.3.0
+        - list [ref=e160]:
+          - listitem [ref=e161]: Copy a todo title and notes together as Markdown.
+          - listitem [ref=e162]: Use consistent bottom-sheet actions across the app.
+          - listitem [ref=e163]: Scroll smoothly through larger local lists.
+    - generic [ref=e165]:
+      - generic [ref=e166]:
+        - paragraph [ref=e167]: Open source
+        - heading "Built in public." [level=2] [ref=e168]
+        - paragraph [ref=e169]: Floatick is MIT-licensed. Use it for free, report problems, or help improve the app.
+        - generic [ref=e170]:
+          - link "Contribute on GitHub" [ref=e171] [cursor=pointer]:
+            - /url: https://github.com/lucaslushuo/floatick
+          - link "Suggest a feature" [ref=e172] [cursor=pointer]:
+            - /url: https://github.com/lucaslushuo/floatick/issues/new?labels=enhancement
+      - list [ref=e173]:
+        - listitem [ref=e174]:
+          - generic [ref=e175]: "01"
+          - paragraph [ref=e176]: Report a reproducible bug.
+        - listitem [ref=e177]:
+          - generic [ref=e178]: "02"
+          - paragraph [ref=e179]: Suggest a feature or workflow.
+        - listitem [ref=e180]:
+          - generic [ref=e181]: "03"
+          - paragraph [ref=e182]: Contribute code, tests, documentation, translations, or design.
+    - generic [ref=e183]:
+      - generic [ref=e184]:
+        - paragraph [ref=e185]: FAQ
+        - heading "Before you install." [level=2] [ref=e186]
+        - paragraph [ref=e187]: Quick answers about storage, compatibility, Sticky Boards, and Markdown copy.
+      - generic [ref=e188]:
+        - group [ref=e189]:
+          - generic "What is Floatick?" [ref=e190] [cursor=pointer]: +
+        - group [ref=e193]:
+          - generic "Where does Floatick store my todos?" [ref=e194] [cursor=pointer]: +
+        - group [ref=e197]:
+          - generic "What is a Sticky Board?" [ref=e198] [cursor=pointer]: +
+        - group [ref=e201]:
+          - generic "Does Floatick support Apple silicon and Intel Macs?" [ref=e202] [cursor=pointer]: +
+        - group [ref=e205]:
+          - generic "Can I copy a todo as Markdown?" [ref=e206] [cursor=pointer]: +
+    - generic [ref=e209]:
+      - paragraph [ref=e210]: For macOS
+      - heading "Keep your next todo on the desktop." [level=2] [ref=e211]
+      - paragraph [ref=e212]: Download the latest universal build, or view the source on GitHub.
+      - generic [ref=e213]:
+        - link "Download Floatick" [ref=e214] [cursor=pointer]:
+          - /url: https://github.com/lucaslushuo/floatick/releases/latest/download/Floatick-macos-universal.dmg
+        - link "View source" [ref=e217] [cursor=pointer]:
+          - /url: https://github.com/lucaslushuo/floatick
+  - contentinfo [ref=e218]:
+    - generic [ref=e219]:
+      - generic [ref=e221]:
+        - strong [ref=e222]: Floatick
+        - paragraph [ref=e223]: A local-first floating todo list for macOS.
+      - generic [ref=e224]:
+        - link "Source" [ref=e225] [cursor=pointer]:
+          - /url: https://github.com/lucaslushuo/floatick
+        - link "Releases" [ref=e226] [cursor=pointer]:
+          - /url: /changelog/
+        - link "MIT License" [ref=e227] [cursor=pointer]:
+          - /url: https://github.com/lucaslushuo/floatick/blob/main/LICENSE
+        - link "简体中文" [ref=e228] [cursor=pointer]:
+          - /url: /zh/
+  - generic [ref=e231]:
+    - button [ref=e232]
+    - button [ref=e238]
+    - button [ref=e242]
+    - button [ref=e247]

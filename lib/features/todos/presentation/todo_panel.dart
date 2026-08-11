@@ -19,6 +19,7 @@ import '../../updates/presentation/update_view_model.dart';
 import '../domain/todo_item.dart';
 import 'tag_filter_drawer.dart';
 import 'tag_management_drawer.dart';
+import 'todo_deadline_picker.dart';
 import 'todo_editor_drawer.dart';
 import 'todo_view_model.dart';
 import 'widgets/tag_menus.dart';
@@ -60,6 +61,8 @@ class TodoPanel extends StatefulWidget {
     required this.windowBridge,
     required this.expansionAnchor,
     required this.onCollapse,
+    this.requestedTodoId,
+    this.requestedTodoSerial = 0,
     super.key,
   });
 
@@ -70,6 +73,8 @@ class TodoPanel extends StatefulWidget {
   final WindowBridge windowBridge;
   final WindowExpansionAnchor expansionAnchor;
   final VoidCallback onCollapse;
+  final String? requestedTodoId;
+  final int requestedTodoSerial;
 
   @override
   State<TodoPanel> createState() => _TodoPanelState();
@@ -108,6 +113,41 @@ class _TodoPanelState extends State<TodoPanel> {
   int _todoEditorSession = 0;
   String? _selectedNoteId;
   int _drawerRequestSerial = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.requestedTodoId != null) {
+      _scheduleRequestedTodoOpen();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant TodoPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.requestedTodoSerial == widget.requestedTodoSerial ||
+        widget.requestedTodoId == null) {
+      return;
+    }
+    _scheduleRequestedTodoOpen();
+  }
+
+  void _scheduleRequestedTodoOpen() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final todoId = widget.requestedTodoId;
+      if (!mounted ||
+          todoId == null ||
+          widget.controller.itemById(todoId) == null) {
+        return;
+      }
+      setState(() {
+        _contentKind = _PanelContentKind.todos;
+        _scope = TodoListScope.active;
+        _progressFilter = TodoProgressFilter.all;
+      });
+      _openTodoDetails(todoId);
+    });
+  }
 
   @override
   void dispose() {
@@ -276,11 +316,13 @@ class _TodoPanelState extends State<TodoPanel> {
     required String title,
     required String content,
     required Iterable<String> tagIds,
+    required TodoScheduleDraft schedule,
   }) async {
     final item = await widget.controller.create(
       title,
       content: content,
       tagIds: tagIds,
+      schedule: schedule,
     );
     return item != null;
   }
@@ -1113,27 +1155,32 @@ class _TodoPanelState extends State<TodoPanel> {
                                         },
                                         onOpenTagAssignment:
                                             _openTagAssignmentFromEditor,
-                                        onSave: (title, content, tagIds) {
-                                          if (todoEditorMode ==
-                                              TodoEditorDrawerMode.create) {
-                                            return _saveCreatedTodo(
-                                              title: title,
-                                              content: content,
-                                              tagIds: tagIds,
-                                            );
-                                          }
-                                          final todoId = selectedTodo?.id;
-                                          if (todoId == null) {
-                                            return Future<bool>.value(false);
-                                          }
-                                          return widget.controller
-                                              .updateDetails(
-                                                id: todoId,
-                                                title: title,
-                                                content: content,
-                                                tagIds: tagIds,
-                                              );
-                                        },
+                                        onSave:
+                                            (title, content, tagIds, schedule) {
+                                              if (todoEditorMode ==
+                                                  TodoEditorDrawerMode.create) {
+                                                return _saveCreatedTodo(
+                                                  title: title,
+                                                  content: content,
+                                                  tagIds: tagIds,
+                                                  schedule: schedule,
+                                                );
+                                              }
+                                              final todoId = selectedTodo?.id;
+                                              if (todoId == null) {
+                                                return Future<bool>.value(
+                                                  false,
+                                                );
+                                              }
+                                              return widget.controller
+                                                  .updateDetails(
+                                                    id: todoId,
+                                                    title: title,
+                                                    content: content,
+                                                    tagIds: tagIds,
+                                                    schedule: schedule,
+                                                  );
+                                            },
                                         onSaved: () {
                                           if (_drawerMode ==
                                               _TodoPanelDrawerMode.createTodo) {
@@ -1827,6 +1874,17 @@ class _ScrollableTodoEntriesState extends State<_ScrollableTodoEntries> {
   Timer? _hoverResumeTimer;
   bool _isScrolling = false;
 
+  Future<void> _editDeadline(TodoItem item) async {
+    final schedule = await showTodoDeadlinePicker(
+      context: context,
+      initialSchedule: TodoScheduleDraft.fromItem(item),
+    );
+    if (!mounted || schedule == null) {
+      return;
+    }
+    await widget.controller.updateSchedule(id: item.id, schedule: schedule);
+  }
+
   @override
   void dispose() {
     _hoverResumeTimer?.cancel();
@@ -1887,6 +1945,9 @@ class _ScrollableTodoEntriesState extends State<_ScrollableTodoEntries> {
                         unawaited(widget.controller.toggleDoing(entry.item.id)),
               onOpenDetails: () => widget.onOpenDetails(entry.item.id),
               onEdit: archived ? null : () => widget.onEditTodo(entry.item.id),
+              onSetDeadline: archived
+                  ? null
+                  : () => unawaited(_editDeadline(entry.item)),
               onArchive: () =>
                   unawaited(widget.controller.archive(entry.item.id)),
               onRestore: () =>

@@ -535,6 +535,15 @@ void main() {
       tester.getCenter(find.text('Design the floating icon').hitTestable()),
     );
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('deadline-todo-new-todo')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('todo-deadline-picker')), findsOneWidget);
+    expect(find.byKey(const Key('deadline-shortcut-row')), findsNothing);
+    await tester.tap(find.byKey(const Key('save-todo-deadline')));
+    await tester.pumpAndSettle();
+    expect(repository.savedItems.single.dueAt, isNotNull);
+    expect(find.byKey(const Key('deadline-status-new-todo')), findsOneWidget);
+
     await tester.tap(find.byKey(const Key('more-todo-new-todo')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('todo-action-view-new-todo')));

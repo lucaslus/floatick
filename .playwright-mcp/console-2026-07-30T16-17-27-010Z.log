@@ -1,0 +1,4 @@
+[     594ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://127.0.0.1:4321/@vite/client:524
+[     621ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://127.0.0.1:4321/@vite/client:524
+[ 1295985ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://127.0.0.1:4321/@vite/client:524
+[ 1296006ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://127.0.0.1:4321/@vite/client:524

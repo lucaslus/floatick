@@ -192,14 +192,22 @@ class TodoViewModel extends ChangeNotifier {
     String title, {
     String content = '',
     Iterable<String> tagIds = const <String>[],
+    TodoScheduleDraft schedule = const TodoScheduleDraft(),
   }) async {
-    return await create(title, content: content, tagIds: tagIds) != null;
+    return await create(
+          title,
+          content: content,
+          tagIds: tagIds,
+          schedule: schedule,
+        ) !=
+        null;
   }
 
   Future<TodoItem?> create(
     String title, {
     String content = '',
     Iterable<String> tagIds = const <String>[],
+    TodoScheduleDraft schedule = const TodoScheduleDraft(),
   }) {
     final normalizedTitle = title.trim();
     if (normalizedTitle.isEmpty && content.trim().isEmpty) {
@@ -223,7 +231,7 @@ class TodoViewModel extends ChangeNotifier {
         title: resolvedTitle,
         content: content,
         createdAt: _clock().toUtc(),
-      );
+      ).withSchedule(schedule);
       final updatedItems = <TodoItem>[..._items, createdItem];
       final updatedWorkspace = _workspaceWithTodoTags(
         todoId: todoId,
@@ -245,6 +253,15 @@ class TodoViewModel extends ChangeNotifier {
         return item;
       }
       return item.withCompletedAt(item.isCompleted ? null : _clock().toUtc());
+    });
+  }
+
+  Future<void> complete(String id) {
+    return _updateItem(id, (item) {
+      if (item.isArchived || item.isCompleted) {
+        return item;
+      }
+      return item.withCompletedAt(_clock().toUtc());
     });
   }
 
@@ -284,6 +301,7 @@ class TodoViewModel extends ChangeNotifier {
     required String title,
     required String content,
     Iterable<String>? tagIds,
+    TodoScheduleDraft? schedule,
   }) {
     final normalizedTitle = title.trim();
     if (normalizedTitle.isEmpty && content.trim().isEmpty) {
@@ -311,7 +329,10 @@ class TodoViewModel extends ChangeNotifier {
 
       final todoChanged =
           existingItem.title != resolvedTitle ||
-          existingItem.content != content;
+          existingItem.content != content ||
+          (schedule != null &&
+              TodoScheduleDraft.fromItem(existingItem) !=
+                  schedule.normalized());
       final tagsChanged = !listEquals(tagIdsForTodo(id), normalizedTagIds);
       if (!todoChanged && !tagsChanged) {
         return true;
@@ -319,10 +340,14 @@ class TodoViewModel extends ChangeNotifier {
 
       final updatedItems = List<TodoItem>.of(_items);
       if (todoChanged) {
-        updatedItems[existingIndex] = existingItem.withDetails(
+        var updatedItem = existingItem.withDetails(
           title: resolvedTitle,
           content: content,
         );
+        if (schedule != null) {
+          updatedItem = updatedItem.withSchedule(schedule);
+        }
+        updatedItems[existingIndex] = updatedItem;
       }
       return _commitTodoAndTags(
         updatedItems: updatedItems,
@@ -336,12 +361,57 @@ class TodoViewModel extends ChangeNotifier {
     });
   }
 
+  Future<void> updateSchedule({
+    required String id,
+    required TodoScheduleDraft schedule,
+  }) {
+    final normalizedSchedule = schedule.normalized();
+    return _updateItem(id, (item) {
+      if (item.isArchived) {
+        return item;
+      }
+      return item.withSchedule(normalizedSchedule);
+    });
+  }
+
   Future<void> archive(String id) {
     return _updateItem(id, (item) => item.withArchivedAt(_clock().toUtc()));
   }
 
   Future<void> restore(String id) {
     return _updateItem(id, (item) => item.withArchivedAt(null));
+  }
+
+  Future<void> markDeadlineNotificationDelivered(String id) {
+    final deliveredAt = _clock().toUtc();
+    return _updateItem(
+      id,
+      (item) => item.withNotificationDelivery(deadlineDeliveredAt: deliveredAt),
+    );
+  }
+
+  Future<void> markReminderNotificationDelivered(String id) {
+    final deliveredAt = _clock().toUtc();
+    return _updateItem(
+      id,
+      (item) => item.withNotificationDelivery(reminderDeliveredAt: deliveredAt),
+    );
+  }
+
+  Future<void> snoozeNotification(String id, Duration duration) {
+    if (duration <= Duration.zero) {
+      return Future<void>.value();
+    }
+    return _updateItem(
+      id,
+      (item) => item.isArchived || item.isCompleted || item.dueAt == null
+          ? item
+          : item.withSnoozedUntil(_clock().toUtc().add(duration)),
+    );
+  }
+
+  Future<void> clearSnoozedNotification(String id) {
+    return _updateItem(id, (item) => item.withSnoozedUntil(null));
   }
 
   Future<bool> deletePermanently(String id) {

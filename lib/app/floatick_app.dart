@@ -9,6 +9,7 @@ import '../features/notes/presentation/note_view_model.dart';
 import '../features/settings/domain/app_settings.dart';
 import '../features/settings/presentation/settings_view_model.dart';
 import '../features/todos/presentation/todo_panel.dart';
+import '../features/todos/presentation/deadline_reminder_scheduler.dart';
 import '../features/todos/presentation/todo_view_model.dart';
 import '../features/updates/presentation/update_view_model.dart';
 import '../l10n/app_localizations.dart';
@@ -21,6 +22,7 @@ class FloatickApp extends StatelessWidget {
     required this.settingsController,
     required this.updateController,
     required this.windowBridge,
+    this.deadlineReminderBridge,
     this.locale,
     super.key,
   });
@@ -30,6 +32,7 @@ class FloatickApp extends StatelessWidget {
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
   final WindowBridge windowBridge;
+  final DeadlineReminderBridge? deadlineReminderBridge;
   final Locale? locale;
 
   @override
@@ -62,6 +65,7 @@ class FloatickApp extends StatelessWidget {
             settingsController: settingsController,
             updateController: updateController,
             windowBridge: windowBridge,
+            deadlineReminderBridge: deadlineReminderBridge,
           ),
         );
       },
@@ -76,6 +80,7 @@ class _FloatickShell extends StatefulWidget {
     required this.settingsController,
     required this.updateController,
     required this.windowBridge,
+    required this.deadlineReminderBridge,
   });
 
   final TodoViewModel controller;
@@ -83,6 +88,7 @@ class _FloatickShell extends StatefulWidget {
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
   final WindowBridge windowBridge;
+  final DeadlineReminderBridge? deadlineReminderBridge;
 
   @override
   State<_FloatickShell> createState() => _FloatickShellState();
@@ -106,6 +112,9 @@ class _FloatickShellState extends State<_FloatickShell> {
   WindowExpansionAnchor _expansionAnchor = WindowExpansionAnchor.topRight;
   Future<void>? _rendererWarmUpFuture;
   Future<void>? _panelPreparationFuture;
+  DeadlineReminderScheduler? _deadlineReminderScheduler;
+  String? _requestedTodoId;
+  int _requestedTodoSerial = 0;
 
   @override
   void initState() {
@@ -114,6 +123,7 @@ class _FloatickShellState extends State<_FloatickShell> {
     widget.windowBridge.setCollapseRequestHandler(_handleNativeCollapseRequest);
     widget.controller.addListener(_handleTodoStateChanged);
     widget.settingsController.addListener(_handleSettingsChanged);
+    _configureDeadlineReminderScheduler();
     unawaited(_syncPreferredLanguage());
     unawaited(_syncPreferredTheme());
     unawaited(_syncAlwaysOnTop());
@@ -137,6 +147,10 @@ class _FloatickShellState extends State<_FloatickShell> {
       _hasSyncedPreferredTheme = false;
       _hasSyncedAlwaysOnTop = false;
       _lastSyncedFloatingIconCount = null;
+    }
+    if (oldWidget.deadlineReminderBridge != widget.deadlineReminderBridge ||
+        oldWidget.controller != widget.controller) {
+      _configureDeadlineReminderScheduler();
     }
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_handleTodoStateChanged);
@@ -169,7 +183,31 @@ class _FloatickShellState extends State<_FloatickShell> {
     widget.windowBridge.setCollapseRequestHandler(null);
     widget.controller.removeListener(_handleTodoStateChanged);
     widget.settingsController.removeListener(_handleSettingsChanged);
+    _deadlineReminderScheduler?.dispose();
     super.dispose();
+  }
+
+  void _configureDeadlineReminderScheduler() {
+    _deadlineReminderScheduler?.dispose();
+    final bridge = widget.deadlineReminderBridge;
+    _deadlineReminderScheduler = bridge == null
+        ? null
+        : DeadlineReminderScheduler(
+            todoViewModel: widget.controller,
+            bridge: bridge,
+            onOpenTodo: _openTodoFromReminder,
+          );
+  }
+
+  void _openTodoFromReminder(String todoId) {
+    if (!mounted || widget.controller.itemById(todoId) == null) {
+      return;
+    }
+    setState(() {
+      _requestedTodoId = todoId;
+      _requestedTodoSerial += 1;
+    });
+    unawaited(_setExpanded(true));
   }
 
   void _handleSettingsChanged() {
@@ -291,7 +329,14 @@ class _FloatickShellState extends State<_FloatickShell> {
   }
 
   void _handleNativeExpandRequest(WindowExpansionAnchor expansionAnchor) {
+    _deadlineReminderScheduler?.refresh();
     unawaited(_setExpanded(true, requestedAnchor: expansionAnchor));
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    _deadlineReminderScheduler?.refresh();
   }
 
   void _handleNativeCollapseRequest() {
@@ -439,6 +484,8 @@ class _FloatickShellState extends State<_FloatickShell> {
                             windowBridge: widget.windowBridge,
                             expansionAnchor: _expansionAnchor,
                             onCollapse: () => unawaited(_setExpanded(false)),
+                            requestedTodoId: _requestedTodoId,
+                            requestedTodoSerial: _requestedTodoSerial,
                           ),
                         ),
                       ),

@@ -877,6 +877,74 @@ void main() {
     expect(repository.saveCount, 0);
     expect(tagRepository.saveCount, 1);
   });
+
+  test(
+    'create and update persist schedules and reset delivery state',
+    () async {
+      await controller.load();
+      final created = await controller.create(
+        'Ship release',
+        schedule: TodoScheduleDraft(
+          dueAt: DateTime.parse('2026-07-24T09:00:00.000Z'),
+          reminderAt: DateTime.parse('2026-07-24T08:00:00.000Z'),
+        ),
+      );
+      await controller.markReminderNotificationDelivered(created!.id);
+
+      final updated = await controller.updateDetails(
+        id: created.id,
+        title: created.title,
+        content: created.content,
+        schedule: TodoScheduleDraft(
+          dueAt: DateTime.parse('2026-07-25T09:00:00.000Z'),
+          notifyAtDeadline: false,
+        ),
+      );
+
+      expect(updated, isTrue);
+      expect(
+        controller.items.single.dueAt,
+        DateTime.parse('2026-07-25T09:00:00.000Z'),
+      );
+      expect(controller.items.single.notifyAtDeadline, isFalse);
+      expect(controller.items.single.reminderNotifiedAt, isNull);
+      expect(repository.savedItems.single, controller.items.single);
+    },
+  );
+
+  test('updateSchedule persists a list-row deadline change', () async {
+    repository.savedItems = <TodoItem>[
+      TodoItem(
+        id: 'existing',
+        title: 'Prepare release',
+        createdAt: DateTime.parse(firstDate),
+        dueAt: DateTime.parse('2026-07-24T09:00:00.000Z'),
+        deadlineNotifiedAt: DateTime.parse('2026-07-24T09:00:00.000Z'),
+      ),
+    ];
+    await controller.load();
+
+    await controller.updateSchedule(
+      id: 'existing',
+      schedule: TodoScheduleDraft(
+        dueAt: DateTime.parse('2026-07-25T18:00:00.000Z'),
+        reminderAt: DateTime.parse('2026-07-25T17:50:00.000Z'),
+        notifyAtDeadline: false,
+      ),
+    );
+
+    expect(
+      controller.items.single.dueAt,
+      DateTime.parse('2026-07-25T18:00:00.000Z'),
+    );
+    expect(
+      controller.items.single.reminderAt,
+      DateTime.parse('2026-07-25T17:50:00.000Z'),
+    );
+    expect(controller.items.single.notifyAtDeadline, isFalse);
+    expect(controller.items.single.deadlineNotifiedAt, isNull);
+    expect(repository.savedItems.single, controller.items.single);
+  });
 }
 
 class _MemoryTodoRepository implements TodoRepository {
