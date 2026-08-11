@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../../core/platform/window_bridge.dart';
@@ -18,10 +17,14 @@ class DeadlineReminderScheduler with WidgetsBindingObserver {
     required DeadlineReminderBridge bridge,
     required OpenTodoFromReminder onOpenTodo,
     DeadlineReminderClock? clock,
-  }) : _todoViewModel = todoViewModel,
-       _bridge = bridge,
-       _onOpenTodo = onOpenTodo,
-       _clock = clock ?? DateTime.now {
+  }) : this._(todoViewModel, bridge, onOpenTodo, clock ?? DateTime.now);
+
+  DeadlineReminderScheduler._(
+    this._todoViewModel,
+    this._bridge,
+    this._onOpenTodo,
+    this._clock,
+  ) {
     WidgetsBinding.instance.addObserver(this);
     _todoViewModel.addListener(_scheduleNext);
     _bridge.setDeadlineReminderActionHandler(_handleAction);

@@ -775,7 +775,6 @@ class _SelectionRow extends StatelessWidget {
     required this.icon,
     required this.label,
     this.trailing,
-    this.onPressed,
     this.showChevron = true,
     super.key,
   });
@@ -783,7 +782,6 @@ class _SelectionRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final Widget? trailing;
-  final VoidCallback? onPressed;
   final bool showChevron;
 
   @override
@@ -792,46 +790,42 @@ class _SelectionRow extends StatelessWidget {
     return Material(
       color: theme.colorScheme.onSurface.withValues(alpha: 0.035),
       borderRadius: BorderRadius.circular(11),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(11),
-        child: Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.10),
-            ),
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.10),
           ),
-          child: Row(
-            children: <Widget>[
-              Icon(icon, size: 18),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+        ),
+        child: Row(
+          children: <Widget>[
+            Icon(icon, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              if (trailing case final trailing?) ...[
-                const SizedBox(width: 10),
-                trailing,
-              ],
-              if (showChevron) ...[
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 19,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
-                ),
-              ],
+            ),
+            if (trailing case final trailing?) ...[
+              const SizedBox(width: 10),
+              trailing,
             ],
-          ),
+            if (showChevron) ...[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 19,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
+              ),
+            ],
+          ],
         ),
       ),
     );

@@ -49,7 +49,7 @@ class DeadlineReminderPayload {
       'dueLabel': dueLabel,
       'isOverdue': isOverdue,
       'isAdvanceReminder': isAdvanceReminder,
-      if (tagLabel case final tagLabel?) 'tagLabel': tagLabel,
+      'tagLabel': ?tagLabel,
     };
   }
 }

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:floatick/core/platform/window_bridge.dart';
 import 'package:floatick/features/todos/data/tag_repository.dart';
 import 'package:floatick/features/todos/data/todo_repository.dart';
