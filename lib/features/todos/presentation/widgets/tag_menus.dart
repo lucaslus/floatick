@@ -35,12 +35,12 @@ class TagFilterButton extends StatelessWidget {
           maximumSize: const Size.square(_tagFilterButtonDimension),
           padding: EdgeInsets.zero,
           backgroundColor: isDark
-              ? Colors.white.withValues(alpha: 0.055)
+              ? theme.inputDecorationTheme.fillColor
               : const Color(0xFFF0F4F2),
           foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.62),
           side: BorderSide(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.06)
+                ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
                 : Colors.black.withValues(alpha: 0.045),
           ),
           shape: RoundedRectangleBorder(
@@ -51,7 +51,7 @@ class TagFilterButton extends StatelessWidget {
         icon: Stack(
           clipBehavior: Clip.none,
           children: <Widget>[
-            const Icon(Icons.sell_outlined, size: 18),
+            const Icon(Icons.local_offer_outlined, size: 16),
             if (selectedCount > 0)
               Positioned(
                 top: -7,
@@ -89,8 +89,8 @@ class TagFilterButton extends StatelessWidget {
           clipBehavior: Clip.none,
           children: <Widget>[
             Icon(
-              Icons.sell_rounded,
-              size: 18,
+              Icons.local_offer_rounded,
+              size: 16,
               color: theme.colorScheme.primary,
             ),
             if (selectedCount > 0)

@@ -121,7 +121,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       lang: 'en',
       title: 'Floatick — Floating Todos & Notes for macOS',
       description:
-        'A free, open-source floating todo and notes app for macOS with local storage, Markdown, shared tags, Sticky Boards, and fast desktop capture.',
+        'A free, open-source floating todo and quick notes app for macOS with a focused Doing state, deadlines, local reminders, Markdown, and local storage.',
       canonicalPath: '/',
       alternatePath: '/zh/',
     },
@@ -134,26 +134,26 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       languageLabel: 'Read in Chinese',
     },
     hero: {
-      eyebrow: 'Floating todos & notes for macOS · Local-first · Open source',
-      titleBefore: 'Tasks and thoughts,',
-      titleAccent: 'always one click away.',
+      eyebrow: 'Floating todos, quick notes & deadlines · Local-first · Open source',
+      titleBefore: 'Capture fast.',
+      titleAccent: 'Finish with focus.',
       body:
-        'Floatick lives on your Mac as a small, draggable icon. Click to capture a todo or note, add context and shared tags, then collapse it back to the desktop.',
+        'Floatick stays on your Mac as a small, draggable icon. Capture a todo or note, mark the task you are doing, add a deadline, and let a quiet in-app reminder bring it back at the right moment.',
       download: 'Download for macOS',
       github: 'Explore on GitHub',
       compatibility: 'macOS 10.15+ · Apple silicon and Intel',
     },
     proof: [
-      { value: 'Free', label: 'No account or subscription' },
-      { value: 'Open source', label: 'MIT-licensed on GitHub' },
-      { value: 'Local-first', label: 'Todos and notes stay on your Mac' },
-      { value: 'Maintained', label: 'New releases and fixes' },
+      { value: 'One click', label: 'Capture without changing context' },
+      { value: '3 states', label: 'Todo → Doing → Done' },
+      { value: 'On time', label: 'Deadlines and in-app reminders' },
+      { value: 'Local-first', label: 'Your workspace stays on your Mac' },
     ],
     features: {
       eyebrow: 'Core features',
       title: 'Tasks and notes, close to the desktop.',
       body:
-        'Capture, organize, and revisit work or ideas without keeping a full-size productivity app open.',
+        'Capture, focus, and finish without keeping a full-size productivity app open.',
       items: [
         {
           number: '01',
@@ -163,27 +163,27 @@ export const siteCopy: Record<Locale, SiteCopy> = {
         },
         {
           number: '02',
-          title: 'A lightweight Notes space',
+          title: 'A visible Doing state',
           body:
-            'Switch from Todos to Notes to capture ideas, work logs, snippets, and anything worth keeping nearby.',
+            'Move one task into Doing, give it a calm visual emphasis, and filter the list down to active work.',
         },
         {
           number: '03',
-          title: 'Tags and combined filters',
+          title: 'Deadlines without notification noise',
           body:
-            'Reuse the same colored tags across todos and notes, assign more than one, and filter by several tags at once.',
+            'Set a due date and reminder from creation or the list. Floatick surfaces a compact in-app alert when it matters.',
         },
         {
           number: '04',
-          title: 'Pinnable Sticky Boards',
+          title: 'A lightweight Notes space',
           body:
-            'Group existing todos on a colored board and pin it to the desktop. A board never owns or deletes its todos.',
+            'Capture ideas, logs, and snippets with date grouping, search, pinning, autosave, and Markdown preview.',
         },
         {
           number: '05',
-          title: 'Pin, archive, and restore',
+          title: 'Shared tags and fast retrieval',
           body:
-            'Keep useful notes pinned, move finished items into the archive, and restore them whenever they matter again.',
+            'Reuse colored tags across todos and notes, combine filters, archive finished work, and restore it later.',
         },
         {
           number: '06',
@@ -195,27 +195,27 @@ export const siteCopy: Record<Locale, SiteCopy> = {
     },
     workflow: {
       eyebrow: 'From capture to action',
-      title: 'Start with a title. Keep writing in one surface.',
+      title: 'A small, explicit path from idea to done.',
       body:
-        'Todos and notes share a focused title-and-content editor, with Markdown available when you need structure.',
+        'Floatick keeps status and timing visible without turning a lightweight list into project management software.',
       steps: [
         {
           label: 'Capture',
-          title: 'Capture a todo or note from the desktop.',
+          title: 'Capture a todo or quick note from the desktop.',
           body:
             'Open Floatick, choose the right space, add a title, and get back to what you were doing.',
         },
         {
-          label: 'Organize',
-          title: 'Use shared tags and Sticky Boards.',
+          label: 'Focus',
+          title: 'Mark what you are doing and set the time.',
           body:
-            'Connect related todos and notes with tags, then group active tasks on desktop boards.',
+            'Use Doing to spotlight active work, then add a deadline or reminder only when the task needs one.',
         },
         {
-          label: 'Share',
-          title: 'Copy the whole task as Markdown.',
+          label: 'Finish',
+          title: 'Complete it with one check.',
           body:
-            'Send the title and notes to a document, teammate, or chat in one paste.',
+            'Check the task off, archive it when you are ready, or copy the full context as Markdown.',
         },
       ],
     },
@@ -278,7 +278,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       eyebrow: 'FAQ',
       title: 'Before you install.',
       body:
-        'Quick answers about notes, storage, compatibility, Sticky Boards, and Markdown copy.',
+        'Quick answers about deadlines, notes, storage, compatibility, and Markdown copy.',
       items: [
         {
           question: 'What is Floatick?',
@@ -296,9 +296,9 @@ export const siteCopy: Record<Locale, SiteCopy> = {
             'Yes. Notes have their own searchable workspace with pinning, archiving, shared tags, automatic saving, and Markdown preview.',
         },
         {
-          question: 'What is a Sticky Board?',
+          question: 'How do deadline reminders work?',
           answer:
-            'A Sticky Board is a colored desktop group for existing todos. You can pin it to the desktop, and deleting the board never deletes its todos.',
+            'Set a deadline while creating or editing a todo, or directly from the list. Floatick shows a compact in-app reminder and keeps overdue work visible; it does not require macOS system notifications.',
         },
         {
           question: 'Does Floatick support Apple silicon and Intel Macs?',
@@ -316,7 +316,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       eyebrow: 'For macOS',
       title: 'Keep tasks and thoughts on the desktop.',
       body:
-        'Download the latest universal build, or view the source on GitHub.',
+        'Capture quickly, focus on what is active, and finish on time with a local-first Universal macOS app.',
       download: 'Download Floatick',
       github: 'View source',
     },
@@ -333,7 +333,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       lang: 'zh-CN',
       title: 'Floatick — 免费开源的 macOS 悬浮 Todo 与笔记',
       description:
-        '免费开源的 macOS 桌面悬浮 Todo 与轻量笔记，支持本地存储、Markdown、共享标签、便利板和快速记录。',
+        '免费开源的 macOS 桌面悬浮 Todo 与轻量笔记，支持 Doing 状态、截止时间、本地提醒、Markdown 和本地存储。',
       canonicalPath: '/zh/',
       alternatePath: '/',
     },
@@ -346,26 +346,26 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       languageLabel: 'Read in English',
     },
     hero: {
-      eyebrow: 'macOS 悬浮 Todo 与笔记 · 本地优先 · 开源',
-      titleBefore: '待办和灵感，',
-      titleAccent: '点一下就到。',
+      eyebrow: 'macOS 悬浮 Todo、Quick Notes 与 DDL · 本地优先 · 开源',
+      titleBefore: '随手记下，',
+      titleAccent: '专注完成。',
       body:
-        'Floatick 平时是桌面上的一个可拖动图标。点击记录 Todo 或笔记、补充内容和共享标签，用完后再收回原位。',
+        'Floatick 平时是桌面上的可拖动图标。记录 Todo 或笔记、标记正在做的任务、设置 DDL；到时间后，用克制的应用内提醒把它带回视线。',
       download: '下载 macOS 版',
       github: '在 GitHub 查看',
       compatibility: '支持 macOS 10.15+ · Apple 芯片与 Intel',
     },
     proof: [
-      { value: '免费', label: '无需账号或订阅' },
-      { value: '开源', label: 'GitHub 上的 MIT 项目' },
-      { value: '本地优先', label: 'Todo 和笔记保存在这台 Mac' },
-      { value: '持续维护', label: '持续发布功能与修复' },
+      { value: '一步记录', label: '不必切换当前工作环境' },
+      { value: '3 个状态', label: 'Todo → Doing → Done' },
+      { value: '按时提醒', label: 'DDL 与应用内提醒' },
+      { value: '本地优先', label: '工作空间留在这台 Mac' },
     ],
     features: {
       eyebrow: '核心功能',
       title: 'Todo 和笔记，就在桌面旁边。',
       body:
-        '无需常驻一个完整的效率工具，也能随时记录、整理和找回任务或想法。',
+        '无需常驻一个完整的效率工具，也能完成记录、专注与按时收尾。',
       items: [
         {
           number: '01',
@@ -375,27 +375,27 @@ export const siteCopy: Record<Locale, SiteCopy> = {
         },
         {
           number: '02',
-          title: '轻量的 Notes 空间',
+          title: '清晰的 Doing 状态',
           body:
-            '从 Todo 切换到 Notes，随手记录灵感、工作日志、片段和任何值得留下的内容。',
+            '把正在推进的任务标记为 Doing，用克制的视觉强调它，也可以只筛选进行中的任务。',
         },
         {
           number: '03',
-          title: '标签与组合筛选',
+          title: '不打扰的 DDL 与提醒',
           body:
-            'Todo 与笔记复用同一套彩色标签，支持添加多个标签并同时组合筛选。',
+            '新建、编辑或直接在列表中设置截止时间；到点后显示紧凑的应用内提醒。',
         },
         {
           number: '04',
-          title: '可固定的便利板',
+          title: '轻量的 Notes 空间',
           body:
-            '把已有 Todo 放进彩色便利板并固定在桌面。删除便利板不会删除 Todo。',
+            '随手记录灵感、工作日志和片段，支持按日期分组、搜索、置顶、自动保存与 Markdown 预览。',
         },
         {
           number: '05',
-          title: '置顶、归档与恢复',
+          title: '共享标签与快速找回',
           body:
-            '置顶常用笔记，把完成的内容移入归档，并在需要时随时恢复。',
+            'Todo 与笔记复用彩色标签，支持组合筛选、归档与恢复。',
         },
         {
           number: '06',
@@ -407,9 +407,9 @@ export const siteCopy: Record<Locale, SiteCopy> = {
     },
     workflow: {
       eyebrow: '从记录到执行',
-      title: '先写标题，在同一个区域继续记录。',
+      title: '从想法到完成，路径小而明确。',
       body:
-        'Todo 和笔记使用一致的标题与内容编辑器，需要结构时可以继续使用 Markdown。',
+        '状态和时间始终清晰可见，但 Floatick 不会因此变成一套沉重的项目管理工具。',
       steps: [
         {
           label: '记录',
@@ -418,16 +418,16 @@ export const siteCopy: Record<Locale, SiteCopy> = {
             '展开 Floatick、选择合适的空间、写下标题，然后继续手上的工作。',
         },
         {
-          label: '组织',
-          title: '使用共享标签和便利板。',
+          label: '专注',
+          title: '标记正在做的任务和时间。',
           body:
-            '用标签连接相关 Todo 与笔记，再把活跃任务放进桌面便利板。',
+            '用 Doing 聚焦当前任务；只有确实需要时，再补充 DDL 或提醒。',
         },
         {
-          label: '复制',
-          title: '把整个任务复制为 Markdown。',
+          label: '完成',
+          title: '勾选一下，结束任务。',
           body:
-            '一次复制标题和内容，直接粘贴到文档、聊天或发给同事。',
+            '完成后勾选，准备好时再归档；需要交接时也可以复制完整 Markdown。',
         },
       ],
     },
@@ -489,7 +489,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       eyebrow: '常见问题',
       title: '安装前，你可能想知道这些。',
       body:
-        '快速了解笔记、数据存储、系统兼容性、便利板和 Markdown 复制。',
+        '快速了解 DDL、笔记、数据存储、系统兼容性和 Markdown 复制。',
       items: [
         {
           question: 'Floatick 是什么？',
@@ -507,9 +507,9 @@ export const siteCopy: Record<Locale, SiteCopy> = {
             '可以。Notes 有独立的可搜索空间，支持置顶、归档、共享标签、自动保存和 Markdown 预览。',
         },
         {
-          question: '便利板是什么？',
+          question: 'DDL 到时间后如何提醒？',
           answer:
-            '便利板是已有 Todo 的彩色桌面分组，可以固定在桌面。删除便利板不会删除其中的 Todo。',
+            '新建或编辑 Todo 时可以设置 DDL，也可以直接从首页列表设置。到时间后 Floatick 会显示紧凑的应用内提醒，并持续标记逾期任务；不依赖 macOS 系统通知。',
         },
         {
           question: '支持 Apple 芯片和 Intel Mac 吗？',
@@ -527,7 +527,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       eyebrow: 'macOS',
       title: '把待办和灵感放在桌面旁边。',
       body:
-        '下载最新 Universal 安装包，或前往 GitHub 查看源代码。',
+        '随手记录、聚焦进行中的任务，并在截止时间前完成。下载本地优先的 Universal macOS 应用。',
       download: '下载 Floatick',
       github: '查看源代码',
     },

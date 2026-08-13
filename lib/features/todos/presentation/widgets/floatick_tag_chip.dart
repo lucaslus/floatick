@@ -59,7 +59,7 @@ class FloatickTagChip extends StatelessWidget {
                         Colors.black.withValues(alpha: 0.22),
                         color,
                       ),
-                fontSize: compact ? 8.75 : 10.5,
+                fontSize: compact ? 9.25 : 10.5,
                 fontWeight: FontWeight.w600,
                 height: 1,
               ),

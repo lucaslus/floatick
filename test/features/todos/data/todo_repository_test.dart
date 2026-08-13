@@ -41,6 +41,7 @@ void main() {
       title: 'Finish the Flutter shell',
       content: '## Notes\n\n- Keep it **fast**.',
       createdAt: DateTime.utc(2026, 7, 23, 6, 30),
+      startedAt: DateTime.utc(2026, 7, 23, 6, 45),
       completedAt: DateTime.utc(2026, 7, 23, 7),
     );
 
@@ -55,6 +56,7 @@ void main() {
         'title': 'Finish the Flutter shell',
         'content': '## Notes\n\n- Keep it **fast**.',
         'createdAt': '2026-07-23T06:30:00.000Z',
+        'startedAt': '2026-07-23T06:45:00.000Z',
         'completedAt': '2026-07-23T07:00:00.000Z',
       },
     ]);
@@ -76,7 +78,29 @@ void main() {
 
     expect(item.title, 'Existing todo');
     expect(item.content, isEmpty);
+    expect(item.startedAt, isNull);
+    expect(item.isDoing, isFalse);
   });
+
+  test(
+    'deadline and reminder delivery state round-trip through JSON',
+    () async {
+      final item = TodoItem(
+        id: 'scheduled',
+        title: 'Ship release',
+        createdAt: DateTime.utc(2026, 8, 7, 9),
+        dueAt: DateTime.utc(2026, 8, 7, 10),
+        reminderAt: DateTime.utc(2026, 8, 7, 9, 50),
+        notifyAtDeadline: false,
+        reminderNotifiedAt: DateTime.utc(2026, 8, 7, 9, 50),
+        snoozedUntil: DateTime.utc(2026, 8, 7, 10, 10),
+      );
+
+      await repository.save(<TodoItem>[item]);
+
+      expect(await repository.load(), <TodoItem>[item]);
+    },
+  );
 
   test('damaged storage is reported and left unchanged', () async {
     await repository.rootDirectory.create(recursive: true);

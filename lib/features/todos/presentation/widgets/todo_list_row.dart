@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/ui/floatick_hover_motion.dart';
 import '../../../../l10n/l10n.dart';
@@ -17,6 +18,7 @@ class TodoListRow extends StatefulWidget {
     required this.item,
     required this.archivedScope,
     required this.onToggle,
+    required this.onToggleDoing,
     required this.onOpenDetails,
     required this.onEdit,
     required this.onArchive,
@@ -26,7 +28,7 @@ class TodoListRow extends StatefulWidget {
     this.onToggleTag,
     this.onOpenTagManagement,
     this.onOpenTagAssignment,
-    this.onRemoveFromStickyBoard,
+    this.onSetDeadline,
     this.onDeletePermanently,
     this.showArchiveAction = true,
     this.compact = false,
@@ -37,6 +39,7 @@ class TodoListRow extends StatefulWidget {
              onOpenTagAssignment != null ||
              (onToggleTag != null && onOpenTagManagement != null),
        ),
+       assert(archivedScope || onToggleDoing != null),
        assert(!archivedScope || onEdit == null),
        assert(archivedScope || onEdit != null),
        assert(archivedScope || onDeletePermanently == null),
@@ -45,6 +48,7 @@ class TodoListRow extends StatefulWidget {
   final TodoItem item;
   final bool archivedScope;
   final VoidCallback onToggle;
+  final VoidCallback? onToggleDoing;
   final VoidCallback onOpenDetails;
   final VoidCallback? onEdit;
   final VoidCallback onArchive;
@@ -54,7 +58,7 @@ class TodoListRow extends StatefulWidget {
   final Future<bool> Function(String tagId)? onToggleTag;
   final VoidCallback? onOpenTagManagement;
   final VoidCallback? onOpenTagAssignment;
-  final VoidCallback? onRemoveFromStickyBoard;
+  final VoidCallback? onSetDeadline;
   final VoidCallback? onDeletePermanently;
   final bool showArchiveAction;
   final bool compact;
@@ -153,7 +157,6 @@ class _TodoListRowState extends State<TodoListRow> {
       todoId: widget.item.id,
       archivedScope: widget.archivedScope,
       showArchiveAction: widget.showArchiveAction,
-      showRemoveFromStickyBoard: widget.onRemoveFromStickyBoard != null,
     );
     if (!mounted || action == null) {
       return;
@@ -175,9 +178,6 @@ class _TodoListRowState extends State<TodoListRow> {
       case TodoActionsSheetAction.archive:
         widget.onArchive();
         return;
-      case TodoActionsSheetAction.removeFromStickyBoard:
-        widget.onRemoveFromStickyBoard?.call();
-        return;
       case TodoActionsSheetAction.restore:
         widget.onRestore();
         return;
@@ -196,6 +196,16 @@ class _TodoListRowState extends State<TodoListRow> {
     final onSurface = theme.colorScheme.onSurface;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final showContextActions = (widget.hoverEnabled && _isHovered) || _hasFocus;
+    final isDoing = item.isDoing;
+    final rowColor = isDoing
+        ? theme.colorScheme.primary.withValues(
+            alpha: isDark ? (_isHovered ? 0.11 : 0.08) : 0.07,
+          )
+        : _isHovered
+        ? (isDark
+              ? Colors.white.withValues(alpha: 0.055)
+              : Colors.black.withValues(alpha: 0.035))
+        : Colors.transparent;
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
@@ -212,11 +222,14 @@ class _TodoListRowState extends State<TodoListRow> {
           label: item.title,
           value: item.isCompleted
               ? localizations.completedStatus
+              : isDoing
+              ? localizations.doingStatus
               : localizations.incompleteStatus,
           child: MouseRegion(
             onEnter: widget.hoverEnabled ? (_) => _setHovered(true) : null,
             onExit: (_) => _setHovered(false),
             child: AnimatedContainer(
+              key: ValueKey<String>('todo-row-surface-${widget.item.id}'),
               duration: reduceMotion || !widget.hoverEnabled
                   ? Duration.zero
                   : const Duration(milliseconds: 150),
@@ -228,11 +241,7 @@ class _TodoListRowState extends State<TodoListRow> {
                 widget.compact ? 6 : 8,
               ),
               decoration: BoxDecoration(
-                color: _isHovered
-                    ? (isDark
-                          ? Colors.white.withValues(alpha: 0.055)
-                          : Colors.black.withValues(alpha: 0.035))
-                    : Colors.transparent,
+                color: rowColor,
                 borderRadius: BorderRadius.circular(11),
               ),
               child: Column(
@@ -327,6 +336,9 @@ class _TodoListRowState extends State<TodoListRow> {
                                       alpha: item.isCompleted ? 0.45 : 0.91,
                                     ),
                                     fontSize: widget.compact ? 12.5 : 13.5,
+                                    fontWeight: item.isCompleted
+                                        ? FontWeight.w400
+                                        : FontWeight.w500,
                                     height: 1.3,
                                     decoration: item.isCompleted
                                         ? TextDecoration.lineThrough
@@ -343,10 +355,54 @@ class _TodoListRowState extends State<TodoListRow> {
                       ),
                       const SizedBox(width: 3),
                       SizedBox(
-                        width: 60,
+                        width: widget.archivedScope
+                            ? 60
+                            : widget.onSetDeadline == null
+                            ? 90
+                            : 120,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: <Widget>[
+                            if (!widget.archivedScope)
+                              _HoverAction(
+                                key: ValueKey<String>(
+                                  'toggle-doing-todo-${widget.item.id}',
+                                ),
+                                visible:
+                                    !item.isCompleted && showContextActions,
+                                semanticLabel: isDoing
+                                    ? localizations.stopDoingTooltip
+                                    : localizations.startDoingTooltip,
+                                onPressed: widget.onToggleDoing!,
+                                icon: isDoing
+                                    ? Icons.pause_rounded
+                                    : Symbols.play_arrow,
+                                foregroundColor: isDoing
+                                    ? theme.colorScheme.primary
+                                    : null,
+                              ),
+                            if (!widget.archivedScope &&
+                                widget.onSetDeadline != null)
+                              _HoverAction(
+                                key: ValueKey<String>(
+                                  'deadline-todo-${widget.item.id}',
+                                ),
+                                visible:
+                                    !item.isCompleted && showContextActions,
+                                semanticLabel: _deadlineActionTooltip(
+                                  context,
+                                  hasDeadline: item.dueAt != null,
+                                ),
+                                tooltip: _deadlineActionTooltip(
+                                  context,
+                                  hasDeadline: item.dueAt != null,
+                                ),
+                                onPressed: widget.onSetDeadline!,
+                                icon: Symbols.alarm,
+                                foregroundColor: item.dueAt == null
+                                    ? null
+                                    : theme.colorScheme.primary,
+                              ),
                             TodoCopyButton(
                               key: ValueKey<String>(
                                 'copy-todo-${widget.item.id}',
@@ -360,6 +416,8 @@ class _TodoListRowState extends State<TodoListRow> {
                                 'more-todo-${widget.item.id}',
                               ),
                               visible: showContextActions,
+                              semanticLabel:
+                                  localizations.moreTodoActionsTooltip,
                               tooltip: localizations.moreTodoActionsTooltip,
                               onPressed: () => unawaited(_showActions()),
                               icon: Icons.more_horiz_rounded,
@@ -385,10 +443,15 @@ class _TodoListRowState extends State<TodoListRow> {
                                 assignedTagIds: widget.assignedTagIds,
                               )
                             : _ExternalTagAssignment(
+                                item: item,
                                 todoId: item.id,
                                 tags: widget.tags,
                                 assignedTagIds: widget.assignedTagIds,
                                 onPressed: _openTagAssignment,
+                                onSetDeadline: item.isCompleted
+                                    ? null
+                                    : widget.onSetDeadline,
+                                showDoingStatus: isDoing,
                               ),
                       ),
                       const SizedBox(width: 7),
@@ -401,8 +464,9 @@ class _TodoListRowState extends State<TodoListRow> {
                         ),
                         key: ValueKey<String>('todo-time-${widget.item.id}'),
                         style: TextStyle(
-                          color: onSurface.withValues(alpha: 0.35),
+                          color: onSurface.withValues(alpha: 0.45),
                           fontSize: 10.5,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -419,16 +483,22 @@ class _TodoListRowState extends State<TodoListRow> {
 
 class _ExternalTagAssignment extends StatelessWidget {
   const _ExternalTagAssignment({
+    required this.item,
     required this.todoId,
     required this.tags,
     required this.assignedTagIds,
     required this.onPressed,
+    required this.onSetDeadline,
+    required this.showDoingStatus,
   });
 
+  final TodoItem item;
   final String todoId;
   final List<TodoTag> tags;
   final List<String> assignedTagIds;
   final VoidCallback onPressed;
+  final VoidCallback? onSetDeadline;
+  final bool showDoingStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -437,34 +507,167 @@ class _ExternalTagAssignment extends StatelessWidget {
         .where((tag) => assignedIds.contains(tag.id))
         .toList(growable: false);
 
-    return Wrap(
-      spacing: 4,
-      runSpacing: 3,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: <Widget>[
-        for (final tag in assignedTags)
-          FloatickTagChip(
-            key: ValueKey<String>('todo-tag-$todoId-${tag.id}'),
-            tag: tag,
-            compact: true,
-          ),
-        SizedBox.square(
-          dimension: 20,
-          child: IconButton(
-            key: ValueKey<String>('assign-tags-$todoId'),
-            tooltip: context.l10n.assignTagsTooltip,
-            onPressed: onPressed,
-            padding: EdgeInsets.zero,
-            icon: Icon(
-              assignedTags.isEmpty ? Icons.sell_outlined : Icons.sell_rounded,
-              size: 13,
-              color: assignedTags.isEmpty
-                  ? null
-                  : Theme.of(context).colorScheme.primary,
-            ),
+    return SizedBox(
+      height: 20,
+      child: ClipRect(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: <Widget>[
+              if (showDoingStatus) ...[
+                _DoingStatusChip(todoId: todoId),
+                const SizedBox(width: 4),
+              ],
+              if (item.dueAt != null) ...[
+                _DeadlineStatusChip(item: item, onPressed: onSetDeadline),
+                const SizedBox(width: 4),
+              ],
+              for (final tag in assignedTags) ...[
+                FloatickTagChip(
+                  key: ValueKey<String>('todo-tag-$todoId-${tag.id}'),
+                  tag: tag,
+                  compact: true,
+                ),
+                const SizedBox(width: 4),
+              ],
+              SizedBox.square(
+                dimension: 20,
+                child: IconButton(
+                  key: ValueKey<String>('assign-tags-$todoId'),
+                  tooltip: context.l10n.assignTagsTooltip,
+                  onPressed: onPressed,
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    assignedTags.isEmpty
+                        ? Icons.local_offer_outlined
+                        : Icons.local_offer_rounded,
+                    size: 12,
+                    color: assignedTags.isEmpty
+                        ? null
+                        : Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _DeadlineStatusChip extends StatelessWidget {
+  const _DeadlineStatusChip({required this.item, required this.onPressed});
+
+  final TodoItem item;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final dueAt = item.dueAt!.toLocal();
+    final now = DateTime.now();
+    final theme = Theme.of(context);
+    final isOverdue = !item.isCompleted && now.isAfter(dueAt);
+    final isSoon =
+        !isOverdue && dueAt.difference(now) <= const Duration(hours: 24);
+    final color = item.isCompleted
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
+        : isOverdue
+        ? theme.colorScheme.error
+        : isSoon
+        ? const Color(0xFFD79A2B)
+        : theme.colorScheme.primary;
+    final isChinese = Localizations.localeOf(context).languageCode == 'zh';
+    final label = isOverdue
+        ? (isChinese ? '已逾期' : 'Overdue')
+        : _isSameDay(now, dueAt)
+        ? '${isChinese ? '今天' : 'Today'} ${_formatTime(context, dueAt)}'
+        : MaterialLocalizations.of(context).formatShortDate(dueAt);
+    final chip = Container(
+      key: ValueKey<String>('deadline-status-${item.id}'),
+      height: 17,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(Icons.schedule_rounded, size: 9.5, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 9.25,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+    final handlePressed = onPressed;
+    if (handlePressed == null) {
+      return chip;
+    }
+    return Tooltip(
+      message: _deadlineActionTooltip(context, hasDeadline: true),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: handlePressed,
+          child: chip,
+        ),
+      ),
+    );
+  }
+}
+
+class _DoingStatusChip extends StatelessWidget {
+  const _DoingStatusChip({required this.todoId});
+
+  final String todoId;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      key: ValueKey<String>('doing-status-$todoId'),
+      height: 17,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.16 : 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.28 : 0.22),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 4,
+            height: 4,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            context.l10n.doingStatus,
+            style: TextStyle(
+              color: color,
+              fontSize: 9.25,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -504,16 +707,20 @@ class _ReadOnlyTodoTags extends StatelessWidget {
 class _HoverAction extends StatelessWidget {
   const _HoverAction({
     required this.visible,
-    required this.tooltip,
+    required this.semanticLabel,
     required this.onPressed,
     required this.icon,
+    this.foregroundColor,
+    this.tooltip,
     super.key,
   });
 
   final bool visible;
-  final String tooltip;
+  final String semanticLabel;
   final VoidCallback onPressed;
   final IconData icon;
+  final Color? foregroundColor;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -529,12 +736,22 @@ class _HoverAction extends StatelessWidget {
           ignoring: !visible,
           child: ExcludeFocus(
             excluding: !visible,
-            child: IconButton(
-              tooltip: tooltip,
-              onPressed: onPressed,
-              padding: EdgeInsets.zero,
-              icon: Icon(icon, size: 17),
-            ),
+            child: tooltip == null
+                ? Semantics(
+                    button: true,
+                    label: semanticLabel,
+                    child: IconButton(
+                      onPressed: onPressed,
+                      padding: EdgeInsets.zero,
+                      icon: Icon(icon, size: 17, color: foregroundColor),
+                    ),
+                  )
+                : IconButton(
+                    tooltip: tooltip,
+                    onPressed: onPressed,
+                    padding: EdgeInsets.zero,
+                    icon: Icon(icon, size: 17, color: foregroundColor),
+                  ),
           ),
         ),
       ),
@@ -548,4 +765,21 @@ String _formatTime(BuildContext context, DateTime date) {
     TimeOfDay.fromDateTime(local),
     alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
   );
+}
+
+bool _isSameDay(DateTime left, DateTime right) {
+  return left.year == right.year &&
+      left.month == right.month &&
+      left.day == right.day;
+}
+
+String _deadlineActionTooltip(
+  BuildContext context, {
+  required bool hasDeadline,
+}) {
+  final isChinese = Localizations.localeOf(context).languageCode == 'zh';
+  if (hasDeadline) {
+    return isChinese ? '编辑截止时间' : 'Edit deadline';
+  }
+  return isChinese ? '设置截止时间' : 'Set deadline';
 }

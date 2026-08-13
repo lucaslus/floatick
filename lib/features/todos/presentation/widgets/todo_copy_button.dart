@@ -42,7 +42,7 @@ class TodoCopyButton extends StatelessWidget {
                 final (tooltip, icon, color) = switch (status) {
                   TodoCopyStatus.idle => (
                     context.l10n.copyTodoAsMarkdownTooltip,
-                    Icons.content_copy_rounded,
+                    Icons.content_copy_outlined,
                     null,
                   ),
                   TodoCopyStatus.copied => (

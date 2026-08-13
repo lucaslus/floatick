@@ -8,9 +8,8 @@ import '../core/ui/floatick_surface_metrics.dart';
 import '../features/notes/presentation/note_view_model.dart';
 import '../features/settings/domain/app_settings.dart';
 import '../features/settings/presentation/settings_view_model.dart';
-import '../features/sticky_boards/presentation/sticky_board_view_model.dart';
-import '../features/sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import '../features/todos/presentation/todo_panel.dart';
+import '../features/todos/presentation/deadline_reminder_scheduler.dart';
 import '../features/todos/presentation/todo_view_model.dart';
 import '../features/updates/presentation/update_view_model.dart';
 import '../l10n/app_localizations.dart';
@@ -22,9 +21,8 @@ class FloatickApp extends StatelessWidget {
     this.noteController,
     required this.settingsController,
     required this.updateController,
-    required this.stickyBoardController,
-    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
+    this.deadlineReminderBridge,
     this.locale,
     super.key,
   });
@@ -33,9 +31,8 @@ class FloatickApp extends StatelessWidget {
   final NoteViewModel? noteController;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
-  final StickyBoardViewModel stickyBoardController;
-  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
+  final DeadlineReminderBridge? deadlineReminderBridge;
   final Locale? locale;
 
   @override
@@ -67,9 +64,8 @@ class FloatickApp extends StatelessWidget {
             noteController: noteController,
             settingsController: settingsController,
             updateController: updateController,
-            stickyBoardController: stickyBoardController,
-            stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
             windowBridge: windowBridge,
+            deadlineReminderBridge: deadlineReminderBridge,
           ),
         );
       },
@@ -83,18 +79,16 @@ class _FloatickShell extends StatefulWidget {
     required this.noteController,
     required this.settingsController,
     required this.updateController,
-    required this.stickyBoardController,
-    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
+    required this.deadlineReminderBridge,
   });
 
   final TodoViewModel controller;
   final NoteViewModel? noteController;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
-  final StickyBoardViewModel stickyBoardController;
-  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final WindowBridge windowBridge;
+  final DeadlineReminderBridge? deadlineReminderBridge;
 
   @override
   State<_FloatickShell> createState() => _FloatickShellState();
@@ -116,10 +110,11 @@ class _FloatickShellState extends State<_FloatickShell> {
   bool? _lastSyncedAlwaysOnTop;
   int? _lastSyncedFloatingIconCount;
   WindowExpansionAnchor _expansionAnchor = WindowExpansionAnchor.topRight;
-  StickyBoardMainWindowRequest? _stickyBoardRequest;
-  int _stickyBoardRequestSerial = 0;
   Future<void>? _rendererWarmUpFuture;
   Future<void>? _panelPreparationFuture;
+  DeadlineReminderScheduler? _deadlineReminderScheduler;
+  String? _requestedTodoId;
+  int _requestedTodoSerial = 0;
 
   @override
   void initState() {
@@ -128,15 +123,13 @@ class _FloatickShellState extends State<_FloatickShell> {
     widget.windowBridge.setCollapseRequestHandler(_handleNativeCollapseRequest);
     widget.controller.addListener(_handleTodoStateChanged);
     widget.settingsController.addListener(_handleSettingsChanged);
-    widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
-      _handleStickyBoardWindowRequest,
-    );
+    _configureDeadlineReminderScheduler();
     unawaited(_syncPreferredLanguage());
     unawaited(_syncPreferredTheme());
     unawaited(_syncAlwaysOnTop());
     unawaited(_syncFloatingIconCount());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_preparePanelAndRestorePinnedBoards());
+      unawaited(_ensurePanelPrepared());
     });
   }
 
@@ -155,6 +148,10 @@ class _FloatickShellState extends State<_FloatickShell> {
       _hasSyncedAlwaysOnTop = false;
       _lastSyncedFloatingIconCount = null;
     }
+    if (oldWidget.deadlineReminderBridge != widget.deadlineReminderBridge ||
+        oldWidget.controller != widget.controller) {
+      _configureDeadlineReminderScheduler();
+    }
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_handleTodoStateChanged);
       widget.controller.addListener(_handleTodoStateChanged);
@@ -165,13 +162,6 @@ class _FloatickShellState extends State<_FloatickShell> {
       widget.settingsController.addListener(_handleSettingsChanged);
       _hasSyncedPreferredLanguage = false;
       _hasSyncedAlwaysOnTop = false;
-    }
-    if (oldWidget.stickyBoardWindowCoordinator !=
-        widget.stickyBoardWindowCoordinator) {
-      oldWidget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
-      widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(
-        _handleStickyBoardWindowRequest,
-      );
     }
     if (!_hasSyncedPreferredLanguage) {
       unawaited(_syncPreferredLanguage());
@@ -193,14 +183,29 @@ class _FloatickShellState extends State<_FloatickShell> {
     widget.windowBridge.setCollapseRequestHandler(null);
     widget.controller.removeListener(_handleTodoStateChanged);
     widget.settingsController.removeListener(_handleSettingsChanged);
-    widget.stickyBoardWindowCoordinator.setMainWindowRequestHandler(null);
+    _deadlineReminderScheduler?.dispose();
     super.dispose();
   }
 
-  void _handleStickyBoardWindowRequest(StickyBoardMainWindowRequest request) {
+  void _configureDeadlineReminderScheduler() {
+    _deadlineReminderScheduler?.dispose();
+    final bridge = widget.deadlineReminderBridge;
+    _deadlineReminderScheduler = bridge == null
+        ? null
+        : DeadlineReminderScheduler(
+            todoViewModel: widget.controller,
+            bridge: bridge,
+            onOpenTodo: _openTodoFromReminder,
+          );
+  }
+
+  void _openTodoFromReminder(String todoId) {
+    if (!mounted || widget.controller.itemById(todoId) == null) {
+      return;
+    }
     setState(() {
-      _stickyBoardRequest = request;
-      _stickyBoardRequestSerial += 1;
+      _requestedTodoId = todoId;
+      _requestedTodoSerial += 1;
     });
     unawaited(_setExpanded(true));
   }
@@ -229,14 +234,6 @@ class _FloatickShellState extends State<_FloatickShell> {
       debugPrint('Floatick could not warm up the renderer: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
-  }
-
-  Future<void> _preparePanelAndRestorePinnedBoards() async {
-    await _ensurePanelPrepared();
-    if (!mounted) {
-      return;
-    }
-    await widget.stickyBoardWindowCoordinator.restorePinnedBoards();
   }
 
   Future<void> _ensurePanelPrepared() {
@@ -332,7 +329,14 @@ class _FloatickShellState extends State<_FloatickShell> {
   }
 
   void _handleNativeExpandRequest(WindowExpansionAnchor expansionAnchor) {
+    _deadlineReminderScheduler?.refresh();
     unawaited(_setExpanded(true, requestedAnchor: expansionAnchor));
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    _deadlineReminderScheduler?.refresh();
   }
 
   void _handleNativeCollapseRequest() {
@@ -370,7 +374,6 @@ class _FloatickShellState extends State<_FloatickShell> {
     }
     if (_isExpanded == expanded) {
       if (expanded) {
-        unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
         try {
           await widget.windowBridge.setExpanded(true, animated: false);
         } on Object catch (error, stackTrace) {
@@ -395,7 +398,6 @@ class _FloatickShellState extends State<_FloatickShell> {
         if (!mounted) {
           return;
         }
-        unawaited(widget.stickyBoardWindowCoordinator.restorePinnedBoards());
         final expansionAnchor =
             requestedAnchor ??
             await widget.windowBridge.preferredExpansionAnchor();
@@ -479,14 +481,11 @@ class _FloatickShellState extends State<_FloatickShell> {
                             noteController: widget.noteController,
                             settingsController: widget.settingsController,
                             updateController: widget.updateController,
-                            stickyBoardController: widget.stickyBoardController,
-                            stickyBoardWindowCoordinator:
-                                widget.stickyBoardWindowCoordinator,
                             windowBridge: widget.windowBridge,
                             expansionAnchor: _expansionAnchor,
-                            stickyBoardRequest: _stickyBoardRequest,
-                            stickyBoardRequestSerial: _stickyBoardRequestSerial,
                             onCollapse: () => unawaited(_setExpanded(false)),
+                            requestedTodoId: _requestedTodoId,
+                            requestedTodoSerial: _requestedTodoSerial,
                           ),
                         ),
                       ),

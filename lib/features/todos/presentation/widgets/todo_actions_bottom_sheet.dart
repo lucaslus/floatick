@@ -10,7 +10,6 @@ enum TodoActionsSheetAction {
   edit,
   assignTags,
   archive,
-  removeFromStickyBoard,
   restore,
   deletePermanently,
 }
@@ -20,7 +19,6 @@ Future<TodoActionsSheetAction?> showTodoActionsBottomSheet({
   required String todoId,
   required bool archivedScope,
   required bool showArchiveAction,
-  required bool showRemoveFromStickyBoard,
 }) {
   return showFloatickModalBottomSheet<TodoActionsSheetAction>(
     context: context,
@@ -29,7 +27,6 @@ Future<TodoActionsSheetAction?> showTodoActionsBottomSheet({
         todoId: todoId,
         archivedScope: archivedScope,
         showArchiveAction: showArchiveAction,
-        showRemoveFromStickyBoard: showRemoveFromStickyBoard,
       );
     },
   );
@@ -40,13 +37,11 @@ class _TodoActionsBottomSheet extends StatelessWidget {
     required this.todoId,
     required this.archivedScope,
     required this.showArchiveAction,
-    required this.showRemoveFromStickyBoard,
   });
 
   final String todoId;
   final bool archivedScope;
   final bool showArchiveAction;
-  final bool showRemoveFromStickyBoard;
 
   @override
   Widget build(BuildContext context) {
@@ -191,14 +186,6 @@ class _TodoActionsBottomSheet extends StatelessWidget {
             icon: Icons.archive_outlined,
             label: localizations.archiveTooltip,
             onTap: () => _select(context, TodoActionsSheetAction.archive),
-          ),
-        if (showRemoveFromStickyBoard)
-          _TodoActionRow(
-            key: ValueKey<String>('todo-action-remove-$todoId'),
-            icon: Icons.remove_circle_outline_rounded,
-            label: localizations.removeFromStickyBoardTooltip,
-            onTap: () =>
-                _select(context, TodoActionsSheetAction.removeFromStickyBoard),
           ),
       ] else ...[
         _TodoActionRow(

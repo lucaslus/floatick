@@ -1,6 +1,5 @@
 import Cocoa
 import FlutterMacOS
-import multiview_desktop
 
 @main
 class AppDelegate: FlutterAppDelegate {
@@ -21,26 +20,10 @@ class AppDelegate: FlutterAppDelegate {
     {
       return mainWindow.handleApplicationReopen()
     }
-    if MultiviewDesktopPlugin.applicationShouldHandleReopen(
-      sender,
-      hasVisibleWindows: flag
-    ) {
-      return true
-    }
     return super.applicationShouldHandleReopen(
       sender,
       hasVisibleWindows: flag
     )
-  }
-
-  override func applicationShouldTerminate(
-    _ sender: NSApplication
-  ) -> NSApplication.TerminateReply {
-    return MultiviewDesktopPlugin.applicationShouldTerminate(sender)
-  }
-
-  override func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
-    return MultiviewDesktopPlugin.applicationDockMenu(sender)
   }
 
   override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {

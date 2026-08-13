@@ -179,6 +179,49 @@ void main() {
     },
   );
 
+  test(
+    'itemsForView filters active doing todos and caches by progress',
+    () async {
+      repository.savedItems = <TodoItem>[
+        TodoItem(
+          id: 'doing',
+          title: 'Review the release',
+          createdAt: DateTime.parse('2026-07-23T12:00:00.000Z'),
+          startedAt: DateTime.parse('2026-07-23T12:30:00.000Z'),
+        ),
+        TodoItem(
+          id: 'todo',
+          title: 'Prepare notes',
+          createdAt: DateTime.parse('2026-07-23T11:00:00.000Z'),
+        ),
+        TodoItem(
+          id: 'completed',
+          title: 'Completed work',
+          createdAt: DateTime.parse('2026-07-23T10:00:00.000Z'),
+          startedAt: DateTime.parse('2026-07-23T10:30:00.000Z'),
+          completedAt: DateTime.parse('2026-07-23T11:30:00.000Z'),
+        ),
+      ];
+      await controller.load();
+
+      final allItems = controller.itemsForView(archived: false, query: '');
+      final doingItems = controller.itemsForView(
+        archived: false,
+        query: '',
+        progressFilter: TodoProgressFilter.doing,
+      );
+      final equivalentDoingItems = controller.itemsForView(
+        archived: false,
+        query: '',
+        progressFilter: TodoProgressFilter.doing,
+      );
+
+      expect(doingItems.map((item) => item.id), <String>['doing']);
+      expect(identical(doingItems, equivalentDoingItems), isTrue);
+      expect(identical(allItems, doingItems), isFalse);
+    },
+  );
+
   test('rename trims and persists the updated title', () async {
     repository.savedItems = <TodoItem>[
       TodoItem(
@@ -281,7 +324,7 @@ void main() {
   });
 
   test(
-    'completion, archive, and restore share one persisted state flow',
+    'doing and completion preserve the previous active progress state',
     () async {
       repository.savedItems = <TodoItem>[
         TodoItem(
@@ -292,18 +335,76 @@ void main() {
       ];
       await controller.load();
 
+      await controller.toggleDoing('existing');
+      expect(controller.items.single.isDoing, isTrue);
+      expect(controller.items.single.startedAt, DateTime.parse(firstDate));
+
       await controller.toggleCompletion('existing');
       expect(controller.items.single.isCompleted, isTrue);
+      expect(controller.items.single.isDoing, isFalse);
+      expect(controller.items.single.startedAt, DateTime.parse(firstDate));
       expect(controller.activeCount, 0);
+
+      await controller.toggleCompletion('existing');
+      expect(controller.items.single.isCompleted, isFalse);
+      expect(controller.items.single.isDoing, isTrue);
+
+      await controller.toggleDoing('existing');
+      expect(controller.items.single.isDoing, isFalse);
+      expect(controller.items.single.startedAt, isNull);
+      expect(controller.activeCount, 1);
+      expect(repository.saveCount, 4);
+    },
+  );
+
+  test('completed and archived todos cannot enter doing', () async {
+    repository.savedItems = <TodoItem>[
+      TodoItem(
+        id: 'completed',
+        title: 'Completed todo',
+        createdAt: DateTime.parse(firstDate),
+        completedAt: DateTime.parse(firstDate),
+      ),
+      TodoItem(
+        id: 'archived',
+        title: 'Archived todo',
+        createdAt: DateTime.parse(firstDate),
+        archivedAt: DateTime.parse(firstDate),
+      ),
+    ];
+    await controller.load();
+
+    await controller.toggleDoing('completed');
+    await controller.toggleDoing('archived');
+
+    expect(controller.itemById('completed')!.isDoing, isFalse);
+    expect(controller.itemById('archived')!.isDoing, isFalse);
+    expect(repository.saveCount, 0);
+  });
+
+  test(
+    'archive and restore preserve a doing todo without exposing it as active',
+    () async {
+      repository.savedItems = <TodoItem>[
+        TodoItem(
+          id: 'existing',
+          title: 'Ship it',
+          createdAt: DateTime.parse(firstDate),
+          startedAt: DateTime.parse(firstDate),
+        ),
+      ];
+      await controller.load();
 
       await controller.archive('existing');
       expect(controller.items.single.isArchived, isTrue);
+      expect(controller.items.single.isDoing, isFalse);
       expect(controller.archivedCount, 1);
 
       await controller.restore('existing');
       expect(controller.items.single.isArchived, isFalse);
+      expect(controller.items.single.isDoing, isTrue);
       expect(controller.archivedCount, 0);
-      expect(repository.saveCount, 3);
+      expect(repository.saveCount, 2);
     },
   );
 
@@ -345,6 +446,7 @@ void main() {
       isFalse,
     );
     await controller.toggleCompletion('archived');
+    await controller.toggleDoing('archived');
 
     expect(controller.items.single.title, 'Archived todo');
     expect(controller.items.single.content, 'Original notes');
@@ -774,6 +876,74 @@ void main() {
     expect(controller.tagIdsForTodo('existing'), <String>['tag-focus']);
     expect(repository.saveCount, 0);
     expect(tagRepository.saveCount, 1);
+  });
+
+  test(
+    'create and update persist schedules and reset delivery state',
+    () async {
+      await controller.load();
+      final created = await controller.create(
+        'Ship release',
+        schedule: TodoScheduleDraft(
+          dueAt: DateTime.parse('2026-07-24T09:00:00.000Z'),
+          reminderAt: DateTime.parse('2026-07-24T08:00:00.000Z'),
+        ),
+      );
+      await controller.markReminderNotificationDelivered(created!.id);
+
+      final updated = await controller.updateDetails(
+        id: created.id,
+        title: created.title,
+        content: created.content,
+        schedule: TodoScheduleDraft(
+          dueAt: DateTime.parse('2026-07-25T09:00:00.000Z'),
+          notifyAtDeadline: false,
+        ),
+      );
+
+      expect(updated, isTrue);
+      expect(
+        controller.items.single.dueAt,
+        DateTime.parse('2026-07-25T09:00:00.000Z'),
+      );
+      expect(controller.items.single.notifyAtDeadline, isFalse);
+      expect(controller.items.single.reminderNotifiedAt, isNull);
+      expect(repository.savedItems.single, controller.items.single);
+    },
+  );
+
+  test('updateSchedule persists a list-row deadline change', () async {
+    repository.savedItems = <TodoItem>[
+      TodoItem(
+        id: 'existing',
+        title: 'Prepare release',
+        createdAt: DateTime.parse(firstDate),
+        dueAt: DateTime.parse('2026-07-24T09:00:00.000Z'),
+        deadlineNotifiedAt: DateTime.parse('2026-07-24T09:00:00.000Z'),
+      ),
+    ];
+    await controller.load();
+
+    await controller.updateSchedule(
+      id: 'existing',
+      schedule: TodoScheduleDraft(
+        dueAt: DateTime.parse('2026-07-25T18:00:00.000Z'),
+        reminderAt: DateTime.parse('2026-07-25T17:50:00.000Z'),
+        notifyAtDeadline: false,
+      ),
+    );
+
+    expect(
+      controller.items.single.dueAt,
+      DateTime.parse('2026-07-25T18:00:00.000Z'),
+    );
+    expect(
+      controller.items.single.reminderAt,
+      DateTime.parse('2026-07-25T17:50:00.000Z'),
+    );
+    expect(controller.items.single.notifyAtDeadline, isFalse);
+    expect(controller.items.single.deadlineNotifiedAt, isNull);
+    expect(repository.savedItems.single, controller.items.single);
   });
 }
 

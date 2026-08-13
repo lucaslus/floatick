@@ -10,6 +10,7 @@ import '../../../l10n/l10n.dart';
 import '../domain/todo_item.dart';
 import '../domain/todo_tag.dart';
 import 'todo_clipboard_controller.dart';
+import 'todo_deadline_picker.dart';
 import 'widgets/editor_tag_selector.dart';
 import 'widgets/floatick_tag_chip.dart';
 import 'widgets/todo_copy_button.dart';
@@ -44,7 +45,12 @@ class TodoEditorDrawer extends StatefulWidget {
   final VoidCallback onClose;
   final VoidCallback onEdit;
   final VoidCallback onOpenTagAssignment;
-  final Future<bool> Function(String title, String content, List<String> tagIds)
+  final Future<bool> Function(
+    String title,
+    String content,
+    List<String> tagIds,
+    TodoScheduleDraft schedule,
+  )
   onSave;
   final VoidCallback onSaved;
   final FocusNode closeFocusNode;
@@ -64,6 +70,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
   bool _showPreview = false;
   bool _isSaving = false;
   bool _saveFailed = false;
+  TodoScheduleDraft _schedule = const TodoScheduleDraft();
 
   bool get _isEditing =>
       widget.mode == TodoEditorDrawerMode.create ||
@@ -85,7 +92,10 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
         oldWidget.mode != widget.mode ||
         oldWidget.item?.id != widget.item?.id ||
         oldWidget.item?.title != widget.item?.title ||
-        oldWidget.item?.content != widget.item?.content;
+        oldWidget.item?.content != widget.item?.content ||
+        oldWidget.item?.dueAt != widget.item?.dueAt ||
+        oldWidget.item?.reminderAt != widget.item?.reminderAt ||
+        oldWidget.item?.notifyAtDeadline != widget.item?.notifyAtDeadline;
     final didOpen = !oldWidget.isOpen && widget.isOpen;
     if (changedContext) {
       _copyController.reset();
@@ -117,6 +127,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
   void _syncControllers() {
     _titleController.text = widget.item?.title ?? '';
     _contentController.text = widget.item?.content ?? '';
+    _schedule = TodoScheduleDraft.fromItem(widget.item);
   }
 
   void _requestInitialFocus() {
@@ -153,7 +164,23 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
             !setEquals(
               widget.originalAssignedTagIds.toSet(),
               widget.assignedTagIds.toSet(),
-            ));
+            ) ||
+            TodoScheduleDraft.fromItem(item).normalized() !=
+                _schedule.normalized());
+  }
+
+  Future<void> _openDeadlinePicker() async {
+    final schedule = await showTodoDeadlinePicker(
+      context: context,
+      initialSchedule: _schedule,
+    );
+    if (!mounted || schedule == null) {
+      return;
+    }
+    setState(() {
+      _schedule = schedule.normalized();
+      _saveFailed = false;
+    });
   }
 
   Future<void> _submit() async {
@@ -173,6 +200,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
           .where((tag) => widget.assignedTagIds.contains(tag.id))
           .map((tag) => tag.id)
           .toList(growable: false),
+      _schedule,
     );
     if (!mounted) {
       return;
@@ -249,6 +277,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
                 isSaving: _isSaving,
                 saveFailed: _saveFailed,
                 canSave: _canSave,
+                schedule: _schedule,
                 mode: widget.mode,
                 onChanged: () {
                   setState(() {
@@ -259,6 +288,7 @@ class _TodoEditorDrawerState extends State<TodoEditorDrawer> {
                   setState(() => _showPreview = showPreview);
                 },
                 onOpenTagAssignment: widget.onOpenTagAssignment,
+                onOpenDeadline: () => unawaited(_openDeadlinePicker()),
                 onSubmit: () => unawaited(_submit()),
                 onCancel: widget.onClose,
               ),
@@ -280,10 +310,12 @@ class _TodoEditor extends StatelessWidget {
     required this.isSaving,
     required this.saveFailed,
     required this.canSave,
+    required this.schedule,
     required this.mode,
     required this.onChanged,
     required this.onPreviewChanged,
     required this.onOpenTagAssignment,
+    required this.onOpenDeadline,
     required this.onSubmit,
     required this.onCancel,
     super.key,
@@ -300,10 +332,12 @@ class _TodoEditor extends StatelessWidget {
   final bool isSaving;
   final bool saveFailed;
   final bool canSave;
+  final TodoScheduleDraft schedule;
   final TodoEditorDrawerMode mode;
   final VoidCallback onChanged;
   final ValueChanged<bool> onPreviewChanged;
   final VoidCallback onOpenTagAssignment;
+  final VoidCallback onOpenDeadline;
   final VoidCallback onSubmit;
   final VoidCallback onCancel;
 
@@ -361,13 +395,27 @@ class _TodoEditor extends StatelessWidget {
                           contentHint: context.l10n.todoContentFieldHint,
                           titleSemanticsLabel: context.l10n.todoTitleLabel,
                           contentSemanticsLabel: context.l10n.todoContentLabel,
-                          toolbarLeading: EditorTagSelector(
-                            availableTags: availableTags,
-                            selectedTagIds: selectedTagIds,
-                            enabled: !isSaving,
-                            buttonKey: const Key('todo-editor-tag-button'),
-                            tagKeyPrefix: 'todo-editor-tag',
-                            onPressed: onOpenTagAssignment,
+                          toolbarLeading: Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: EditorTagSelector(
+                                  availableTags: availableTags,
+                                  selectedTagIds: selectedTagIds,
+                                  enabled: !isSaving,
+                                  buttonKey: const Key(
+                                    'todo-editor-tag-button',
+                                  ),
+                                  tagKeyPrefix: 'todo-editor-tag',
+                                  onPressed: onOpenTagAssignment,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              _DeadlineToolbarButton(
+                                schedule: schedule,
+                                enabled: !isSaving,
+                                onPressed: onOpenDeadline,
+                              ),
+                            ],
                           ),
                           enabled: !isSaving,
                           showPreview: showPreview,
@@ -479,6 +527,10 @@ class _TodoDetails extends StatelessWidget {
               ],
             ),
           ],
+          if (item.dueAt case final dueAt?) ...[
+            const SizedBox(height: 10),
+            _TodoDetailsDeadline(item: item, dueAt: dueAt),
+          ],
           const SizedBox(height: 14),
           Expanded(
             child: item.content.trim().isEmpty
@@ -490,6 +542,73 @@ class _TodoDetails extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DeadlineToolbarButton extends StatelessWidget {
+  const _DeadlineToolbarButton({
+    required this.schedule,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final TodoScheduleDraft schedule;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dueAt = schedule.dueAt?.toLocal();
+    final isChinese = Localizations.localeOf(context).languageCode == 'zh';
+    return IconButton(
+      key: const Key('todo-editor-deadline-button'),
+      onPressed: enabled ? onPressed : null,
+      tooltip: dueAt == null
+          ? (isChinese ? '设置截止时间' : 'Set deadline')
+          : (isChinese ? '修改截止时间' : 'Change deadline'),
+      style: IconButton.styleFrom(
+        minimumSize: const Size.square(30),
+        maximumSize: const Size.square(30),
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: dueAt == null ? null : theme.colorScheme.primary,
+      ),
+      icon: Icon(
+        dueAt == null ? Icons.event_outlined : Icons.event_rounded,
+        size: 17,
+      ),
+    );
+  }
+}
+
+class _TodoDetailsDeadline extends StatelessWidget {
+  const _TodoDetailsDeadline({required this.item, required this.dueAt});
+
+  final TodoItem item;
+  final DateTime dueAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final localDueAt = dueAt.toLocal();
+    final isOverdue = !item.isCompleted && DateTime.now().isAfter(localDueAt);
+    final color = isOverdue
+        ? theme.colorScheme.error
+        : theme.colorScheme.primary;
+    final localizations = MaterialLocalizations.of(context);
+    return Row(
+      key: const Key('todo-details-deadline'),
+      children: <Widget>[
+        Icon(Icons.event_outlined, size: 16, color: color),
+        const SizedBox(width: 7),
+        Text(
+          '${localizations.formatMediumDate(localDueAt)} · '
+          '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(localDueAt), alwaysUse24HourFormat: true)}',
+          style: theme.textTheme.bodySmall?.copyWith(color: color),
+        ),
+      ],
     );
   }
 }

@@ -44,6 +44,14 @@ class NotePanelContent extends StatelessWidget {
     final regular = archived
         ? items
         : items.where((item) => !item.isPinned).toList(growable: false);
+    final datedRegularRows = _buildDatedNoteRows(
+      context: context,
+      items: regular,
+      archived: archived,
+      controller: controller,
+      availableTags: availableTags,
+      onOpen: onOpen,
+    );
     return ListView(
       key: const Key('note-list'),
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
@@ -64,26 +72,70 @@ class NotePanelContent extends StatelessWidget {
           ),
           const SizedBox(height: 7),
         ],
-        if (regular.isNotEmpty) ...[
-          _SectionLabel(
-            icon: archived
-                ? Icons.inventory_2_outlined
-                : Icons.schedule_rounded,
-            label: archived
-                ? context.l10n.archiveScopeLabel
-                : context.l10n.recentNotesLabel,
-          ),
-          ...regular.map(
-            (item) => _NoteListRow(
-              item: item,
-              archived: archived,
-              controller: controller,
-              availableTags: availableTags,
-              onOpen: () => onOpen(item.id),
-            ),
-          ),
-        ],
+        ...datedRegularRows,
       ],
+    );
+  }
+}
+
+List<Widget> _buildDatedNoteRows({
+  required BuildContext context,
+  required List<NoteItem> items,
+  required bool archived,
+  required NoteViewModel controller,
+  required List<TodoTag> availableTags,
+  required ValueChanged<String> onOpen,
+}) {
+  final children = <Widget>[];
+  DateTime? previousDay;
+  for (final item in items) {
+    final relevantDate = _relevantNoteDate(item, archived: archived).toLocal();
+    final day = DateTime(
+      relevantDate.year,
+      relevantDate.month,
+      relevantDate.day,
+    );
+    if (day != previousDay) {
+      children.add(
+        _DateSectionLabel(day: day, label: _formatNoteDay(context, day)),
+      );
+      previousDay = day;
+    }
+    children.add(
+      _NoteListRow(
+        item: item,
+        archived: archived,
+        controller: controller,
+        availableTags: availableTags,
+        onOpen: () => onOpen(item.id),
+      ),
+    );
+  }
+  return children;
+}
+
+class _DateSectionLabel extends StatelessWidget {
+  const _DateSectionLabel({required this.day, required this.label});
+
+  final DateTime day;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.58);
+    return Padding(
+      key: ValueKey<String>('note-date-${day.year}-${day.month}-${day.day}'),
+      padding: const EdgeInsets.fromLTRB(8, 13, 8, 7),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -227,7 +279,13 @@ class _NoteListRowState extends State<_NoteListRow> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _formatUpdatedTime(context, widget.item.updatedAt),
+                            _formatNoteTime(
+                              context,
+                              _relevantNoteDate(
+                                widget.item,
+                                archived: widget.archived,
+                              ),
+                            ),
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: onSurface.withValues(alpha: 0.36),
                             ),
@@ -407,16 +465,26 @@ String _previewFor(String content) {
       .trim();
 }
 
-String _formatUpdatedTime(BuildContext context, DateTime value) {
-  final local = value.toLocal();
+DateTime _relevantNoteDate(NoteItem item, {required bool archived}) {
+  return archived ? (item.archivedAt ?? item.updatedAt) : item.updatedAt;
+}
+
+String _formatNoteDay(BuildContext context, DateTime day) {
   final now = DateTime.now();
-  if (local.year == now.year &&
-      local.month == now.month &&
-      local.day == now.day) {
-    return MaterialLocalizations.of(context).formatTimeOfDay(
-      TimeOfDay.fromDateTime(local),
-      alwaysUse24HourFormat: true,
-    );
+  final today = DateTime(now.year, now.month, now.day);
+  final difference = today.difference(day).inDays;
+  if (difference == 0) {
+    return context.l10n.todayLabel;
   }
-  return '${local.month}/${local.day}';
+  if (difference == 1) {
+    return context.l10n.yesterdayLabel;
+  }
+  return MaterialLocalizations.of(context).formatFullDate(day);
+}
+
+String _formatNoteTime(BuildContext context, DateTime value) {
+  final local = value.toLocal();
+  return MaterialLocalizations.of(
+    context,
+  ).formatTimeOfDay(TimeOfDay.fromDateTime(local), alwaysUse24HourFormat: true);
 }

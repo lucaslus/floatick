@@ -12,6 +12,17 @@ void main() {
     expect(buildFloatickTheme(Brightness.light).colorScheme.surface.a, 1);
   });
 
+  test('dark theme uses the quiet focus surface hierarchy', () {
+    final theme = buildFloatickTheme(Brightness.dark);
+
+    expect(theme.colorScheme.surface, FloatickColors.darkSurface);
+    expect(theme.colorScheme.onSurface, FloatickColors.darkOnSurface);
+    expect(
+      theme.inputDecorationTheme.fillColor,
+      FloatickColors.darkSurfaceElevated,
+    );
+  });
+
   for (final brightness in Brightness.values) {
     test(
       '$brightness icon buttons use color feedback without a state fill',

@@ -6,9 +6,6 @@ import 'package:floatick/features/settings/data/login_item_repository.dart';
 import 'package:floatick/features/settings/data/settings_repository.dart';
 import 'package:floatick/features/settings/domain/login_item_status.dart';
 import 'package:floatick/features/settings/presentation/settings_view_model.dart';
-import 'package:floatick/features/sticky_boards/data/sticky_board_repository.dart';
-import 'package:floatick/features/sticky_boards/presentation/sticky_board_view_model.dart';
-import 'package:floatick/features/sticky_boards/presentation/sticky_board_window_coordinator.dart';
 import 'package:floatick/features/todos/data/first_run_workspace_seeder.dart';
 import 'package:floatick/features/todos/data/tag_repository.dart';
 import 'package:floatick/features/todos/data/todo_repository.dart';
@@ -211,57 +208,11 @@ void main() {
       expect(find.text('Unfiltered task').hitTestable(), findsOneWidget);
     });
 
-    testWidgets('sticky boards and settings retain their native boundaries', (
-      tester,
-    ) async {
+    testWidgets('settings retain their native boundaries', (tester) async {
       final harness = await _UiTestHarness.create(seedWelcomeWorkspace: false);
       addTearDown(() => harness.dispose(tester));
-      await harness.todoController.create('Review the launch checklist');
       await harness.pumpApp(tester);
 
-      await tester.tap(find.byKey(const Key('sticky-boards-button')));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const Key('sticky-board-search-create-field')),
-        'Launch',
-      );
-      await tester.tap(find.byKey(const Key('submit-sticky-board')));
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(const Key('sticky-board-thumbnail-ui-board-1')),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.byKey(const Key('sticky-board-ui-board-1')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('sticky-board-add-existing')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('sticky-board-picker-ui-todo-1')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Back to Sticky Boards'));
-      await tester.pumpAndSettle();
-      expect(
-        harness.stickyBoardController.todoIdsForBoard('ui-board-1'),
-        <String>['ui-todo-1'],
-      );
-
-      await tester.tap(find.byKey(const Key('sticky-board-pin')));
-      await tester.pumpAndSettle();
-      expect(harness.launchedBoards, <String>['ui-board-1']);
-      expect(
-        harness.stickyBoardController.boardById('ui-board-1')?.isPinned,
-        isTrue,
-      );
-      await tester.tap(find.byKey(const Key('sticky-board-pin')));
-      await tester.pumpAndSettle();
-      expect(harness.hiddenBoards, <String>['ui-board-1']);
-      expect(
-        harness.stickyBoardController.boardById('ui-board-1')?.isPinned,
-        isFalse,
-      );
-
-      await tester.tap(find.byTooltip('Close Sticky Boards'));
-      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('settings-button')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('always-on-top-setting')));
@@ -318,12 +269,8 @@ class _UiTestHarness {
     required this.todoController,
     required this.settingsController,
     required this.updateController,
-    required this.stickyBoardController,
-    required this.stickyBoardWindowCoordinator,
     required this.windowBridge,
     required this.loginItemRepository,
-    required this.launchedBoards,
-    required this.hiddenBoards,
   });
 
   static Future<_UiTestHarness> create({
@@ -336,7 +283,6 @@ class _UiTestHarness {
     final tagRepository = LocalTagRepository(rootDirectory: rootDirectory);
     var todoSequence = 0;
     var tagSequence = 0;
-    var boardSequence = 0;
     final todoController = TodoViewModel(
       todoRepository: todoRepository,
       tagRepository: tagRepository,
@@ -359,26 +305,11 @@ class _UiTestHarness {
     final updateController = UpdateViewModel(
       updateRepository: _UiTestUpdateRepository(),
     );
-    final stickyBoardController = StickyBoardViewModel(
-      repository: LocalStickyBoardRepository(rootDirectory: rootDirectory),
-      clock: () => DateTime.utc(2026, 7, 28, 10, boardSequence),
-      idGenerator: () => 'ui-board-${++boardSequence}',
-    );
     final windowBridge = _UiTestWindowBridge();
-    final launchedBoards = <String>[];
-    final hiddenBoards = <String>[];
-    final stickyBoardWindowCoordinator = StickyBoardWindowCoordinator(
-      boardController: stickyBoardController,
-      todoController: todoController,
-      windowBridge: windowBridge,
-      windowLauncher: (boardId) async => launchedBoards.add(boardId),
-      windowHider: (boardId) async => hiddenBoards.add(boardId),
-    );
     await Future.wait<void>(<Future<void>>[
       todoController.load(),
       settingsController.load(),
       updateController.load(),
-      stickyBoardController.load(),
     ]);
     return _UiTestHarness._(
       rootDirectory: rootDirectory,
@@ -387,13 +318,9 @@ class _UiTestHarness {
       todoController: todoController,
       settingsController: settingsController,
       updateController: updateController,
-      stickyBoardController: stickyBoardController,
-      stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
       windowBridge: windowBridge,
       loginItemRepository:
           settingsController.loginItemRepository as _UiTestLoginItemRepository,
-      launchedBoards: launchedBoards,
-      hiddenBoards: hiddenBoards,
     );
   }
 
@@ -403,12 +330,8 @@ class _UiTestHarness {
   final TodoViewModel todoController;
   final SettingsViewModel settingsController;
   final UpdateViewModel updateController;
-  final StickyBoardViewModel stickyBoardController;
-  final StickyBoardWindowCoordinator stickyBoardWindowCoordinator;
   final _UiTestWindowBridge windowBridge;
   final _UiTestLoginItemRepository loginItemRepository;
-  final List<String> launchedBoards;
-  final List<String> hiddenBoards;
 
   Future<void> pumpApp(WidgetTester tester) async {
     tester.view.physicalSize = const Size(500, 760);
@@ -418,8 +341,6 @@ class _UiTestHarness {
         controller: todoController,
         settingsController: settingsController,
         updateController: updateController,
-        stickyBoardController: stickyBoardController,
-        stickyBoardWindowCoordinator: stickyBoardWindowCoordinator,
         windowBridge: windowBridge,
         locale: const Locale('en'),
       ),
@@ -437,7 +358,6 @@ class _UiTestHarness {
     todoController.dispose();
     settingsController.dispose();
     updateController.dispose();
-    stickyBoardController.dispose();
     if (await rootDirectory.exists()) {
       await rootDirectory.delete(recursive: true);
     }
@@ -489,15 +409,6 @@ class _UiTestWindowBridge implements WindowBridge {
   Future<void> setAlwaysOnTop(bool alwaysOnTop) async {
     alwaysOnTopValues.add(alwaysOnTop);
   }
-
-  @override
-  Future<void> configureBorderlessSecondaryWindow(
-    int viewId, {
-    bool positionAdjacentToMainWindow = false,
-  }) async {}
-
-  @override
-  Future<void> revealBorderlessSecondaryWindow(int viewId) async {}
 }
 
 class _UiTestLoginItemRepository implements LoginItemRepository {

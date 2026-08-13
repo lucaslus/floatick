@@ -10,47 +10,53 @@ const { locale } = Astro.props;
 const demoCopy = {
   en: {
     ariaLabel:
-      'Interactive three-dimensional Floatick workspace with Todos and Notes tabs, a Sticky Board, an editor, and the floating icon',
-    remaining: '3 tasks remaining',
+      'Interactive three-dimensional Floatick workspace showing Todos, Notes, a task in progress, deadlines, and the floating icon',
+    remaining: '13 tasks remaining',
     todosTab: 'Todos',
     notesTab: 'Notes',
     search: 'Search todos',
-    newTodo: 'New',
     today: 'Today',
     tasks: [
-      { title: 'Plan a focused morning', tag: 'Personal', time: '09:10' },
-      { title: 'Review the launch checklist', tag: 'Work', time: '11:30' },
-      { title: 'Write down one good idea', tag: 'Ideas', time: '16:20' },
+      { title: 'Review the launch checklist', tag: 'Work', time: '09:10' },
+      { title: 'Polish the product story', tag: 'Focus', time: '11:30' },
+      { title: 'Send the release notes', tag: 'Launch', time: '16:20' },
     ],
-    boardTitle: 'This week',
-    boardCount: '3 todos',
-    drawerTitle: 'New todo',
-    titleValue: 'Prepare tomorrow’s top task',
-    contentValue: 'Add a short note so the next step is clear.',
-    save: 'Add todo',
-    fallback: 'Floatick product preview',
+    doingLabel: 'Doing',
+    overdueLabel: 'Overdue',
+    drawerTitle: 'Set deadline',
+    calendarMonth: 'August 2026',
+    calendarWeekdays: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+    deadlineLabel: 'Deadline',
+    dueDate: 'Aug 12, 2026',
+    dueTime: '18:30',
+    reminderLabel: 'Reminder',
+    reminderValue: 'At deadline',
+    save: 'Save',
   },
   zh: {
     ariaLabel:
-      'Floatick 的交互式三维工作台，包含 Todo 与 Notes 标签页、便利板、编辑器和圆形悬浮图标',
-    remaining: '还有 3 项待完成',
-    todosTab: '待办',
-    notesTab: '笔记',
-    search: '搜索待办',
-    newTodo: '新建',
+      'Floatick 的交互式三维工作台，展示 Todo、笔记、进行中状态、截止时间与悬浮图标',
+    remaining: '还有 13 项待完成',
+    todosTab: 'Todos',
+    notesTab: 'Notes',
+    search: '搜索 Todos',
     today: '今天',
     tasks: [
-      { title: '规划一个专注的上午', tag: '个人', time: '09:10' },
-      { title: '检查今天的任务清单', tag: '工作', time: '11:30' },
-      { title: '记录一个值得尝试的想法', tag: '灵感', time: '16:20' },
+      { title: '检查发布清单', tag: '工作', time: '09:10' },
+      { title: '完善产品介绍', tag: '专注', time: '11:30' },
+      { title: '发送版本说明', tag: '发布', time: '16:20' },
     ],
-    boardTitle: '本周计划',
-    boardCount: '3 项待办',
-    drawerTitle: '新建待办',
-    titleValue: '确定明天最重要的一件事',
-    contentValue: '补充一句简短说明，让下一步足够清晰。',
-    save: '添加待办',
-    fallback: 'Floatick 产品预览',
+    doingLabel: '进行中',
+    overdueLabel: '已逾期',
+    drawerTitle: '设置截止时间',
+    calendarMonth: '2026 年 8 月',
+    calendarWeekdays: ['日', '一', '二', '三', '四', '五', '六'],
+    deadlineLabel: '截止时间',
+    dueDate: '2026 年 8 月 12 日',
+    dueTime: '18:30',
+    reminderLabel: '提醒',
+    reminderValue: '到期时提醒',
+    save: '保存',
   },
 } as const;
 
@@ -64,7 +70,6 @@ const copy = demoCopy[locale];
   data-todos-tab={copy.todosTab}
   data-notes-tab={copy.notesTab}
   data-search={copy.search}
-  data-new-todo={copy.newTodo}
   data-today={copy.today}
   data-task-one-title={copy.tasks[0].title}
   data-task-one-tag={copy.tasks[0].tag}
@@ -75,18 +80,28 @@ const copy = demoCopy[locale];
   data-task-three-title={copy.tasks[2].title}
   data-task-three-tag={copy.tasks[2].tag}
   data-task-three-time={copy.tasks[2].time}
-  data-board-title={copy.boardTitle}
-  data-board-count={copy.boardCount}
+  data-doing-label={copy.doingLabel}
+  data-overdue-label={copy.overdueLabel}
   data-drawer-title={copy.drawerTitle}
-  data-title-value={copy.titleValue}
-  data-content-value={copy.contentValue}
+  data-calendar-month={copy.calendarMonth}
+  data-calendar-weekdays={copy.calendarWeekdays.join('|')}
+  data-deadline-label={copy.deadlineLabel}
+  data-due-date={copy.dueDate}
+  data-due-time={copy.dueTime}
+  data-reminder-label={copy.reminderLabel}
+  data-reminder-value={copy.reminderValue}
   data-save={copy.save}
   role="img"
   aria-label={copy.ariaLabel}
 >
   <canvas class="product-scene-canvas" data-product-scene-canvas aria-hidden="true"></canvas>
   <div class="product-scene-fallback" aria-hidden="true">
-    <img src="/float-icon.svg" alt={copy.fallback} width="132" height="132" />
+    <img
+      src="/images/floatick-product-hero-v6.jpg"
+      alt=""
+      width="1600"
+      height="800"
+    />
   </div>
 </div>
 
