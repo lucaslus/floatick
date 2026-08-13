@@ -331,112 +331,112 @@ export const siteCopy: Record<Locale, SiteCopy> = {
   zh: {
     meta: {
       lang: 'zh-CN',
-      title: 'Floatick — 免费开源的 macOS 悬浮 Todo 与笔记',
+      title: 'Floatick — 放在桌面上的 macOS 待办和随手记',
       description:
-        '免费开源的 macOS 桌面悬浮 Todo 与轻量笔记，支持 Doing 状态、截止时间、本地提醒、Markdown 和本地存储。',
+        'Floatick 是一款免费开源的 macOS 小工具。点开就能记待办和笔记，也能标记进行中任务、设置截止时间和提醒；所有数据都保存在本机。',
       canonicalPath: '/zh/',
       alternatePath: '/',
     },
     nav: {
       features: '功能',
-      workflow: '工作流',
-      privacy: '隐私',
+      workflow: '怎么用',
+      privacy: '数据与隐私',
       changelog: '更新日志',
       download: '下载',
       languageLabel: 'Read in English',
     },
     hero: {
-      eyebrow: 'macOS 悬浮 Todo、Quick Notes 与 DDL · 本地优先 · 开源',
-      titleBefore: '随手记下，',
-      titleAccent: '专注完成。',
+      eyebrow: 'macOS 桌面待办与随手记 · 数据存在本机 · 免费开源',
+      titleBefore: '随手记下来，',
+      titleAccent: '专心做完它。',
       body:
-        'Floatick 平时是桌面上的可拖动图标。记录 Todo 或笔记、标记正在做的任务、设置 DDL；到时间后，用克制的应用内提醒把它带回视线。',
+        'Floatick 平时收在桌面上的一个小图标里。点开就能记待办、写笔记，正在做的事可以标成“进行中”，需要时再加上截止时间和提醒。',
       download: '下载 macOS 版',
       github: '在 GitHub 查看',
-      compatibility: '支持 macOS 10.15+ · Apple 芯片与 Intel',
+      compatibility: '支持 macOS 10.15 及以上版本 · Apple 芯片和 Intel 都能用',
     },
     proof: [
-      { value: '一步记录', label: '不必切换当前工作环境' },
-      { value: '3 个状态', label: 'Todo → Doing → Done' },
-      { value: '按时提醒', label: 'DDL 与应用内提醒' },
-      { value: '本地优先', label: '工作空间留在这台 Mac' },
+      { value: '点开就记', label: '不用来回切换应用' },
+      { value: '状态简单', label: '待办、进行中、已完成' },
+      { value: '到点提醒', label: '截止时间和应用内提醒' },
+      { value: '只存本机', label: '不用注册，也不会上传数据' },
     ],
     features: {
-      eyebrow: '核心功能',
-      title: 'Todo 和笔记，就在桌面旁边。',
+      eyebrow: '主要功能',
+      title: '待办和笔记，就放在桌面手边。',
       body:
-        '无需常驻一个完整的效率工具，也能完成记录、专注与按时收尾。',
+        '不用一直开着一个大而全的效率软件。想到什么就记下来，做完再勾掉。',
       items: [
         {
           number: '01',
-          title: '可拖动的桌面图标',
+          title: '拖到顺手的位置',
           body:
-            '把 Floatick 放在任意位置。它会朝有空间的方向展开，收起后回到原位。',
+            '小图标可以放在桌面任意位置。点开时会自动朝有空间的方向展开，收起后还在原来的地方。',
         },
         {
           number: '02',
-          title: '清晰的 Doing 状态',
+          title: '一眼看到正在做什么',
           body:
-            '把正在推进的任务标记为 Doing，用克制的视觉强调它，也可以只筛选进行中的任务。',
+            '把当前任务标成“进行中”，它会更醒目。也可以只看正在做的任务，不被其他待办打扰。',
         },
         {
           number: '03',
-          title: '不打扰的 DDL 与提醒',
+          title: '需要时再设截止时间',
           body:
-            '新建、编辑或直接在列表中设置截止时间；到点后显示紧凑的应用内提醒。',
+            '新建或编辑待办时可以设置截止时间，也能直接在列表里修改。到点后，Floatick 会在应用内提醒你。',
         },
         {
           number: '04',
-          title: '轻量的 Notes 空间',
+          title: '随手记点东西',
           body:
-            '随手记录灵感、工作日志和片段，支持按日期分组、搜索、置顶、自动保存与 Markdown 预览。',
+            '灵感、工作记录、临时片段都可以放进笔记。支持按日期整理、搜索、置顶、自动保存和 Markdown 预览。',
         },
         {
           number: '05',
-          title: '共享标签与快速找回',
+          title: '用标签整理待办和笔记',
           body:
-            'Todo 与笔记复用彩色标签，支持组合筛选、归档与恢复。',
+            '待办和笔记可以共用同一套彩色标签，也能组合筛选。用完的内容可以归档，需要时再找回来。',
         },
         {
           number: '06',
-          title: '实用的 macOS 设置',
+          title: '常用的 macOS 设置都有',
           body:
-            '支持登录时启动、置顶、主题切换，以及点击窗口外时是否自动收起。',
+            '可以设置开机启动、窗口置顶、明暗主题，以及点到窗口外时要不要自动收起。',
         },
       ],
     },
     workflow: {
-      eyebrow: '从记录到执行',
-      title: '从想法到完成，路径小而明确。',
+      eyebrow: '用起来很简单',
+      title: '记下来，开始做，做完勾掉。',
       body:
-        '状态和时间始终清晰可见，但 Floatick 不会因此变成一套沉重的项目管理工具。',
+        'Floatick 只保留真正用得上的状态和提醒，不会把简单的待办变成复杂的项目管理。',
       steps: [
         {
-          label: '记录',
-          title: '直接从桌面新建 Todo 或笔记。',
+          label: '记下来',
+          title: '想到什么，点开就记。',
           body:
-            '展开 Floatick、选择合适的空间、写下标题，然后继续手上的工作。',
+            '选择待办或笔记，写个标题，就可以继续忙手上的事。',
         },
         {
-          label: '专注',
-          title: '标记正在做的任务和时间。',
+          label: '开始做',
+          title: '把手头这件事标成“进行中”。',
           body:
-            '用 Doing 聚焦当前任务；只有确实需要时，再补充 DDL 或提醒。',
+            '需要卡时间时，再加上截止时间或提前提醒。',
         },
         {
-          label: '完成',
-          title: '勾选一下，结束任务。',
+          label: '做完了',
+          title: '勾一下，就完成了。',
           body:
-            '完成后勾选，准备好时再归档；需要交接时也可以复制完整 Markdown。',
+            '做完可以直接归档；需要发给别人时，也能把标题和内容一起复制成 Markdown。',
         },
       ],
     },
     agent: {
-      eyebrow: '一键复制 Markdown',
-      title: '完整复制一个 Todo。',
+      eyebrow: '一键复制',
+      title: '把待办完整复制出去。',
       body:
-        '标题和内容会一起复制，可以直接粘贴到文档、聊天或 AI Agent。',
-      sourceLabel: 'Todo',
+        '标题和正文会一起复制成 Markdown，可以粘贴到文档、聊天窗口或其他工具里。',
+      sourceLabel: '待办',
       sourceTitle: '准备明天的项目简报',
       sourceContent: '整理目标、待确认的问题，以及下一步要做的第一件事。',
       sourceTags: ['计划', '明天'],
@@ -445,94 +445,94 @@ export const siteCopy: Record<Locale, SiteCopy> = {
         '# 准备明天的项目简报\n\n整理目标、待确认的问题，以及下一步要做的第一件事。',
     },
     privacy: {
-      eyebrow: '本地优先',
-      title: '数据保存在这台 Mac。',
+      eyebrow: '数据只存在本机',
+      title: '不用注册，也不会上传。',
       body:
-        'Floatick 将 Todo、笔记和设置保存为 ~/.floatick 中的可读文件，无需账号。',
+        '待办、笔记和设置都保存在这台 Mac 的 ~/.floatick 文件夹里。',
       points: [
-        'Todo 和笔记数据可以直接查看和备份。',
-        '无需注册、云工作区或遥测。',
-        'Floatick 只在检查应用更新时访问网络。',
+        '文件就在本机，随时可以查看和备份。',
+        '不用账号，也没有云端工作区。',
+        '除了检查新版本，Floatick 不会主动联网。',
       ],
-      pathLabel: '工作目录',
+      pathLabel: '保存位置',
     },
     updates: {
       eyebrow: '更新日志',
-      title: '看看这次改了什么。',
+      title: '每个版本改了什么，都写清楚。',
       body:
-        '每个版本都会列出新增功能、问题修复和行为变化。',
+        '新增功能、问题修复和使用上的变化，都会记录在这里。',
       latestLabel: '最新版本',
       version: 'v0.3.4',
       date: '2026 年 8 月 13 日',
       dateTime: '2026-08-13',
       highlights: [
-        '让任务在 Todo、Doing 与 Done 之间流转，并只筛选正在推进的工作。',
-        '在编辑器或列表中设置 DDL 与提前提醒。',
-        '到期时显示紧凑的原生应用内提醒，并持续标记逾期任务。',
+        '待办可以标成“进行中”，也能只看手头正在做的任务。',
+        '可以在编辑器或列表里设置截止时间和提前提醒。',
+        '到点后会在应用内提醒，逾期任务也会一直标出来。',
       ],
       viewAll: '查看完整更新日志',
     },
     community: {
-      eyebrow: '开放源代码',
-      title: '在 GitHub 一起完善。',
+      eyebrow: '免费开源',
+      title: '代码在 GitHub，欢迎一起改进。',
       body:
-        'Floatick 采用 MIT 许可证。你可以免费使用、反馈问题或参与开发。',
+        'Floatick 使用 MIT 许可证。你可以免费使用，也可以提交问题、建议或代码。',
       points: [
-        '反馈可以复现的问题。',
-        '提出功能或工作流建议。',
-        '贡献代码、测试、文档、翻译或设计。',
+        '遇到问题，可以提交能复现的 Bug。',
+        '有更顺手的用法，可以告诉我们。',
+        '也欢迎贡献代码、测试、文档、翻译或设计。',
       ],
-      contribute: '前往 GitHub 贡献',
-      suggest: '提出功能建议',
+      contribute: '去 GitHub 看看',
+      suggest: '提个建议',
     },
     faq: {
       eyebrow: '常见问题',
-      title: '安装前，你可能想知道这些。',
+      title: '安装前，先回答几个常见问题。',
       body:
-        '快速了解 DDL、笔记、数据存储、系统兼容性和 Markdown 复制。',
+        '关于数据保存、提醒、系统支持和笔记功能，这里都有简短说明。',
       items: [
         {
           question: 'Floatick 是什么？',
           answer:
-            'Floatick 是一款免费开源的 macOS 悬浮 Todo 与笔记应用。它平时是桌面上的可拖动图标，点击后展开。',
+            'Floatick 是一款免费开源的 macOS 桌面小工具。它平时是一个可以拖动的小图标，点一下就会展开待办和笔记。',
         },
         {
-          question: 'Todo 和笔记数据保存在哪里？',
+          question: '数据保存在哪里？',
           answer:
-            'Todo、笔记和偏好设置以可读文件保存在这台 Mac 的 ~/.floatick 中，无需账号或云工作区。',
+            '待办、笔记和设置都以可读文件保存在这台 Mac 的 ~/.floatick 文件夹里，不需要账号，也不会同步到云端。',
         },
         {
           question: '可以用 Floatick 随手记笔记吗？',
           answer:
-            '可以。Notes 有独立的可搜索空间，支持置顶、归档、共享标签、自动保存和 Markdown 预览。',
+            '可以。笔记有单独的页面，支持搜索、置顶、归档、标签、自动保存和 Markdown 预览。',
         },
         {
-          question: 'DDL 到时间后如何提醒？',
+          question: '截止时间到了会怎么提醒？',
           answer:
-            '新建或编辑 Todo 时可以设置 DDL，也可以直接从首页列表设置。到时间后 Floatick 会显示紧凑的应用内提醒，并持续标记逾期任务；不依赖 macOS 系统通知。',
+            '新建或编辑待办时可以设置截止时间，也能直接在列表里修改。到点后 Floatick 会弹出一个简洁的应用内提醒，并继续标出逾期任务；不需要开启 macOS 系统通知。',
         },
         {
           question: '支持 Apple 芯片和 Intel Mac 吗？',
           answer:
-            '支持。Universal 安装包兼容 macOS 10.15 或更高版本的 Apple 芯片与 Intel Mac。',
+            '支持。安装包同时支持 Apple 芯片和 Intel Mac，系统需要 macOS 10.15 或更高版本。',
         },
         {
-          question: '可以把 Todo 复制为 Markdown 吗？',
+          question: '可以把待办复制成 Markdown 吗？',
           answer:
-            '可以。Floatick 会一起复制标题和内容，可以直接粘贴到文档或聊天。',
+            '可以。标题和正文会一起复制，直接粘贴到文档或聊天里就行。',
         },
       ],
     },
     finalCta: {
       eyebrow: 'macOS',
-      title: '把待办和灵感放在桌面旁边。',
+      title: '把待办和随手记放在桌面手边。',
       body:
-        '随手记录、聚焦进行中的任务，并在截止时间前完成。下载本地优先的 Universal macOS 应用。',
+        '点开就记，做完就勾。Floatick 免费开源，数据只存在本机，同时支持 Apple 芯片和 Intel Mac。',
       download: '下载 Floatick',
       github: '查看源代码',
     },
     footer: {
-      tagline: '本地优先的 macOS 悬浮 Todo 与笔记。',
+      tagline: '放在 macOS 桌面上的待办和随手记，数据只存在本机。',
       source: '源代码',
       releases: '版本发布',
       license: 'MIT 许可证',
