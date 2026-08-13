@@ -1,8 +1,8 @@
 <div align="center">
   <img
-    src="./docs/assets/floatick-product-hero-v5.png"
+    src="./docs/assets/floatick-product-hero-v6.png"
     width="100%"
-    alt="Floatick floating workspace for macOS with todos, notes, tags, and settings"
+    alt="Floatick floating workspace for macOS with Todo, Doing, deadlines, reminders, and quick notes"
   />
   <h1>Floatick — Floating Todos and Notes for macOS</h1>
   <p><strong>An open-source, local-first macOS app for lightweight tasks and notes.</strong></p>
@@ -24,19 +24,27 @@
   </p>
 </div>
 
-Floatick is an offline-friendly desktop todo and notes app that rests above your
+Floatick is an offline-friendly desktop todo and quick notes app that rests above your
 workspace as a small, draggable icon. Click it and the icon expands into a
 focused panel; collapse it and the icon returns to the same anchor. The panel chooses
 its expansion direction from the available screen space, so it stays useful
-near any display edge.
+near any display edge. Tasks move through a deliberately small flow—Todo,
+Doing, and Done—with optional deadlines and quiet in-app reminders.
 
 ## A focused macOS space for tasks and notes
 
 - **Always within reach** — drag the floating icon anywhere, then click to open.
 - **Fast task flow** — create, edit, complete, search, archive, restore, and
   organize tasks in automatic daily sections.
-- **Lightweight notes** — capture ideas, logs, and snippets with search, pinning,
-  archiving, shared tags, autosave, and Markdown preview.
+- **Visible focus** — mark the task you are actively working on as Doing, give
+  it a calm visual emphasis, and filter the list to active work.
+- **Deadlines without noise** — set a due time while creating or editing a todo,
+  or directly from the list; Floatick surfaces a compact in-app reminder and
+  keeps overdue tasks visible without relying on system notifications.
+- **Lightweight quick notes** — capture ideas, logs, and snippets grouped by
+  date, with search, pinning, archiving, shared tags, autosave, and Markdown preview.
+- **Shared organization** — reuse color-coded tags across todos and notes,
+  combine filters, and copy a complete todo as Markdown.
 - **Local by default** — no account, cloud service, or telemetry. Your todo and
   note data remains in `~/.floatick`.
 - **Made for macOS** — transparent AppKit window behavior, keyboard shortcuts,
@@ -79,6 +87,9 @@ Only download Floatick from this repository's Releases page.
 | Create a note | Open Notes and choose New |
 | Search the current workspace | Press `⌘F` |
 | Edit a todo | Hover over the item and choose Edit |
+| Start or stop Doing | Hover over a todo and use its play control |
+| Show only active work | Use the Doing filter beside search |
+| Set or edit a deadline | Use the alarm control on a todo row or in the todo editor |
 | Complete a todo | Select its checkbox |
 | Archive or restore | Use the action at the end of the item |
 | Quit Floatick | Right-click the floating icon and choose Quit |
@@ -89,7 +100,7 @@ Floatick creates its working directory on first launch:
 
 | Path | Purpose |
 | --- | --- |
-| `~/.floatick/todos.json` | Todos, completion state, and archive state |
+| `~/.floatick/todos.json` | Todos, Doing/completion state, deadlines, reminders, and archive state |
 | `~/.floatick/notes.json` | Notes, tags, pinning, and archive state |
 | `~/.floatick/tags.json` | Reusable tags shared by todos and notes |
 | `~/.floatick/settings.json` | Theme and language preferences |

@@ -1,8 +1,8 @@
 <div align="center">
   <img
-    src="./docs/assets/floatick-product-hero-v5.png"
+    src="./docs/assets/floatick-product-hero-v6.png"
     width="100%"
-    alt="Floatick macOS 悬浮工作区，展示 Todo、笔记、标签与设置"
+    alt="Floatick macOS 悬浮工作区，展示 Todo、Doing、DDL、提醒与 Quick Notes"
   />
   <h1>Floatick — macOS 悬浮 Todo 与笔记</h1>
   <p><strong>一款开源、本地优先的 macOS 轻量 Todo 与笔记应用。</strong></p>
@@ -24,17 +24,23 @@
   </p>
 </div>
 
-Floatick 是一款支持离线使用的 macOS 桌面 Todo 与笔记应用。它平时以一个小巧、
+Floatick 是一款支持离线使用的 macOS 桌面 Todo 与 Quick Notes 应用。它平时以一个小巧、
 可拖动的图标悬浮在工作区上方；点击图标会展开专注的面板，收起后则会准确
 回到原来的锚点。面板还会根据图标附近的屏幕空间自动选择展开方向，因此放在
-屏幕边缘也能自然使用。
+屏幕边缘也能自然使用。任务只保留 Todo、Doing 和 Done 三个明确状态，并可按需
+设置 DDL 与克制的应用内提醒。
 
 ## 专注而轻量的 macOS Todo 与笔记空间
 
 - **随时可用**——图标可以拖到任意位置，点击即可展开。
 - **完整待办流程**——支持创建、编辑、完成、搜索、归档和恢复，并按天自动分组。
-- **轻量笔记空间**——记录灵感、日志和片段，支持搜索、置顶、归档、共享标签、
-  自动保存与 Markdown 预览。
+- **看得见的专注状态**——把当前任务标记为 Doing，用克制的视觉效果突出显示，
+  也可以直接筛选所有进行中的任务。
+- **不打扰的 DDL**——新建、编辑或直接从列表设置截止时间；到点后显示紧凑的
+  应用内提醒，并持续标记逾期任务，不依赖系统通知。
+- **轻量 Quick Notes**——按日期记录灵感、日志和片段，支持搜索、置顶、归档、
+  共享标签、自动保存与 Markdown 预览。
+- **共享整理能力**——Todo 与笔记复用彩色标签、组合筛选，并支持完整复制 Markdown。
 - **默认仅存本地**——不需要账号、云服务或遥测，Todo 与笔记数据保存在 `~/.floatick`。
 - **贴合 macOS**——使用 AppKit 管理透明悬浮窗口，支持快捷键、右键退出和
   “减少动态效果”。
@@ -73,6 +79,9 @@ Floatick 目前仍处于早期预览阶段，下载包暂未使用 Apple Develop
 | 创建笔记 | 打开 Notes 并点击新建 |
 | 搜索当前空间 | 按 `⌘F` |
 | 编辑待办 | 将鼠标悬浮到待办上并点击编辑 |
+| 开始或停止 Doing | 将鼠标悬浮到待办上并使用播放按钮 |
+| 只查看进行中的任务 | 使用搜索框旁边的 Doing 筛选 |
+| 设置或修改 DDL | 使用 Todo 行内的闹钟按钮，或在 Todo 编辑器中设置 |
 | 完成待办 | 点击待办前的复选框 |
 | 归档或恢复 | 使用待办末尾的操作按钮 |
 | 退出 Floatick | 右键点击悬浮图标并选择退出 |
@@ -83,7 +92,7 @@ Floatick 第一次启动时会自动创建工作目录：
 
 | 路径 | 用途 |
 | --- | --- |
-| `~/.floatick/todos.json` | 待办、完成状态与归档状态 |
+| `~/.floatick/todos.json` | 待办、Doing/完成状态、DDL、提醒与归档状态 |
 | `~/.floatick/notes.json` | 笔记、标签、置顶与归档状态 |
 | `~/.floatick/tags.json` | Todo 与笔记共享的可复用标签 |
 | `~/.floatick/settings.json` | 主题与语言设置 |

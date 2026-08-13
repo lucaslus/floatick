@@ -47,12 +47,18 @@ type ProductSceneCopy = {
   todosTab: string;
   notesTab: string;
   search: string;
-  newTodo: string;
   today: string;
   tasks: [TaskPreview, TaskPreview, TaskPreview];
+  doingLabel: string;
+  overdueLabel: string;
   drawerTitle: string;
-  titleValue: string;
-  contentValue: string;
+  calendarMonth: string;
+  calendarWeekdays: string[];
+  deadlineLabel: string;
+  dueDate: string;
+  dueTime: string;
+  reminderLabel: string;
+  reminderValue: string;
   save: string;
 };
 
@@ -135,21 +141,27 @@ const PRODUCT_FRAME = {
 } as const;
 
 const DEFAULT_COPY: ProductSceneCopy = {
-  remaining: '3 tasks remaining',
+  remaining: '13 tasks remaining',
   todosTab: 'Todos',
   notesTab: 'Notes',
   search: 'Search todos',
-  newTodo: 'New',
   today: 'Today',
   tasks: [
-    { title: 'Plan a focused morning', tag: 'Personal', time: '09:10' },
-    { title: 'Review the launch checklist', tag: 'Work', time: '11:30' },
-    { title: 'Write down one good idea', tag: 'Ideas', time: '16:20' },
+    { title: 'Review the launch checklist', tag: 'Work', time: '09:10' },
+    { title: 'Polish the product story', tag: 'Focus', time: '11:30' },
+    { title: 'Send the release notes', tag: 'Launch', time: '16:20' },
   ],
-  drawerTitle: 'New todo',
-  titleValue: 'Prepare tomorrow’s top task',
-  contentValue: 'Add a short note so the next step is clear.',
-  save: 'Add todo',
+  doingLabel: 'Doing',
+  overdueLabel: 'Overdue',
+  drawerTitle: 'Set deadline',
+  calendarMonth: 'August 2026',
+  calendarWeekdays: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  deadlineLabel: 'Deadline',
+  dueDate: 'Aug 12, 2026',
+  dueTime: '18:30',
+  reminderLabel: 'Reminder',
+  reminderValue: 'At deadline',
+  save: 'Save',
 };
 
 const mountedStages = new WeakSet<HTMLElement>();
@@ -161,6 +173,12 @@ const PANEL_LAYOUT = {
 } as const;
 
 const COIN_BASE_POSITION = new Vector3(3.52, -3.22, 2.16);
+const HERO_CALENDAR = {
+  firstWeekdayIndex: 6,
+  dayCount: 31,
+  todayDate: 11,
+  selectedDate: 12,
+} as const;
 
 function sceneViewportLayout(width: number) {
   if (width < NARROW_VIEWPORT_MAX_WIDTH) {
@@ -177,13 +195,25 @@ function dataValue(stage: HTMLElement, key: keyof DOMStringMap, fallback: string
   return value?.trim() || fallback;
 }
 
+function dataList(
+  stage: HTMLElement,
+  key: keyof DOMStringMap,
+  fallback: string[],
+) {
+  const value = stage.dataset[key];
+  if (!value) return fallback;
+  const items = value.split('|').map((item) => item.trim());
+  return items.length === fallback.length && items.every(Boolean)
+    ? items
+    : fallback;
+}
+
 function readSceneCopy(stage: HTMLElement): ProductSceneCopy {
   return {
     remaining: dataValue(stage, 'remaining', DEFAULT_COPY.remaining),
     todosTab: dataValue(stage, 'todosTab', DEFAULT_COPY.todosTab),
     notesTab: dataValue(stage, 'notesTab', DEFAULT_COPY.notesTab),
     search: dataValue(stage, 'search', DEFAULT_COPY.search),
-    newTodo: dataValue(stage, 'newTodo', DEFAULT_COPY.newTodo),
     today: dataValue(stage, 'today', DEFAULT_COPY.today),
     tasks: [
       {
@@ -214,9 +244,36 @@ function readSceneCopy(stage: HTMLElement): ProductSceneCopy {
         time: dataValue(stage, 'taskThreeTime', DEFAULT_COPY.tasks[2].time),
       },
     ],
+    doingLabel: dataValue(stage, 'doingLabel', DEFAULT_COPY.doingLabel),
+    overdueLabel: dataValue(stage, 'overdueLabel', DEFAULT_COPY.overdueLabel),
     drawerTitle: dataValue(stage, 'drawerTitle', DEFAULT_COPY.drawerTitle),
-    titleValue: dataValue(stage, 'titleValue', DEFAULT_COPY.titleValue),
-    contentValue: dataValue(stage, 'contentValue', DEFAULT_COPY.contentValue),
+    calendarMonth: dataValue(
+      stage,
+      'calendarMonth',
+      DEFAULT_COPY.calendarMonth,
+    ),
+    calendarWeekdays: dataList(
+      stage,
+      'calendarWeekdays',
+      DEFAULT_COPY.calendarWeekdays,
+    ),
+    deadlineLabel: dataValue(
+      stage,
+      'deadlineLabel',
+      DEFAULT_COPY.deadlineLabel,
+    ),
+    dueDate: dataValue(stage, 'dueDate', DEFAULT_COPY.dueDate),
+    dueTime: dataValue(stage, 'dueTime', DEFAULT_COPY.dueTime),
+    reminderLabel: dataValue(
+      stage,
+      'reminderLabel',
+      DEFAULT_COPY.reminderLabel,
+    ),
+    reminderValue: dataValue(
+      stage,
+      'reminderValue',
+      DEFAULT_COPY.reminderValue,
+    ),
     save: dataValue(stage, 'save', DEFAULT_COPY.save),
   };
 }
@@ -495,6 +552,121 @@ function drawTagIcon(
   context.restore();
 }
 
+function drawPlayIcon(
+  context: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  size: number,
+  color: string,
+) {
+  context.save();
+  context.translate(centerX, centerY);
+  context.fillStyle = color;
+  context.beginPath();
+  context.moveTo(-size * 0.34, -size * 0.5);
+  context.lineTo(size * 0.52, 0);
+  context.lineTo(-size * 0.34, size * 0.5);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+function drawAlarmIcon(
+  context: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  size: number,
+  color: string,
+) {
+  const radius = size * 0.34;
+  context.save();
+  context.translate(centerX, centerY);
+  context.strokeStyle = color;
+  context.lineWidth = Math.max(3, size * 0.09);
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.beginPath();
+  context.arc(0, 2, radius, 0, Math.PI * 2);
+  context.stroke();
+  context.beginPath();
+  context.moveTo(0, 2);
+  context.lineTo(0, -radius * 0.56);
+  context.moveTo(0, 2);
+  context.lineTo(radius * 0.55, radius * 0.22);
+  context.moveTo(-radius * 0.72, -radius * 0.78);
+  context.lineTo(-radius * 1.05, -radius * 0.46);
+  context.moveTo(radius * 0.72, -radius * 0.78);
+  context.lineTo(radius * 1.05, -radius * 0.46);
+  context.moveTo(-radius * 0.5, radius * 0.86);
+  context.lineTo(-radius * 0.74, radius * 1.14);
+  context.moveTo(radius * 0.5, radius * 0.86);
+  context.lineTo(radius * 0.74, radius * 1.14);
+  context.stroke();
+  context.restore();
+}
+
+function drawCalendarIcon(
+  context: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  size: number,
+  color: string,
+) {
+  context.save();
+  context.translate(centerX, centerY);
+  context.strokeStyle = color;
+  context.lineWidth = Math.max(3, size * 0.09);
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  roundedRect(
+    context,
+    -size * 0.44,
+    -size * 0.34,
+    size * 0.88,
+    size * 0.76,
+    size * 0.08,
+    'transparent',
+    color,
+  );
+  context.beginPath();
+  context.moveTo(-size * 0.44, -size * 0.12);
+  context.lineTo(size * 0.44, -size * 0.12);
+  context.moveTo(-size * 0.22, -size * 0.48);
+  context.lineTo(-size * 0.22, -size * 0.25);
+  context.moveTo(size * 0.22, -size * 0.48);
+  context.lineTo(size * 0.22, -size * 0.25);
+  context.stroke();
+  context.restore();
+}
+
+function drawBellIcon(
+  context: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  size: number,
+  color: string,
+) {
+  context.save();
+  context.translate(centerX, centerY);
+  context.strokeStyle = color;
+  context.lineWidth = Math.max(3, size * 0.09);
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.beginPath();
+  context.moveTo(-size * 0.4, size * 0.3);
+  context.quadraticCurveTo(-size * 0.24, size * 0.08, -size * 0.24, -size * 0.14);
+  context.quadraticCurveTo(-size * 0.24, -size * 0.46, 0, -size * 0.5);
+  context.quadraticCurveTo(size * 0.24, -size * 0.46, size * 0.24, -size * 0.14);
+  context.quadraticCurveTo(size * 0.24, size * 0.08, size * 0.4, size * 0.3);
+  context.closePath();
+  context.stroke();
+  context.beginPath();
+  context.moveTo(-size * 0.13, size * 0.43);
+  context.quadraticCurveTo(0, size * 0.58, size * 0.13, size * 0.43);
+  context.stroke();
+  context.restore();
+}
+
 function drawCopyIcon(
   context: CanvasRenderingContext2D,
   x: number,
@@ -561,6 +733,24 @@ function drawTag(
   return width;
 }
 
+function drawStatusBadge(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  label: string,
+  color: string,
+) {
+  context.font = '700 21px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+  const width = Math.min(170, context.measureText(label).width + 54);
+  roundedRect(context, x, y, width, 38, 19, `${color}18`, `${color}aa`);
+  context.beginPath();
+  context.arc(x + 18, y + 19, 4.5, 0, Math.PI * 2);
+  context.fillStyle = color;
+  context.fill();
+  context.fillText(label, x + 31, y + 27);
+  return width;
+}
+
 function createCanvasTexture(
   width: number,
   height: number,
@@ -609,173 +799,207 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
     context.fillRect(0, 0, 1000, 1340);
 
     const headerGradient = context.createLinearGradient(0, 0, 1000, 0);
-    headerGradient.addColorStop(0, '#22373a');
-    headerGradient.addColorStop(1, '#182a2d');
+    headerGradient.addColorStop(0, '#1e3134');
+    headerGradient.addColorStop(1, '#17272a');
     context.fillStyle = headerGradient;
-    context.fillRect(0, 0, 1000, 190);
+    context.fillRect(0, 0, 1000, 176);
 
-    roundedRect(context, 58, 46, 102, 102, 28, '#183136', '#426568');
-    drawCheckmark(context, 83, 77, 52, COLORS.accent);
+    roundedRect(context, 58, 42, 92, 92, 26, '#183136', '#426568');
+    drawCheckmark(context, 82, 70, 46, COLORS.accent);
 
     context.fillStyle = COLORS.textSoft;
     context.font =
-      '650 31px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.remaining, 190, 110);
+      '650 30px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    context.fillText(copy.remaining, 182, 99);
 
     context.globalAlpha = 0.72;
-    drawArchiveIcon(context, 688, 94, 32);
-    drawSettingsIcon(context, 805, 94, 15);
-    drawCollapseIcon(context, 922, 94, 12);
+    drawArchiveIcon(context, 704, 88, 30);
+    drawSettingsIcon(context, 814, 88, 14);
+    drawCollapseIcon(context, 920, 88, 11);
     context.globalAlpha = 1;
 
-    roundedRect(
-      context,
-      58,
-      218,
-      886,
-      88,
-      24,
-      COLORS.panelDark,
-      COLORS.line,
-    );
-    roundedRect(
-      context,
-      64,
-      224,
-      431,
-      76,
-      20,
-      'rgba(45, 212, 199, 0.16)',
-    );
     context.font =
       '720 28px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
     context.textAlign = 'center';
     context.fillStyle = COLORS.accent;
-    context.fillText(copy.todosTab, 279, 273);
+    context.fillText(copy.todosTab, 278, 247);
     context.fillStyle = COLORS.textMuted;
-    context.fillText(copy.notesTab, 716, 273);
+    context.fillText(copy.notesTab, 716, 247);
     context.textAlign = 'start';
 
     roundedRect(
       context,
       58,
-      336,
-      626,
-      104,
-      27,
+      292,
+      562,
+      96,
+      25,
       COLORS.panelRaised,
       COLORS.line,
     );
-    drawSearchIcon(context, 103, 383, 14);
+    drawSearchIcon(context, 102, 340, 13);
     context.fillStyle = COLORS.textMuted;
     context.font =
-      '540 30px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.search, 151, 395);
+      '540 28px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    context.fillText(copy.search, 148, 351);
 
     roundedRect(
       context,
-      704,
-      336,
-      104,
-      104,
-      27,
+      640,
+      292,
+      88,
+      96,
+      25,
       COLORS.panelRaised,
       COLORS.line,
     );
-    drawTagIcon(context, 756, 388, 34, COLORS.textSoft);
+    drawPlayIcon(context, 684, 340, 28, COLORS.textSoft);
 
-    roundedRect(context, 826, 336, 118, 104, 34, '#34554f');
-    context.fillStyle = COLORS.text;
-    context.font =
-      '720 28px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    drawCenteredIconLabel(
+    roundedRect(
       context,
-      copy.newTodo,
-      885,
-      388,
-      18,
-      10,
-      COLORS.text,
-      drawPlusIcon,
+      744,
+      292,
+      88,
+      96,
+      25,
+      COLORS.panelRaised,
+      COLORS.line,
     );
+    drawTagIcon(context, 788, 340, 31, COLORS.textSoft);
+
+    roundedRect(
+      context,
+      848,
+      292,
+      96,
+      96,
+      27,
+      'rgba(45, 212, 199, 0.07)',
+      'rgba(45, 212, 199, 0.62)',
+    );
+    drawPlusIcon(context, 896, 340, 28, COLORS.accent);
 
     context.fillStyle = COLORS.textMuted;
     context.font =
       '700 26px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.today, 64, 520);
-    context.fillStyle = '#526467';
-    context.fillRect(156, 503, 788, 2);
+    context.fillText(copy.today, 64, 458);
 
-    const tagColors = [COLORS.accent, COLORS.blue, COLORS.purple];
-    const taskStarts = [560, 818, 1076];
+    const tagColors = [COLORS.orange, COLORS.blue, COLORS.purple];
+    const taskStarts = [500, 770, 1040];
     copy.tasks.forEach((task, index) => {
       const y = taskStarts[index];
-      const completed = index === 1;
-      if (index > 0) {
-        context.fillStyle = 'rgba(202, 229, 226, 0.07)';
-        context.fillRect(60, y - 28, 884, 2);
-      }
-      if (index === 0) {
+      const isDoing = index === 1;
+      const isOverdue = index === 2;
+      if (isDoing) {
         roundedRect(
           context,
           56,
           y - 18,
           888,
-          174,
+          206,
           22,
-          'rgba(255, 255, 255, 0.035)',
+          'rgba(21, 116, 110, 0.18)',
+          'rgba(45, 212, 199, 0.34)',
+        );
+      } else if (index === 0) {
+        roundedRect(
+          context,
+          56,
+          y - 18,
+          888,
+          206,
+          22,
+          'rgba(255, 255, 255, 0.032)',
         );
       }
 
       roundedRect(
         context,
         66,
-        y,
+        y + 4,
         54,
         54,
         16,
-        completed ? COLORS.accent : 'transparent',
-        completed ? COLORS.accent : '#6e7e80',
+        'transparent',
+        '#6e7e80',
       );
-      if (completed) {
-        drawCheckmark(context, 80, y + 16, 27, COLORS.ink);
-      }
 
-      context.fillStyle = completed ? COLORS.textMuted : COLORS.text;
+      context.fillStyle = COLORS.text;
       context.font =
         '690 31px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-      context.fillText(task.title, 150, y + 40);
-      if (completed) {
-        const textWidth = Math.min(600, context.measureText(task.title).width);
-        context.fillStyle = COLORS.textMuted;
-        context.fillRect(150, y + 24, textWidth, 3);
-      }
+      context.fillText(task.title, 150, y + 43);
 
       const tagWidth = drawTag(
         context,
         150,
-        y + 72,
+        y + 78,
         task.tag,
         tagColors[index],
       );
       drawTagIcon(
         context,
         150 + tagWidth + 25,
-        y + 91,
+        y + 97,
         18,
         COLORS.accent,
       );
+
+      if (isDoing) {
+        drawStatusBadge(
+          context,
+          150 + tagWidth + 58,
+          y + 78,
+          copy.doingLabel,
+          COLORS.accent,
+        );
+      }
+      if (isOverdue) {
+        const overdueWidth = drawStatusBadge(
+          context,
+          150,
+          y + 128,
+          copy.overdueLabel,
+          '#ff9e88',
+        );
+        drawAlarmIcon(
+          context,
+          150 + overdueWidth + 31,
+          y + 147,
+          27,
+          '#ff9e88',
+        );
+      }
+
       context.fillStyle = COLORS.textMuted;
       context.font =
         '560 23px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
       context.textAlign = 'right';
-      context.fillText(task.time, 918, y + 101);
+      context.fillText(task.time, 918, y + 145);
       context.textAlign = 'start';
 
-      if (index === 0) {
-        context.globalAlpha = 0.82;
-        drawCopyIcon(context, 852, y + 30, 28);
-        drawMoreIcon(context, 914, y + 30);
+      if (isDoing) {
+        const actionCenterY = y + 38;
+        const actionCenters = [738, 794, 850, 906] as const;
+
+        context.globalAlpha = 0.88;
+        drawPlayIcon(
+          context,
+          actionCenters[0],
+          actionCenterY,
+          24,
+          COLORS.accent,
+        );
+        drawAlarmIcon(
+          context,
+          actionCenters[1],
+          actionCenterY,
+          28,
+          COLORS.accent,
+        );
+
+        context.globalAlpha = 0.68;
+        drawCopyIcon(context, actionCenters[2], actionCenterY, 24);
+        drawMoreIcon(context, actionCenters[3], actionCenterY);
         context.globalAlpha = 1;
       }
     });
@@ -801,52 +1025,96 @@ function createDrawerTexture(copy: ProductSceneCopy) {
     context.fillStyle = 'rgba(205, 229, 226, 0.14)';
     context.fillRect(0, 118, 720, 2);
 
-    drawTagIcon(context, 70, 174, 30, COLORS.textSoft);
-    roundedRect(
-      context,
-      48,
-      212,
-      624,
-      534,
-      22,
-      '#162426',
-      'rgba(45, 212, 199, 0.62)',
-    );
+    context.fillStyle = COLORS.textMuted;
+    context.font =
+      '700 25px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    context.fillText(copy.calendarMonth, 62, 179);
     context.fillStyle = COLORS.textSoft;
     context.font =
       '700 31px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    context.fillText(copy.titleValue, 74, 282);
+    context.fillText('‹', 596, 181);
+    context.fillText('›', 646, 181);
 
-    context.fillStyle = 'rgba(205, 229, 226, 0.18)';
-    context.fillRect(74, 322, 572, 2);
+    const calendarLeft = 72;
+    const calendarTop = 230;
+    const columnWidth = 82;
+    copy.calendarWeekdays.forEach((day, index) => {
+      context.fillStyle = COLORS.textMuted;
+      context.font =
+        '650 20px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+      context.textAlign = 'center';
+      context.fillText(day, calendarLeft + index * columnWidth, calendarTop);
+    });
+
+    const calendarCells = [
+      ...Array<null>(HERO_CALENDAR.firstWeekdayIndex).fill(null),
+      ...Array.from(
+        { length: HERO_CALENDAR.dayCount },
+        (_, index) => index + 1,
+      ),
+    ];
+    calendarCells.forEach((date, index) => {
+      if (date === null) return;
+      const column = index % 7;
+      const row = Math.floor(index / 7);
+      const x = calendarLeft + column * columnWidth;
+      const y = calendarTop + 52 + row * 52;
+      if (date === HERO_CALENDAR.selectedDate) {
+        context.beginPath();
+        context.arc(x, y - 9, 24, 0, Math.PI * 2);
+        context.fillStyle = COLORS.accent;
+        context.fill();
+      } else if (date === HERO_CALENDAR.todayDate) {
+        context.beginPath();
+        context.arc(x, y - 9, 23, 0, Math.PI * 2);
+        context.strokeStyle = 'rgba(45, 212, 199, 0.65)';
+        context.lineWidth = 2;
+        context.stroke();
+      }
+      context.fillStyle =
+        date === HERO_CALENDAR.selectedDate ? COLORS.ink : COLORS.textSoft;
+      context.font =
+        '650 23px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+      context.textAlign = 'center';
+      context.fillText(String(date), x, y);
+    });
+    context.textAlign = 'start';
+
+    context.fillStyle = COLORS.textMuted;
+    context.font =
+      '700 21px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    context.fillText(copy.deadlineLabel, 48, 568);
+    roundedRect(context, 48, 590, 624, 98, 20, '#203236', COLORS.line);
+    drawCalendarIcon(context, 86, 640, 36, COLORS.textSoft);
     context.fillStyle = COLORS.textSoft;
     context.font =
-      '540 25px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-    const words = copy.contentValue.split(' ');
-    let line = '';
-    let lineY = 378;
-    words.forEach((word) => {
-      const nextLine = `${line}${word} `;
-      if (context.measureText(nextLine).width > 540 && line) {
-        context.fillText(line.trim(), 74, lineY);
-        line = `${word} `;
-        lineY += 42;
-      } else {
-        line = nextLine;
-      }
-    });
-    context.fillText(line.trim(), 74, lineY);
+      '650 25px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    context.fillText(copy.dueDate, 122, 649);
+    context.textAlign = 'right';
+    context.fillText(copy.dueTime, 640, 649);
+    context.textAlign = 'start';
 
-    roundedRect(context, 386, 864, 286, 106, 53, COLORS.accent);
+    context.fillStyle = COLORS.textMuted;
     context.font =
-      '760 28px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+      '700 21px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    context.fillText(copy.reminderLabel, 48, 748);
+    roundedRect(context, 48, 770, 624, 98, 20, '#203236', COLORS.line);
+    drawBellIcon(context, 86, 820, 36, COLORS.textSoft);
+    context.fillStyle = COLORS.textSoft;
+    context.font =
+      '650 25px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    context.fillText(copy.reminderValue, 122, 829);
+
+    roundedRect(context, 430, 910, 242, 82, 41, COLORS.accent);
+    context.font =
+      '760 26px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
     drawCenteredIconLabel(
       context,
       copy.save,
-      529,
-      917,
-      27,
-      16,
+      551,
+      951,
+      24,
+      14,
       COLORS.ink,
       drawCenteredCheckmark,
     );
