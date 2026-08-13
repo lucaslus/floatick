@@ -27,6 +27,7 @@ const featureRequestUrl =
   description={copy.meta.description}
   canonicalPath={copy.meta.canonicalPath}
   alternatePath={copy.meta.alternatePath}
+  softwareVersion={copy.updates.version.replace(/^v/, '')}
   faqItems={copy.faq.items}
 >
   <header class="site-header">

@@ -82,6 +82,22 @@ export const changelogCopy: Record<Locale, ChangelogCopy> = {
 export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
   en: [
     {
+      version: 'v0.3.4',
+      date: 'August 13, 2026',
+      dateTime: '2026-08-13',
+      title: 'Focused todos, deadlines, and reminders',
+      summary:
+        'This release adds a clear Doing state and a lightweight deadline workflow that keeps active and overdue tasks visible without system notification noise.',
+      highlights: [
+        'Move tasks through Todo, Doing, and Done, and filter the list to active work.',
+        'Set or edit deadlines from the todo editor or directly from the list.',
+        'Choose advance reminders and receive compact native in-app alerts when they are due.',
+        'Keep overdue work visible and preserve deadline delivery state in local storage.',
+      ],
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.4',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.3...v0.3.4',
+    },
+    {
       version: 'v0.3.3',
       date: 'August 5, 2026',
       dateTime: '2026-08-05',
@@ -175,6 +191,22 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
     },
   ],
   zh: [
+    {
+      version: 'v0.3.4',
+      date: '2026 年 8 月 13 日',
+      dateTime: '2026-08-13',
+      title: '聚焦进行中的 Todo、DDL 与提醒',
+      summary:
+        '这个版本新增清晰的 Doing 状态和轻量 DDL 流程，让进行中与已逾期的任务保持可见，同时避免系统通知带来的打扰。',
+      highlights: [
+        '让任务在 Todo、Doing 与 Done 之间流转，并只筛选正在推进的工作。',
+        '在 Todo 编辑器或列表中直接设置和修改 DDL。',
+        '选择提前提醒，并在到期时收到紧凑的原生应用内提醒。',
+        '持续标记逾期任务，并在本地保存提醒送达状态。',
+      ],
+      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.3.4',
+      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.3...v0.3.4',
+    },
     {
       version: 'v0.3.3',
       date: '2026 年 8 月 5 日',
