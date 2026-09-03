@@ -6,13 +6,13 @@ import {
   Pause,
   Clock,
   Copy,
-  MoreHorizontal,
-  Edit2,
+  DotsThree,
+  PencilSimple,
   Archive,
-  Undo,
-  Trash2,
+  ArrowUUpLeft,
+  Trash,
   Tag,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import type { TodoItem } from "@/types";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useTagStore } from "@/stores/useTagStore";
@@ -82,7 +82,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                 : "border-[#EEF2F1]/[0.28] hover:border-[#22B8A7] bg-transparent"
             }`}
           >
-            {isCompleted && <Check className="w-[15px] h-[15px] stroke-[3]" />}
+            {isCompleted && <Check size={14} weight="bold" />}
           </button>
         </div>
 
@@ -123,9 +123,9 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
               }`}
             >
               {isDoing ? (
-                <Pause className="w-4 h-4 fill-current" />
+                <Pause size={16} weight="fill" />
               ) : (
-                <Play className="w-4 h-4 fill-current" />
+                <Play size={16} weight="fill" />
               )}
             </button>
           )}
@@ -142,7 +142,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                   : "text-[#EEF2F1]/62 hover:text-[#EEF2F1] hover:bg-white/[0.055]"
               }`}
             >
-              <Clock className="w-4 h-4" />
+              <Clock size={16} weight={todo.dueAt ? "fill" : "regular"} />
             </button>
           )}
 
@@ -154,9 +154,9 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
             className="w-7 h-7 rounded-md flex items-center justify-center text-[#EEF2F1]/62 hover:text-[#EEF2F1] hover:bg-white/[0.055] tactile-btn cursor-pointer"
           >
             {copied ? (
-              <Check className="w-4 h-4 text-[#22B8A7] stroke-[2.5]" />
+              <Check size={16} weight="bold" className="text-[#22B8A7]" />
             ) : (
-              <Copy className="w-4 h-4" />
+              <Copy size={16} />
             )}
           </button>
 
@@ -171,7 +171,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
               title={t("moreActions")}
               className="w-7 h-7 rounded-md flex items-center justify-center text-[#EEF2F1]/62 hover:text-[#EEF2F1] hover:bg-white/[0.055] tactile-btn cursor-pointer"
             >
-              <MoreHorizontal className="w-4 h-4" />
+              <DotsThree size={20} weight="bold" />
             </button>
 
             {showMenu && (
@@ -193,7 +193,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                     }}
                     className="w-full px-3 py-1.5 flex items-center space-x-2 text-[#EEF2F1] hover:bg-[#22B8A7]/15 hover:text-[#22B8A7]"
                   >
-                    <Edit2 className="w-3.5 h-3.5" />
+                    <PencilSimple size={14} />
                     <span>{t("edit")}</span>
                   </button>
 
@@ -207,7 +207,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                       }}
                       className="w-full px-3 py-1.5 flex items-center space-x-2 text-[#EEF2F1] hover:bg-[#22B8A7]/15 hover:text-[#22B8A7]"
                     >
-                      <Undo className="w-3.5 h-3.5" />
+                      <ArrowUUpLeft size={14} weight="bold" />
                       <span>{t("restore")}</span>
                     </button>
                   ) : (
@@ -220,7 +220,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                       }}
                       className="w-full px-3 py-1.5 flex items-center space-x-2 text-[#EEF2F1] hover:bg-amber-500/15 hover:text-amber-400"
                     >
-                      <Archive className="w-3.5 h-3.5" />
+                      <Archive size={14} />
                       <span>{t("archive")}</span>
                     </button>
                   )}
@@ -234,7 +234,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                     }}
                     className="w-full px-3 py-1.5 flex items-center space-x-2 text-red-400 hover:bg-red-500/15 hover:text-red-300"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash size={14} />
                     <span>{t("delete")}</span>
                   </button>
                 </div>
@@ -307,7 +307,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                   : "text-[#EEF2F1]/35 hover:text-[#EEF2F1]/80 hover:bg-white/[0.06]"
               }`}
             >
-              <Tag className="w-3 h-3" />
+              <Tag size={13} weight={assignedTags.length > 0 ? "fill" : "regular"} />
             </button>
           )}
         </div>

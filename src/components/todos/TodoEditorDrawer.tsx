@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   X,
-  Tag as TagIcon,
-  Calendar,
+  Tag,
+  CalendarBlank,
   Check,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useTagStore } from "@/stores/useTagStore";
 import { TodoDeadlinePicker } from "./TodoDeadlinePicker";
@@ -146,7 +146,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
             title={t("cancel")}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[#EEF2F1]/58 hover:text-[#EEF2F1] hover:bg-white/[0.06] transition-colors tactile-btn cursor-pointer"
           >
-            <X className="w-[18px] h-[18px]" />
+            <X size={18} weight="bold" />
           </button>
         </div>
 
@@ -168,7 +168,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                       : "text-[#EEF2F1]/56 hover:text-[#EEF2F1] hover:bg-white/[0.06]"
                   }`}
                 >
-                  <TagIcon className="w-4 h-4" />
+                  <Tag size={16} weight={selectedTagIds.length > 0 ? "fill" : "regular"} />
                 </button>
 
                 {/* Tag Dropdown Popover */}
@@ -206,7 +206,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                                 </span>
                               </div>
                               {isSelected && (
-                                <Check className="w-3.5 h-3.5 text-[#22B8A7] shrink-0" />
+                                <Check size={14} weight="bold" className="text-[#22B8A7] shrink-0" />
                               )}
                             </button>
                           );
@@ -257,7 +257,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                       : "text-[#EEF2F1]/56 hover:text-[#EEF2F1] hover:bg-white/[0.06]"
                   }`}
                 >
-                  <Calendar className="w-4 h-4" />
+                  <CalendarBlank size={16} weight={dueAt ? "fill" : "regular"} />
                 </button>
 
                 {/* Deadline Chip */}
@@ -272,7 +272,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                       }}
                       className="hover:text-white ml-0.5 cursor-pointer"
                     >
-                      <X className="w-3 h-3" />
+                      <X size={12} weight="bold" />
                     </button>
                   </div>
                 )}
@@ -369,7 +369,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
             disabled={!canSave}
             className="px-4.5 py-1.5 rounded-lg bg-[#22B8A7] hover:bg-[#1DB3A8] text-[#151B1E] font-semibold text-xs flex items-center space-x-1.5 transition-colors tactile-btn cursor-pointer shadow-xs disabled:opacity-40 disabled:pointer-events-none"
           >
-            <Check className="w-4 h-4 stroke-[2.5]" />
+            <Check size={16} weight="bold" />
             <span>
               {isCreate ? t("createTodoAction") : t("saveChangesAction")}
             </span>

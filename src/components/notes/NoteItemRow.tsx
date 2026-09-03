@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Pin, Archive, Trash2 } from "lucide-react";
+import { PushPin, Archive, Trash } from "@phosphor-icons/react";
 import type { NoteItem } from "@/types";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { useTagStore } from "@/stores/useTagStore";
@@ -35,7 +35,7 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
       {/* Top row: Title & Actions */}
       <div className="flex items-center justify-between space-x-2">
         <h4 className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate flex items-center space-x-1.5 tracking-tight">
-          {isPinned && <Pin className="w-3 h-3 text-teal-600 dark:text-teal-400 fill-current shrink-0" />}
+          {isPinned && <PushPin size={12} weight="fill" className="text-[#22B8A7] shrink-0" />}
           <span>{note.title || t("newNote")}</span>
         </h4>
 
@@ -50,11 +50,11 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
             title={isPinned ? t("unpin") : t("pin")}
             className={`w-6 h-6 rounded flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
               isPinned
-                ? "text-teal-600 dark:text-teal-400 bg-teal-500/15"
+                ? "text-[#22B8A7] bg-[#22B8A7]/15"
                 : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
             }`}
           >
-            <Pin className="w-3 h-3" />
+            <PushPin size={14} weight={isPinned ? "fill" : "regular"} />
           </button>
           <button
             type="button"
@@ -62,7 +62,7 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
             title={isArchived ? t("restore") : t("archive")}
             className="w-6 h-6 rounded flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 tactile-btn cursor-pointer"
           >
-            <Archive className="w-3 h-3" />
+            <Archive size={14} weight={isArchived ? "fill" : "regular"} />
           </button>
           <button
             type="button"
@@ -70,7 +70,7 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
             title={t("delete")}
             className="w-6 h-6 rounded flex items-center justify-center text-zinc-400 hover:text-red-500 tactile-btn cursor-pointer"
           >
-            <Trash2 className="w-3 h-3" />
+            <Trash size={14} />
           </button>
         </div>
       </div>

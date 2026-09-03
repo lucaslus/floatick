@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Bell, Check, Trash2 } from "lucide-react";
+import {
+  X,
+  CaretLeft,
+  CaretRight,
+  CalendarBlank,
+  Bell,
+  Check,
+  Trash,
+} from "@phosphor-icons/react";
 import {
   format,
   addMonths,
@@ -97,7 +105,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
             onClick={onClose}
             className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors mui-ripple"
           >
-            <X className="w-3.5 h-3.5" />
+            <X size={15} weight="bold" />
           </button>
         </div>
 
@@ -112,14 +120,14 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
               onClick={handlePrevMonth}
               className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors mui-ripple"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <CaretLeft size={16} weight="bold" />
             </button>
             <button
               type="button"
               onClick={handleNextMonth}
               className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors mui-ripple"
             >
-              <ChevronRight className="w-4 h-4" />
+              <CaretRight size={16} weight="bold" />
             </button>
           </div>
         </div>
@@ -165,7 +173,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
         <div className="mt-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2.5">
           <div className="flex items-center justify-between bg-black/[0.03] dark:bg-black/25 p-2 rounded-xl border border-black/[0.04] dark:border-white/[0.06]">
             <div className="flex items-center space-x-2 text-xs">
-              <CalendarIcon className="w-3.5 h-3.5 text-teal-600 dark:text-[#22B8A7]" />
+              <CalendarBlank size={15} weight="fill" className="text-[#22B8A7]" />
               <span className="font-medium">
                 {format(selectedDay, t("dateFormatMonthDay"), { locale: dateLocale })}
               </span>
@@ -181,7 +189,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
           {/* Reminder Selection */}
           <div className="flex items-center justify-between bg-black/[0.03] dark:bg-black/25 p-2 rounded-xl border border-black/[0.04] dark:border-white/[0.06] text-xs">
             <div className="flex items-center space-x-2">
-              <Bell className="w-3.5 h-3.5 text-teal-600 dark:text-[#22B8A7]" />
+              <Bell size={15} weight="fill" className="text-[#22B8A7]" />
               <span className="text-zinc-500 dark:text-[#8E9599] text-[11px]">{t("reminder")}</span>
             </div>
             <select
@@ -206,7 +214,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
               onClick={handleClear}
               className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center space-x-1 cursor-pointer mui-ripple px-2 py-1 rounded-lg"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash size={14} />
               <span>{t("clearDeadline")}</span>
             </button>
           ) : (
@@ -218,7 +226,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
             onClick={handleSave}
             className="px-5 py-2 rounded-full bg-teal-600 hover:bg-teal-700 dark:bg-[#22B8A7] dark:hover:bg-[#1CA394] text-white font-medium text-xs flex items-center space-x-1.5 shadow-md mui-ripple cursor-pointer"
           >
-            <Check className="w-3.5 h-3.5 stroke-[3]" />
+            <Check size={14} weight="bold" />
             <span>{t("save")}</span>
           </button>
         </div>

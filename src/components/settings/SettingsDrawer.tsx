@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { X, Sun, Moon, Monitor, Globe, LogOut, Folder } from "lucide-react";
+import {
+  X,
+  Sun,
+  Moon,
+  Desktop,
+  FolderSimple,
+  SignOut,
+  Globe,
+} from "@phosphor-icons/react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { api } from "@/lib/api";
 import type { ThemePreference, LanguagePreference } from "@/types";
@@ -64,7 +72,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             onClick={onClose}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08] cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X size={15} weight="bold" />
           </button>
         </div>
 
@@ -77,7 +85,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             </span>
             <div className="grid grid-cols-3 gap-1.5">
               {[
-                { id: "system" as ThemePreference, label: t("themeSystemTooltip"), icon: Monitor },
+                { id: "system" as ThemePreference, label: t("themeSystemTooltip"), icon: Desktop },
                 { id: "light" as ThemePreference, label: t("themeLightTooltip"), icon: Sun },
                 { id: "dark" as ThemePreference, label: t("themeDarkTooltip"), icon: Moon },
               ].map(({ id, label, icon: Icon }) => (
@@ -91,7 +99,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       : "bg-white dark:bg-[#181E22] border-black/[0.04] dark:border-white/[0.06] text-zinc-600 dark:text-zinc-400 hover:border-black/[0.1] dark:hover:border-white/[0.1]"
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon size={16} weight={settings.theme === id ? "fill" : "regular"} />
                   <span className="text-[10px] truncate max-w-[70px]">{label}</span>
                 </button>
               ))}
@@ -119,7 +127,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       : "bg-white dark:bg-[#181E22] border-black/[0.04] dark:border-white/[0.06] text-zinc-600 dark:text-zinc-400 hover:border-black/[0.1] dark:hover:border-white/[0.1]"
                   }`}
                 >
-                  <Globe className="w-3 h-3 shrink-0" />
+                  <Globe size={13} weight={settings.language === id ? "fill" : "regular"} className="shrink-0" />
                   <span className="text-[10px] truncate max-w-[65px]">{label}</span>
                 </button>
               ))}
@@ -203,7 +211,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               {t("workingDirectorySectionTitle")}
             </span>
             <div className="p-2.5 bg-white dark:bg-[#181E22] rounded-xl border border-black/[0.04] dark:border-white/[0.06] flex items-center space-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-              <Folder className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+              <FolderSimple size={15} weight="fill" className="text-teal-600 dark:text-teal-400" />
               <span className="font-mono">~/.floatick</span>
             </div>
           </div>
@@ -215,7 +223,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               onClick={handleQuit}
               className="w-full p-2.5 rounded-xl border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/40 font-medium flex items-center justify-center space-x-1.5 transition-colors tactile-btn cursor-pointer"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <SignOut size={15} weight="bold" />
               <span>{t("quit")}</span>
             </button>
           </div>

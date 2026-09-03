@@ -3,12 +3,12 @@ import { useTranslation } from "react-i18next";
 import {
   X,
   Check,
-  ChevronLeft,
-  Layers,
-  Edit2,
-  Trash2,
+  CaretLeft,
+  Stack,
+  PencilSimple,
+  Trash,
   Plus,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useTagStore } from "@/stores/useTagStore";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useNoteStore } from "@/stores/useNoteStore";
@@ -188,7 +188,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                 title={returnMode === "assignment" ? t("assignTagsTitle") || "分配标签" : t("filterByTagTitle")}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[#EEF2F1]/58 hover:text-[#EEF2F1] hover:bg-white/[0.06] transition-colors tactile-btn cursor-pointer -ml-1.5"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <CaretLeft size={16} weight="bold" />
               </button>
             )}
             <span className="text-[14px] font-semibold text-[#EEF2F1] tracking-tight truncate">
@@ -215,7 +215,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
               onClick={onClose}
               className="w-7 h-7 rounded-lg flex items-center justify-center text-[#EEF2F1]/58 hover:text-[#EEF2F1] hover:bg-white/[0.06] transition-colors tactile-btn cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X size={16} weight="bold" />
             </button>
           </div>
         </div>
@@ -234,13 +234,13 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <Layers className="w-4 h-4 opacity-50" />
+                <Stack size={17} weight={selectedTagIds.length === 0 ? "fill" : "regular"} className="opacity-75" />
                 <span className="text-[13px] font-medium tracking-tight">
                   {t("allTagsFilterLabel")}
                 </span>
               </div>
               {selectedTagIds.length === 0 && (
-                <Check className="w-4 h-4 text-[#22B8A7] stroke-[2.5]" />
+                <Check size={16} weight="bold" className="text-[#22B8A7]" />
               )}
             </button>
 
@@ -279,7 +279,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                         {count}
                       </span>
                       {isSelected && (
-                        <Check className="w-4 h-4 text-[#22B8A7] stroke-[2.5]" />
+                        <Check size={16} weight="bold" className="text-[#22B8A7]" />
                       )}
                     </div>
                   </button>
@@ -326,7 +326,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                         {count}
                       </span>
                       {isAssigned && (
-                        <Check className="w-4 h-4 text-[#22B8A7] stroke-[2.5]" />
+                        <Check size={16} weight="bold" className="text-[#22B8A7]" />
                       )}
                     </div>
                   </button>
@@ -361,7 +361,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                       onClick={handleCancelEdit}
                       className="w-6 h-6 rounded-md flex items-center justify-center text-[#EEF2F1]/50 hover:text-[#EEF2F1] cursor-pointer"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X size={13} weight="bold" />
                     </button>
                   )}
                   <button
@@ -370,9 +370,9 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                     className="w-6.5 h-6.5 rounded-lg flex items-center justify-center bg-[#22B8A7] text-[#151B1E] font-semibold tactile-btn cursor-pointer disabled:opacity-30 disabled:pointer-events-none shadow-xs"
                   >
                     {editingTagId ? (
-                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <Check size={14} weight="bold" />
                     ) : (
-                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <Plus size={14} weight="bold" />
                     )}
                   </button>
                 </div>
@@ -461,14 +461,14 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                               onClick={() => setConfirmDeleteTagId(null)}
                               className="w-6 h-6 rounded flex items-center justify-center text-[#EEF2F1]/60 hover:text-[#EEF2F1] cursor-pointer"
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <X size={13} weight="bold" />
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDelete(tag.id)}
                               className="w-6 h-6 rounded flex items-center justify-center text-[#E15F5F] hover:bg-[#E15F5F]/15 cursor-pointer"
                             >
-                              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                              <Check size={14} weight="bold" />
                             </button>
                           </div>
                         ) : (
@@ -479,7 +479,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                               title={t("edit")}
                               className="w-6.5 h-6.5 rounded flex items-center justify-center text-[#EEF2F1]/50 hover:text-[#EEF2F1] hover:bg-white/[0.06] cursor-pointer"
                             >
-                              <Edit2 className="w-3.5 h-3.5" />
+                              <PencilSimple size={14} />
                             </button>
                             <button
                               type="button"
@@ -487,7 +487,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                               title={t("delete")}
                               className="w-6.5 h-6.5 rounded flex items-center justify-center text-[#EEF2F1]/50 hover:text-[#E15F5F] hover:bg-white/[0.06] cursor-pointer"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash size={14} />
                             </button>
                           </div>
                         )}

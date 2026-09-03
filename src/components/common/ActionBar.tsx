@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, X, Tag, Plus, Clock } from "lucide-react";
+import { MagnifyingGlass, X, Tag, Plus, Clock } from "@phosphor-icons/react";
 import { useTranslation } from "react-i18next";
 
 interface ActionBarProps {
@@ -40,7 +40,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           placeholder={placeholder || t("search")}
           className="w-full h-full pl-9 pr-12 text-[13px] rounded-xl bg-[#1D2529] border border-white/[0.08] text-[#EEF2F1] placeholder:text-[#EEF2F1]/58 focus:outline-none focus:border-[#22B8A7] transition-colors"
         />
-        <Search className="w-4 h-4 absolute left-3 text-[#EEF2F1]/58 pointer-events-none" />
+        <MagnifyingGlass size={16} weight="bold" className="absolute left-3 text-[#EEF2F1]/58 pointer-events-none" />
 
         {/* Clear Button */}
         {query && (
@@ -50,7 +50,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             title={t("clearSearch")}
             className="w-5 h-5 absolute right-3 rounded-full flex items-center justify-center text-[#EEF2F1]/58 hover:text-[#EEF2F1] tactile-btn cursor-pointer"
           >
-            <X className="w-3.5 h-3.5" />
+            <X size={13} weight="bold" />
           </button>
         )}
       </div>
@@ -67,7 +67,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
               : "bg-[#1D2529] border-white/[0.08] text-[#EEF2F1]/62 hover:text-[#EEF2F1] hover:bg-white/[0.055]"
           }`}
         >
-          <Clock className="w-[17px] h-[17px]" />
+          <Clock size={19} weight={isDoingSelected ? "fill" : "regular"} />
         </button>
       )}
 
@@ -82,7 +82,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             : "bg-[#1D2529] border-white/[0.08] text-[#EEF2F1]/62 hover:text-[#EEF2F1] hover:bg-white/[0.055]"
         }`}
       >
-        <Tag className="w-[17px] h-[17px]" />
+        <Tag size={19} weight={selectedTagCount > 0 ? "fill" : "regular"} />
         {selectedTagCount > 0 && (
           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#22B8A7] text-zinc-950 text-[9px] font-bold flex items-center justify-center">
             {selectedTagCount}
@@ -97,7 +97,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         title={addTooltip || t("createTodoAction")}
         className="w-[42px] h-[42px] shrink-0 rounded-xl flex items-center justify-center bg-[#22B8A7] hover:bg-[#1DB3A8] text-[#151B1E] font-semibold tactile-btn cursor-pointer shadow-xs"
       >
-        <Plus className="w-5 h-5 stroke-[2.4]" />
+        <Plus size={20} weight="bold" />
       </button>
     </div>
   );

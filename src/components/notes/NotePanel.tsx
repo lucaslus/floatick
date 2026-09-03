@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { FileText, Pin } from "lucide-react";
+import { Note, PushPin } from "@phosphor-icons/react";
 import type { NoteItem } from "@/types";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { useTagStore } from "@/stores/useTagStore";
@@ -109,7 +109,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
       <div className="flex-1 overflow-y-auto px-4 pb-3 space-y-3 smooth-scroll">
         {filteredNotes.length === 0 ? (
           <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-2">
-            <FileText className="w-9 h-9 text-teal-500/40" />
+            <Note size={40} weight="duotone" className="text-[#22B8A7]/40" />
             <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
               {t("noNotes")}
             </p>
@@ -122,8 +122,8 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
             {/* Pinned Section */}
             {pinnedNotes.length > 0 && (
               <div className="space-y-0.5">
-                <div className="px-2.5 pt-1 text-[11px] font-medium text-teal-600 dark:text-teal-400 flex items-center space-x-1">
-                  <Pin className="w-3 h-3 fill-current" />
+                <div className="px-2.5 pt-1 text-[11px] font-medium text-[#22B8A7] flex items-center space-x-1">
+                  <PushPin size={12} weight="fill" />
                   <span>{t("pinnedNotes")}</span>
                 </div>
                 <div className="space-y-0.5">

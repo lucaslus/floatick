@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   X,
-  Pin,
+  PushPin,
   Archive,
-  Trash2,
+  Trash,
   Check,
-  Tag as TagIcon,
-} from "lucide-react";
+  Tag,
+} from "@phosphor-icons/react";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { useTagStore } from "@/stores/useTagStore";
 import { FloatickMarkdown } from "@/components/common/FloatickMarkdown";
@@ -139,7 +139,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                     note.pinnedAt ? "text-[#22B8A7] bg-[#22B8A7]/15" : "text-[#EEF2F1]/58 hover:text-[#EEF2F1]"
                   }`}
                 >
-                  <Pin className="w-3.5 h-3.5" />
+                  <PushPin size={15} weight={note.pinnedAt ? "fill" : "regular"} />
                 </button>
                 <button
                   type="button"
@@ -149,7 +149,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                     note.archivedAt ? "text-amber-400 bg-amber-500/15" : "text-[#EEF2F1]/58 hover:text-[#EEF2F1]"
                   }`}
                 >
-                  <Archive className="w-3.5 h-3.5" />
+                  <Archive size={15} weight={note.archivedAt ? "fill" : "regular"} />
                 </button>
                 <button
                   type="button"
@@ -160,7 +160,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   title={t("delete")}
                   className="w-6 h-6 rounded flex items-center justify-center text-[#EEF2F1]/58 hover:text-red-400 tactile-btn cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash size={15} />
                 </button>
               </div>
             )}
@@ -172,7 +172,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
             title={t("save")}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[#EEF2F1]/58 hover:text-[#EEF2F1] hover:bg-white/[0.06] transition-colors tactile-btn cursor-pointer"
           >
-            <X className="w-[18px] h-[18px]" />
+            <X size={18} weight="bold" />
           </button>
         </div>
 
@@ -193,7 +193,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                       : "text-[#EEF2F1]/56 hover:text-[#EEF2F1] hover:bg-white/[0.06]"
                   }`}
                 >
-                  <TagIcon className="w-4 h-4" />
+                  <Tag size={16} weight={selectedTagIds.length > 0 ? "fill" : "regular"} />
                 </button>
 
                 {showTagMenu && (
@@ -230,7 +230,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                                 </span>
                               </div>
                               {isSelected && (
-                                <Check className="w-3.5 h-3.5 text-[#22B8A7] shrink-0" />
+                                <Check size={14} weight="bold" className="text-[#22B8A7] shrink-0" />
                               )}
                             </button>
                           );
@@ -356,7 +356,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
             disabled={!canSave}
             className="px-4.5 py-1.5 rounded-lg bg-[#22B8A7] hover:bg-[#1DB3A8] text-[#151B1E] font-semibold text-xs flex items-center space-x-1.5 transition-colors tactile-btn cursor-pointer shadow-xs disabled:opacity-40 disabled:pointer-events-none"
           >
-            <Check className="w-4 h-4 stroke-[2.5]" />
+            <Check size={16} weight="bold" />
             <span>{t("save")}</span>
           </button>
         </div>

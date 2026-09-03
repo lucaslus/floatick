@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Archive, Settings, ChevronUp } from "lucide-react";
+import { Archive, GearSix, CaretUp } from "@phosphor-icons/react";
 import { FloatickBrandMark } from "@/components/common/FloatickBrandMark";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useNoteStore } from "@/stores/useNoteStore";
@@ -75,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
               : "hover:text-[#EEF2F1] hover:bg-white/[0.055]"
           }`}
         >
-          <Archive className="w-[17px] h-[17px]" />
+          <Archive size={18} weight={isArchived ? "fill" : "regular"} />
         </button>
 
         {/* Settings */}
@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
           title={t("settings")}
           className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-[#EEF2F1] hover:bg-white/[0.055] tactile-btn cursor-pointer"
         >
-          <Settings className="w-[17px] h-[17px]" />
+          <GearSix size={18} />
         </button>
 
         {/* Collapse */}
@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
           title={t("escToClose")}
           className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-[#EEF2F1] hover:bg-white/[0.055] tactile-btn cursor-pointer"
         >
-          <ChevronUp className="w-[18px] h-[18px]" />
+          <CaretUp size={18} weight="bold" />
         </button>
       </div>
     </header>
