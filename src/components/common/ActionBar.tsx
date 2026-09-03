@@ -31,16 +31,16 @@ export const ActionBar: React.FC<ActionBarProps> = ({
 
   return (
     <div className="px-5 mb-3 flex items-center space-x-2 select-none">
-      {/* 42px Search Bar */}
+      {/* 42px Search Bar - Borderless & Clean */}
       <div className="flex-1 h-[42px] relative flex items-center">
         <input
           type="text"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder={placeholder || t("search")}
-          className="w-full h-full pl-9 pr-12 text-[13px] rounded-xl bg-[#1D2529] border border-white/[0.08] text-[#EEF2F1] placeholder:text-[#EEF2F1]/58 focus:outline-none focus:border-[#22B8A7] transition-colors"
+          className="w-full h-full pl-9 pr-12 text-[13px] rounded-[8px] bg-[#1D2529] text-[#EEF2F1] placeholder:text-[#EEF2F1]/50 focus:outline-none focus:bg-[#222B30] transition-colors"
         />
-        <MagnifyingGlass size={16} weight="bold" className="absolute left-3 text-[#EEF2F1]/58 pointer-events-none" />
+        <MagnifyingGlass size={16} weight="bold" className="absolute left-3 text-[#EEF2F1]/50 pointer-events-none" />
 
         {/* Clear Button */}
         {query && (
@@ -48,38 +48,38 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             type="button"
             onClick={() => onQueryChange("")}
             title={t("clearSearch")}
-            className="w-5 h-5 absolute right-3 rounded-full flex items-center justify-center text-[#EEF2F1]/58 hover:text-[#EEF2F1] tactile-btn cursor-pointer"
+            className="w-5 h-5 absolute right-3 rounded-full flex items-center justify-center text-[#EEF2F1]/50 hover:text-[#EEF2F1] tactile-btn cursor-pointer"
           >
             <X size={13} weight="bold" />
           </button>
         )}
       </div>
 
-      {/* Doing Filter Button (42x42) */}
+      {/* Doing Filter Button (42x42) - Borderless */}
       {showDoingFilter && onToggleDoingFilter && (
         <button
           type="button"
           onClick={onToggleDoingFilter}
           title={isDoingSelected ? t("clearDoingFilterTooltip") : t("filterDoingTooltip")}
-          className={`w-[42px] h-[42px] shrink-0 rounded-xl flex items-center justify-center border transition-colors tactile-btn cursor-pointer ${
+          className={`w-[42px] h-[42px] shrink-0 rounded-[8px] flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
             isDoingSelected
-              ? "bg-[#22B8A7]/[0.13] border-[#22B8A7]/[0.46] text-[#22B8A7]"
-              : "bg-[#1D2529] border-white/[0.08] text-[#EEF2F1]/62 hover:text-[#EEF2F1] hover:bg-white/[0.055]"
+              ? "bg-[#22B8A7]/[0.18] text-[#22B8A7]"
+              : "bg-[#1D2529] text-[#EEF2F1]/62 hover:text-[#EEF2F1] hover:bg-[#252F34]"
           }`}
         >
           <Clock size={19} weight={isDoingSelected ? "fill" : "regular"} />
         </button>
       )}
 
-      {/* Tag Filter Button (42x42) */}
+      {/* Tag Filter Button (42x42) - Borderless */}
       <button
         type="button"
         onClick={onOpenTagFilter}
         title={t("filterByTagTitle")}
-        className={`w-[42px] h-[42px] shrink-0 rounded-xl flex items-center justify-center border transition-colors relative tactile-btn cursor-pointer ${
+        className={`w-[42px] h-[42px] shrink-0 rounded-[8px] flex items-center justify-center transition-colors relative tactile-btn cursor-pointer ${
           selectedTagCount > 0
-            ? "bg-[#22B8A7]/[0.13] border-[#22B8A7]/[0.46] text-[#22B8A7]"
-            : "bg-[#1D2529] border-white/[0.08] text-[#EEF2F1]/62 hover:text-[#EEF2F1] hover:bg-white/[0.055]"
+            ? "bg-[#22B8A7]/[0.18] text-[#22B8A7]"
+            : "bg-[#1D2529] text-[#EEF2F1]/62 hover:text-[#EEF2F1] hover:bg-[#252F34]"
         }`}
       >
         <Tag size={19} weight={selectedTagCount > 0 ? "fill" : "regular"} />
@@ -90,12 +90,12 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         )}
       </button>
 
-      {/* Add Button (42x42) */}
+      {/* Add Button (42x42) - Borderless, Crisp 8px radius */}
       <button
         type="button"
         onClick={onAddNew}
         title={addTooltip || t("createTodoAction")}
-        className="w-[42px] h-[42px] shrink-0 rounded-xl flex items-center justify-center bg-[#22B8A7] hover:bg-[#1DB3A8] text-[#151B1E] font-semibold tactile-btn cursor-pointer shadow-xs"
+        className="w-[42px] h-[42px] shrink-0 rounded-[8px] flex items-center justify-center bg-[#22B8A7] hover:bg-[#1DB3A8] text-[#151B1E] font-semibold tactile-btn cursor-pointer"
       >
         <Plus size={20} weight="bold" />
       </button>

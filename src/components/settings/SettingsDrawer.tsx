@@ -93,10 +93,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   key={id}
                   type="button"
                   onClick={() => updateTheme(id)}
-                  className={`p-2 rounded-xl flex flex-col items-center space-y-1 border transition-all tactile-btn cursor-pointer ${
+                  className={`p-2 rounded-[8px] flex flex-col items-center space-y-1 transition-all tactile-btn cursor-pointer ${
                     settings.theme === id
-                      ? "bg-teal-500/15 border-teal-500/40 text-teal-600 dark:text-teal-400 font-medium"
-                      : "bg-white dark:bg-[#181E22] border-black/[0.04] dark:border-white/[0.06] text-zinc-600 dark:text-zinc-400 hover:border-black/[0.1] dark:hover:border-white/[0.1]"
+                      ? "bg-[#22B8A7]/15 text-[#22B8A7] font-medium"
+                      : "bg-white/[0.04] text-zinc-400 hover:text-[#EEF2F1] hover:bg-white/[0.07]"
                   }`}
                 >
                   <Icon size={16} weight={settings.theme === id ? "fill" : "regular"} />
@@ -121,10 +121,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   key={id}
                   type="button"
                   onClick={() => updateLanguage(id)}
-                  className={`p-1.5 rounded-xl flex items-center justify-center space-x-1 border transition-all tactile-btn cursor-pointer ${
+                  className={`p-1.5 rounded-[8px] flex items-center justify-center space-x-1 transition-all tactile-btn cursor-pointer ${
                     settings.language === id
-                      ? "bg-teal-500/15 border-teal-500/40 text-teal-600 dark:text-teal-400 font-medium"
-                      : "bg-white dark:bg-[#181E22] border-black/[0.04] dark:border-white/[0.06] text-zinc-600 dark:text-zinc-400 hover:border-black/[0.1] dark:hover:border-white/[0.1]"
+                      ? "bg-[#22B8A7]/15 text-[#22B8A7] font-medium"
+                      : "bg-white/[0.04] text-zinc-400 hover:text-[#EEF2F1] hover:bg-white/[0.07]"
                   }`}
                 >
                   <Globe size={13} weight={settings.language === id ? "fill" : "regular"} className="shrink-0" />
@@ -139,7 +139,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
               {t("windowSectionTitle")}
             </span>
-            <div className="bg-white dark:bg-[#181E22] rounded-xl border border-black/[0.04] dark:border-white/[0.06] divide-y divide-black/[0.04] dark:divide-white/[0.04]">
+            <div className="bg-white dark:bg-[#181E22] rounded-[8px] border border-black/[0.04] dark:border-white/[0.06] divide-y divide-black/[0.04] dark:divide-white/[0.04]">
               <div className="p-2.5 flex items-center justify-between">
                 <span className="text-zinc-700 dark:text-zinc-200 text-[11px] flex-1 mr-2 truncate">
                   {t("alwaysOnTopLabel")}
@@ -185,7 +185,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
               {t("startupSectionTitle")}
             </span>
-            <div className="bg-white dark:bg-[#181E22] rounded-xl border border-black/[0.04] dark:border-white/[0.06] p-2.5 flex items-center justify-between">
+            <div className="bg-white dark:bg-[#181E22] rounded-[8px] border border-black/[0.04] dark:border-white/[0.06] p-2.5 flex items-center justify-between">
               <span className="text-zinc-700 dark:text-zinc-200 text-[11px] flex-1 mr-2 truncate">
                 {t("openAtLoginLabel")}
               </span>
@@ -210,7 +210,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <span className="text-[11px] font-semibold text-zinc-400 dark:text-[#8E9599] uppercase tracking-wider block">
               {t("workingDirectorySectionTitle")}
             </span>
-            <div className="p-2.5 bg-white dark:bg-[#181E22] rounded-xl border border-black/[0.04] dark:border-white/[0.06] flex items-center space-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <div className="p-2.5 bg-white dark:bg-[#181E22] rounded-[8px] border border-black/[0.04] dark:border-white/[0.06] flex items-center space-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
               <FolderSimple size={15} weight="fill" className="text-teal-600 dark:text-teal-400" />
               <span className="font-mono">~/.floatick</span>
             </div>
@@ -221,7 +221,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <button
               type="button"
               onClick={handleQuit}
-              className="w-full p-2.5 rounded-xl border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/40 font-medium flex items-center justify-center space-x-1.5 transition-colors tactile-btn cursor-pointer"
+              className="w-full p-2.5 rounded-[8px] text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/25 hover:bg-red-100 dark:hover:bg-red-950/45 font-medium flex items-center justify-center space-x-1.5 transition-colors tactile-btn cursor-pointer"
             >
               <SignOut size={15} weight="bold" />
               <span>{t("quit")}</span>

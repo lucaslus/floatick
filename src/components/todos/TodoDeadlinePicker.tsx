@@ -95,7 +95,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-[336px] rounded-3xl bg-white dark:bg-[#1D2529] text-zinc-900 dark:text-[#EEF2F1] border border-black/[0.08] dark:border-white/[0.1] shadow-2xl overflow-hidden p-4.5 select-none transition-all">
+      <div className="w-[336px] rounded-[14px] bg-white dark:bg-[#1D2529] text-zinc-900 dark:text-[#EEF2F1] border border-black/[0.08] dark:border-white/[0.1] shadow-2xl overflow-hidden p-4.5 select-none transition-all">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.08]">
           <span className="text-xs font-semibold tracking-tight text-zinc-800 dark:text-[#EEF2F1]">
@@ -171,7 +171,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
 
         {/* Time & Deadline Input Section */}
         <div className="mt-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2.5">
-          <div className="flex items-center justify-between bg-black/[0.03] dark:bg-black/25 p-2 rounded-xl border border-black/[0.04] dark:border-white/[0.06]">
+          <div className="flex items-center justify-between bg-black/[0.03] dark:bg-black/25 p-2 rounded-[8px] border border-black/[0.04] dark:border-white/[0.06]">
             <div className="flex items-center space-x-2 text-xs">
               <CalendarBlank size={15} weight="fill" className="text-[#22B8A7]" />
               <span className="font-medium">
@@ -182,12 +182,12 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
               type="time"
               value={timeStr}
               onChange={(e) => setTimeStr(e.target.value)}
-              className="px-2 py-0.5 rounded-lg bg-white dark:bg-white/10 text-xs font-mono text-zinc-900 dark:text-white border border-black/[0.08] dark:border-white/10 outline-none focus:border-teal-500 dark:focus:border-[#22B8A7]"
+              className="px-2 py-0.5 rounded-[6px] bg-white dark:bg-white/10 text-xs font-mono text-zinc-900 dark:text-white border border-black/[0.08] dark:border-white/10 outline-none focus:border-teal-500 dark:focus:border-[#22B8A7]"
             />
           </div>
 
           {/* Reminder Selection */}
-          <div className="flex items-center justify-between bg-black/[0.03] dark:bg-black/25 p-2 rounded-xl border border-black/[0.04] dark:border-white/[0.06] text-xs">
+          <div className="flex items-center justify-between bg-black/[0.03] dark:bg-black/25 p-2 rounded-[8px] border border-black/[0.04] dark:border-white/[0.06] text-xs">
             <div className="flex items-center space-x-2">
               <Bell size={15} weight="fill" className="text-[#22B8A7]" />
               <span className="text-zinc-500 dark:text-[#8E9599] text-[11px]">{t("reminder")}</span>
@@ -212,7 +212,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
             <button
               type="button"
               onClick={handleClear}
-              className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center space-x-1 cursor-pointer mui-ripple px-2 py-1 rounded-lg"
+              className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center space-x-1 cursor-pointer mui-ripple px-2 py-1 rounded-[6px]"
             >
               <Trash size={14} />
               <span>{t("clearDeadline")}</span>
@@ -224,7 +224,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
           <button
             type="button"
             onClick={handleSave}
-            className="px-5 py-2 rounded-full bg-teal-600 hover:bg-teal-700 dark:bg-[#22B8A7] dark:hover:bg-[#1CA394] text-white font-medium text-xs flex items-center space-x-1.5 shadow-md mui-ripple cursor-pointer"
+            className="px-5 py-2 rounded-[8px] bg-teal-600 hover:bg-teal-700 dark:bg-[#22B8A7] dark:hover:bg-[#1CA394] text-white font-medium text-xs flex items-center space-x-1.5 shadow-md mui-ripple cursor-pointer"
           >
             <Check size={14} weight="bold" />
             <span>{t("save")}</span>

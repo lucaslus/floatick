@@ -95,8 +95,8 @@ export const App: React.FC = () => {
 
   return (
     <div className="w-full h-full p-2 flex flex-col items-center justify-center select-none bg-transparent font-sans">
-      {/* Original Floatick Panel Surface */}
-      <div className="w-full h-full flex flex-col rounded-[26px] overflow-hidden floatick-panel text-[#EEF2F1] relative">
+      {/* Refined Floatick Panel Surface */}
+      <div className="w-full h-full flex flex-col rounded-[14px] overflow-hidden floatick-panel text-[#EEF2F1] relative">
         {/* Panel Header */}
         <Header
           activeTab={activeTab}

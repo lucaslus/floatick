@@ -63,7 +63,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
 
   return (
     <div
-      className={`group relative pl-[7px] pr-[5px] py-2 my-[2px] rounded-[11px] transition-colors duration-150 select-none ${
+      className={`group relative pl-[7px] pr-[5px] py-2 my-[2px] rounded-[8px] transition-colors duration-150 select-none ${
         isDoing
           ? "bg-[#22B8A7]/[0.08] hover:bg-[#22B8A7]/[0.11]"
           : "hover:bg-white/[0.055]"
@@ -71,12 +71,12 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
     >
       {/* Main Row: Checkbox + Title + Hover Actions */}
       <div className="flex items-center">
-        {/* 21x21 Checkbox with r=7px, border=1.4px */}
+        {/* 21x21 Checkbox with r=5px, border=1.4px */}
         <div className="p-1 shrink-0">
           <button
             type="button"
             onClick={() => toggleComplete(todo.id)}
-            className={`w-[21px] h-[21px] rounded-[7px] flex items-center justify-center border-[1.4px] transition-all tactile-btn cursor-pointer ${
+            className={`w-[21px] h-[21px] rounded-[5px] flex items-center justify-center border-[1.4px] transition-all tactile-btn cursor-pointer ${
               isCompleted
                 ? "bg-[#22B8A7] border-[#22B8A7] text-white"
                 : "border-[#EEF2F1]/[0.28] hover:border-[#22B8A7] bg-transparent"
@@ -183,7 +183,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                     setShowMenu(false);
                   }}
                 />
-                <div className="absolute right-0 top-8 z-50 w-28 bg-[#1D2529] rounded-xl shadow-2xl border border-white/[0.08] py-1 text-xs animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute right-0 top-8 z-50 w-28 bg-[#1D2529] rounded-[8px] shadow-2xl border border-white/[0.08] py-1 text-xs animate-in fade-in zoom-in-95 duration-100">
                   <button
                     type="button"
                     onClick={(e) => {

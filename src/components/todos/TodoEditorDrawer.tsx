@@ -133,8 +133,8 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
         onClick={onClose}
       />
 
-      {/* FloatickEditorDrawerSurface (590px height, 22px radius, #202A2E dark surface) */}
-      <div className="absolute inset-x-0 bottom-0 z-50 h-[590px] rounded-t-[22px] bg-[#202A2E] text-[#EEF2F1] border-t border-white/[0.11] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200 sheet-slide-up select-none">
+      {/* FloatickEditorDrawerSurface (590px height, 14px radius, #202A2E dark surface) */}
+      <div className="absolute inset-x-0 bottom-0 z-50 h-[590px] rounded-t-[14px] bg-[#202A2E] text-[#EEF2F1] border-t border-white/[0.11] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200 sheet-slide-up select-none">
         {/* FloatickEditorDrawerHeader */}
         <div className="px-5 pt-3.5 pb-3 border-b border-white/[0.08] flex items-center justify-between shrink-0">
           <span className="text-[14.5px] font-semibold text-[#EEF2F1] tracking-tight">
@@ -178,7 +178,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                       className="fixed inset-0 z-30"
                       onClick={() => setShowTagMenu(false)}
                     />
-                    <div className="absolute left-0 top-9 z-40 w-48 bg-[#1D2529] rounded-xl shadow-2xl border border-white/[0.1] py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-56 overflow-y-auto smooth-scroll">
+                    <div className="absolute left-0 top-9 z-40 w-48 bg-[#1D2529] rounded-[8px] shadow-2xl border border-white/[0.1] py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-56 overflow-y-auto smooth-scroll">
                       <div className="px-3 py-1 text-[11px] font-medium text-[#EEF2F1]/50 uppercase tracking-wider">
                         {t("tags")}
                       </div>

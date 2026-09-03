@@ -26,10 +26,10 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
   return (
     <div
       onClick={() => onOpen(note)}
-      className={`group relative p-2.5 rounded-xl transition-colors border cursor-pointer select-none ${
+      className={`group relative p-2.5 rounded-[8px] transition-colors cursor-pointer select-none ${
         isPinned
-          ? "bg-teal-500/[0.06] border-teal-500/25"
-          : "bg-black/[0.02] dark:bg-white/[0.03] border-black/[0.04] dark:border-white/[0.05] hover:border-black/[0.08] dark:hover:border-white/[0.1]"
+          ? "bg-[#22B8A7]/[0.09] hover:bg-[#22B8A7]/[0.13]"
+          : "bg-white/[0.03] hover:bg-white/[0.055]"
       }`}
     >
       {/* Top row: Title & Actions */}

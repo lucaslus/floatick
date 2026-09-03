@@ -121,8 +121,8 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
         onClick={handleSave}
       />
 
-      {/* FloatickEditorDrawerSurface (590px height, 22px radius, #202A2E dark surface) */}
-      <div className="absolute inset-x-0 bottom-0 z-50 h-[590px] rounded-t-[22px] bg-[#202A2E] text-[#EEF2F1] border-t border-white/[0.11] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200 sheet-slide-up select-none">
+      {/* FloatickEditorDrawerSurface (590px height, 14px radius, #202A2E dark surface) */}
+      <div className="absolute inset-x-0 bottom-0 z-50 h-[590px] rounded-t-[14px] bg-[#202A2E] text-[#EEF2F1] border-t border-white/[0.11] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200 sheet-slide-up select-none">
         {/* Header */}
         <div className="px-5 pt-3.5 pb-3 border-b border-white/[0.08] flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2">

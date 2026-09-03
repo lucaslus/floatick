@@ -227,7 +227,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
             <button
               type="button"
               onClick={clearTagFilter}
-              className={`w-full h-11 px-3 rounded-xl flex items-center justify-between transition-colors tactile-btn cursor-pointer ${
+              className={`w-full h-11 px-3 rounded-[8px] flex items-center justify-between transition-colors tactile-btn cursor-pointer ${
                 selectedTagIds.length === 0
                   ? "bg-[#22B8A7]/[0.12] text-[#22B8A7]"
                   : "text-[#EEF2F1]/85 hover:bg-white/[0.055]"
@@ -258,7 +258,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                     key={tag.id}
                     type="button"
                     onClick={() => toggleTagFilter(tag.id)}
-                    className={`w-full h-11 px-3 rounded-xl flex items-center justify-between transition-colors tactile-btn cursor-pointer ${
+                    className={`w-full h-11 px-3 rounded-[8px] flex items-center justify-between transition-colors tactile-btn cursor-pointer ${
                       isSelected
                         ? "bg-[#22B8A7]/[0.12] text-[#22B8A7]"
                         : "text-[#EEF2F1]/85 hover:bg-white/[0.055]"
@@ -305,7 +305,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                     key={tag.id}
                     type="button"
                     onClick={() => toggleTodoTag(targetTodoId, tag.id)}
-                    className={`w-full h-11 px-3 rounded-xl flex items-center justify-between transition-colors tactile-btn cursor-pointer ${
+                    className={`w-full h-11 px-3 rounded-[8px] flex items-center justify-between transition-colors tactile-btn cursor-pointer ${
                       isAssigned
                         ? "bg-[#22B8A7]/[0.12] text-[#22B8A7]"
                         : "text-[#EEF2F1]/85 hover:bg-white/[0.055]"
@@ -351,7 +351,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                     if (validationError) setValidationError(null);
                   }}
                   placeholder={editingTagId ? t("tagName") : t("searchOrCreateTagHint") || "搜索或创建标签…"}
-                  className="w-full h-9.5 pl-3 pr-16 rounded-xl bg-[#1D2529] border border-white/[0.08] text-xs text-[#EEF2F1] placeholder:text-[#EEF2F1]/38 focus:outline-none focus:border-[#22B8A7] transition-colors"
+                  className="w-full h-9.5 pl-3 pr-16 rounded-[8px] bg-[#1D2529] text-xs text-[#EEF2F1] placeholder:text-[#EEF2F1]/38 focus:outline-none focus:bg-[#222B30] transition-colors"
                 />
 
                 <div className="absolute right-1.5 flex items-center space-x-1">
@@ -424,7 +424,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                   return (
                     <div
                       key={tag.id}
-                      className={`group h-11 px-3 rounded-xl flex items-center justify-between transition-colors ${
+                      className={`group h-11 px-3 rounded-[8px] flex items-center justify-between transition-colors ${
                         isEditing
                           ? "bg-[#22B8A7]/10"
                           : "hover:bg-white/[0.055]"
