@@ -32,6 +32,8 @@
   "allTagsFilterLabel": "全部待办",
   "filterByTagTitle": "标签筛选",
   "filterByTag": "标签筛选",
+  "assignTagsTitle": "分配标签",
+  "assignTagsTooltip": "分配标签",
   "filterDoingTooltip": "只看进行中",
   "clearDoingFilterTooltip": "显示全部",
   "tags": "标签",

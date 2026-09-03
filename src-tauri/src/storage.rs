@@ -73,13 +73,46 @@ pub fn load_tags() -> Result<TagWorkspace, String> {
     }
     let content = fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read {TAGS_FILE}: {e}"))?;
-    let workspace: TagWorkspace = serde_json::from_str(&content)
+    let mut workspace: TagWorkspace = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse {TAGS_FILE}: {e}"))?;
+
+    for tag in &mut workspace.tags {
+        if tag.color_hex.is_empty() {
+            if let Some(val) = tag.color_value {
+                let rgb = val & 0x00FFFFFF;
+                tag.color_hex = format!("#{:06X}", rgb);
+            } else {
+                tag.color_hex = "#20B8A8".to_string();
+            }
+        }
+        if tag.color_value.is_none() {
+            let clean = tag.color_hex.trim_start_matches('#');
+            if let Ok(rgb) = i64::from_str_radix(clean, 16) {
+                tag.color_value = Some(0xFF000000i64 | (rgb & 0x00FFFFFF));
+            } else {
+                tag.color_value = Some(4280334504);
+            }
+        }
+    }
     Ok(workspace)
 }
 
 pub fn save_tags(workspace: &TagWorkspace) -> Result<(), String> {
-    atomic_save(TAGS_FILE, workspace)
+    let mut to_save = workspace.clone();
+    for tag in &mut to_save.tags {
+        if tag.color_value.is_none() {
+            let clean = tag.color_hex.trim_start_matches('#');
+            if let Ok(rgb) = i64::from_str_radix(clean, 16) {
+                tag.color_value = Some(0xFF000000i64 | (rgb & 0x00FFFFFF));
+            } else {
+                tag.color_value = Some(4280334504);
+            }
+        }
+        if tag.created_at.is_none() {
+            tag.created_at = Some(chrono::Utc::now().to_rfc3339());
+        }
+    }
+    atomic_save(TAGS_FILE, &to_save)
 }
 
 pub fn load_notes() -> Result<Vec<NoteItem>, String> {

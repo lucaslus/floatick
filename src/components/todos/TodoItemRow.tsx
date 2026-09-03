@@ -11,11 +11,12 @@ import {
   Archive,
   Undo,
   Trash2,
+  Tag,
 } from "lucide-react";
 import type { TodoItem } from "@/types";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useTagStore } from "@/stores/useTagStore";
-import { formatDeadline } from "@/lib/dateUtils";
+import { formatDeadline, formatTime } from "@/lib/dateUtils";
 
 interface TodoItemRowProps {
   todo: TodoItem;
@@ -243,16 +244,43 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
         </div>
       </div>
 
-      {/* Sub-row: Indented 36px (Exact Flutter Alignment) */}
-      {(assignedTags.length > 0 || deadlineInfo) && (
-        <div className="pl-[36px] pt-1 flex flex-wrap items-center gap-1.5">
+      {/* Sub-row: Indented 36px (Exact Flutter TodoListRow Metadata Line) */}
+      <div className="pl-[36px] pt-1 flex items-center justify-between min-h-[20px]">
+        {/* Left: Doing status + Deadline status + Tags + Tag shortcut button */}
+        <div className="flex items-center space-x-1.5 overflow-x-auto smooth-scroll no-scrollbar py-0.5 min-w-0 flex-1 mr-2">
+          {/* Doing status badge */}
+          {isDoing && (
+            <span className="inline-flex items-center space-x-1 px-1.5 py-0.2 rounded-full text-[10px] font-medium bg-[#22B8A7]/15 text-[#22B8A7] border border-[#22B8A7]/30 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#22B8A7] animate-pulse" />
+              <span>{t("doing") || "进行中"}</span>
+            </span>
+          )}
+
+          {/* Deadline */}
+          {deadlineInfo && (
+            <button
+              type="button"
+              onClick={() => onOpenDeadlinePicker(todo)}
+              className={`inline-flex items-center space-x-1 text-[10.5px] px-1.5 py-0.2 rounded-md transition-opacity hover:opacity-80 tactile-btn cursor-pointer shrink-0 ${
+                deadlineInfo.isOverdue && !isCompleted
+                  ? "text-[#F18A45] bg-[#F18A45]/10 border border-[#F18A45]/30 font-medium"
+                  : "text-[#EEF2F1]/62 hover:text-[#EEF2F1] bg-white/[0.04] border border-white/[0.06]"
+              }`}
+            >
+              <Clock className="w-2.5 h-2.5 shrink-0" />
+              <span className="truncate max-w-[120px]">{deadlineInfo.label}</span>
+              {deadlineInfo.isOverdue && !isCompleted && <span className="shrink-0">· {t("overdue")}</span>}
+            </button>
+          )}
+
           {/* FloatickTagChip (Flutter format) */}
           {assignedTags.map((tag) => (
             <button
               key={tag.id}
               type="button"
               onClick={() => onOpenTagAssignment(todo)}
-              className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-md text-[10.5px] font-medium transition-opacity hover:opacity-80 tactile-btn cursor-pointer"
+              title={tag.name}
+              className="inline-flex items-center space-x-1 px-1.5 py-0.2 rounded text-[10.5px] font-medium shrink-0 transition-opacity hover:opacity-80 tactile-btn cursor-pointer"
               style={{
                 backgroundColor: `${tag.colorHex}22`,
                 border: `1px solid ${tag.colorHex}44`,
@@ -263,28 +291,32 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                 className="w-1.5 h-1.5 rounded-full shrink-0"
                 style={{ backgroundColor: tag.colorHex }}
               />
-              <span className="truncate max-w-[120px]">{tag.name}</span>
+              <span className="truncate max-w-[90px]">{tag.name}</span>
             </button>
           ))}
 
-          {/* Deadline */}
-          {deadlineInfo && (
+          {/* Tag Quick Selection Icon Button (Flutter: assign-tags-$todoId) */}
+          {!isArchived && (
             <button
               type="button"
-              onClick={() => onOpenDeadlinePicker(todo)}
-              className={`inline-flex items-center space-x-1 text-[10.5px] px-2 py-0.5 rounded-md transition-opacity hover:opacity-80 tactile-btn cursor-pointer ${
-                deadlineInfo.isOverdue && !isCompleted
-                  ? "text-[#F17842] bg-[#F17842]/10 border border-[#F17842]/30 font-medium"
-                  : "text-[#EEF2F1]/62 hover:text-[#EEF2F1]"
+              onClick={() => onOpenTagAssignment(todo)}
+              title={t("assignTagsTooltip") || "分配标签"}
+              className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors tactile-btn cursor-pointer ${
+                assignedTags.length > 0
+                  ? "text-[#22B8A7] hover:bg-[#22B8A7]/10"
+                  : "text-[#EEF2F1]/35 hover:text-[#EEF2F1]/80 hover:bg-white/[0.06]"
               }`}
             >
-              <Clock className="w-3 h-3 shrink-0" />
-              <span className="truncate max-w-[140px]">{deadlineInfo.label}</span>
-              {deadlineInfo.isOverdue && !isCompleted && <span className="shrink-0">· {t("overdue")}</span>}
+              <Tag className="w-3 h-3" />
             </button>
           )}
         </div>
-      )}
+
+        {/* Right: Created / Archived timestamp (10.5px, opacity: 0.45) */}
+        <div className="text-[10.5px] text-[#EEF2F1]/45 shrink-0 font-mono">
+          {formatTime(isArchived && todo.archivedAt ? todo.archivedAt : todo.createdAt)}
+        </div>
+      </div>
     </div>
   );
 };

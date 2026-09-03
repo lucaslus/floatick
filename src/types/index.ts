@@ -18,6 +18,8 @@ export interface TodoTag {
   id: string;
   name: string;
   colorHex: string;
+  colorValue?: number;
+  createdAt?: string;
 }
 
 export interface TagWorkspace {

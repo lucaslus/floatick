@@ -42,7 +42,12 @@ pub struct TodoItem {
 pub struct TodoTag {
     pub id: String,
     pub name: String,
+    #[serde(default)]
     pub color_hex: String,
+    #[serde(default)]
+    pub color_value: Option<i64>,
+    #[serde(default)]
+    pub created_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
