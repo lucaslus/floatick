@@ -1,7 +1,7 @@
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, PhysicalPosition, Position, Rect,
+    AppHandle, LogicalPosition, LogicalSize, Manager, Position, Rect,
 };
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
@@ -51,26 +51,31 @@ pub fn toggle_window_at_rect(app_handle: &AppHandle, rect: Rect) {
         if is_visible {
             let _ = window.hide();
         } else {
-            // Position window below the tray icon
-            if let Ok(window_size) = window.outer_size() {
-                let window_width = window_size.width as i32;
-                let tray_pos = rect.position.to_physical::<i32>(1.0);
-                let tray_size = rect.size.to_physical::<u32>(1.0);
+            // Position window below the tray icon using logical points
+            let scale_factor = window.scale_factor().unwrap_or(2.0);
+            let window_logical_size = window
+                .outer_size()
+                .map(|s| s.to_logical::<f64>(scale_factor))
+                .unwrap_or(LogicalSize::new(440.0, 700.0));
+            let window_width = window_logical_size.width;
 
-                let tray_center_x = tray_pos.x + (tray_size.width as i32 / 2);
-                let mut window_x = tray_center_x - (window_width / 2);
-                let window_y = tray_pos.y + tray_size.height as i32 + 6;
+            let tray_pos = rect.position.to_logical::<f64>(scale_factor);
+            let tray_size = rect.size.to_logical::<f64>(scale_factor);
 
-                if let Ok(Some(monitor)) = window.current_monitor() {
-                    let mon_pos = monitor.position();
-                    let mon_size = monitor.size();
-                    let min_x = mon_pos.x + 8;
-                    let max_x = mon_pos.x + mon_size.width as i32 - window_width - 8;
-                    window_x = window_x.clamp(min_x, max_x);
-                }
+            let tray_center_x = tray_pos.x + (tray_size.width / 2.0);
+            let mut window_x = tray_center_x - (window_width / 2.0);
+            let window_y = tray_pos.y + tray_size.height + 6.0;
 
-                let _ = window.set_position(Position::Physical(PhysicalPosition::new(window_x, window_y)));
+            if let Ok(Some(monitor)) = window.current_monitor() {
+                let mon_scale = monitor.scale_factor();
+                let mon_pos = monitor.position().to_logical::<f64>(mon_scale);
+                let mon_size = monitor.size().to_logical::<f64>(mon_scale);
+                let min_x = mon_pos.x + 8.0;
+                let max_x = mon_pos.x + mon_size.width - window_width - 8.0;
+                window_x = window_x.clamp(min_x, max_x);
             }
+
+            let _ = window.set_position(Position::Logical(LogicalPosition::new(window_x, window_y)));
             let _ = window.show();
             let _ = window.set_focus();
         }

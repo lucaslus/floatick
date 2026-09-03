@@ -30,12 +30,13 @@ pub fn run() {
                 let is_autostart = std::env::args().any(|arg| arg == "--autostart");
                 if !is_autostart {
                     if let Ok(Some(monitor)) = window.primary_monitor() {
-                        let mon_pos = monitor.position();
-                        let mon_size = monitor.size();
-                        let window_width = 440;
-                        let window_x = mon_pos.x + mon_size.width as i32 - window_width - 24;
-                        let window_y = mon_pos.y + 36;
-                        let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(window_x, window_y)));
+                        let scale = monitor.scale_factor();
+                        let mon_pos = monitor.position().to_logical::<f64>(scale);
+                        let mon_size = monitor.size().to_logical::<f64>(scale);
+                        let window_width = 440.0;
+                        let window_x = mon_pos.x + mon_size.width - window_width - 20.0;
+                        let window_y = mon_pos.y + 36.0;
+                        let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition::new(window_x, window_y)));
                         let _ = window.show();
                         let _ = window.set_focus();
                     }
