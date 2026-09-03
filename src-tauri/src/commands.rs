@@ -10,8 +10,18 @@ pub fn get_todos() -> Result<Vec<TodoItem>, String> {
 }
 
 #[tauri::command]
-pub fn save_todos(todos: Vec<TodoItem>) -> Result<(), String> {
+pub fn save_todos(app_handle: AppHandle, todos: Vec<TodoItem>) -> Result<(), String> {
+    let active_count = todos
+        .iter()
+        .filter(|t| t.completed_at.is_none() && t.archived_at.is_none())
+        .count();
+    crate::tray::update_tray_todo_count(&app_handle, active_count);
     storage::save_todos(&todos)
+}
+
+#[tauri::command]
+pub fn update_tray_count(app_handle: AppHandle, count: usize) {
+    crate::tray::update_tray_todo_count(&app_handle, count);
 }
 
 #[tauri::command]

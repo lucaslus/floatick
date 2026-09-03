@@ -11,8 +11,27 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
     let menu = Menu::with_items(app, &[&show_item, &sep, &quit_item])?;
 
-    let _tray = TrayIconBuilder::new()
-        .icon(app.default_window_icon().cloned().unwrap())
+    let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon@2x.png"))?;
+
+    let initial_count = crate::storage::load_todos()
+        .map(|todos| {
+            todos
+                .iter()
+                .filter(|t| t.completed_at.is_none() && t.archived_at.is_none())
+                .count()
+        })
+        .unwrap_or(0);
+
+    let title_str = if initial_count > 0 {
+        format!(" {}", if initial_count > 99 { "99+".to_string() } else { initial_count.to_string() })
+    } else {
+        "".to_string()
+    };
+
+    let _tray = TrayIconBuilder::with_id("main-tray")
+        .icon(tray_icon)
+        .icon_as_template(true)
+        .title(title_str)
         .menu(&menu)
         .show_menu_on_left_click(false)
         .tooltip("Floatick")
@@ -94,5 +113,16 @@ pub fn show_window(app_handle: &AppHandle) {
         }
         let _ = window.show();
         let _ = window.set_focus();
+    }
+}
+
+pub fn update_tray_todo_count(app: &AppHandle, count: usize) {
+    if let Some(tray) = app.tray_by_id("main-tray") {
+        let title_str = if count > 0 {
+            format!(" {}", count)
+        } else {
+            "".to_string()
+        };
+        let _ = tray.set_title(Some(title_str));
     }
 }

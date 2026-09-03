@@ -44,6 +44,9 @@ export const api = {
   setAlwaysOnTop: async (alwaysOnTop: boolean): Promise<void> => {
     await invoke("set_always_on_top", { alwaysOnTop });
   },
+  updateTrayCount: async (count: number): Promise<void> => {
+    await invoke("update_tray_count", { count });
+  },
 
   // Autostart
   isAutostartEnabled: async (): Promise<boolean> => {

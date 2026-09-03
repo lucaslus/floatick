@@ -93,6 +93,7 @@ pub fn run() {
             commands::set_always_on_top,
             commands::is_autostart_enabled,
             commands::set_autostart_enabled,
+            commands::update_tray_count,
             commands::quit_app,
         ])
         .build(tauri::generate_context!())
