@@ -117,7 +117,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
               <div className="space-y-1">
                 <div className="px-2.5 text-[10.5px] font-semibold text-teal-600 dark:text-[#22B8A7] uppercase tracking-wider flex items-center space-x-1">
                   <Pin className="w-3 h-3" />
-                  <span>置顶笔记</span>
+                  <span>{t("pinnedNotes")}</span>
                 </div>
                 <div className="space-y-1.5">
                   {pinnedNotes.map((note) => (

@@ -81,7 +81,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
         <div className="h-12 px-4 border-b border-black/[0.05] dark:border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <TagIcon className="w-4 h-4 text-teal-600 dark:text-[#22B8A7]" />
-            <span className="text-xs font-semibold">
+            <span className="text-xs font-semibold tracking-tight">
               {mode === "filter" ? t("filterByTagTitle") : t("manageTags")}
             </span>
           </div>
@@ -90,8 +90,8 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
             <button
               type="button"
               onClick={() => setMode(mode === "filter" ? "manage" : "filter")}
-              title={mode === "filter" ? "管理标签" : "返回筛选"}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+              title={mode === "filter" ? t("manageTags") : t("filterByTag")}
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
                 mode === "manage"
                   ? "text-teal-600 dark:text-[#22B8A7] bg-teal-500/10"
                   : "text-zinc-400 hover:text-zinc-800 dark:hover:text-white"
@@ -101,7 +101,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
             </button>
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white mui-ripple cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -120,10 +120,10 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                   setSelectedTagFilter(null);
                   onClose();
                 }}
-                className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between border transition-all cursor-pointer ${
+                className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between border transition-all mui-ripple cursor-pointer ${
                   selectedTagFilter === null
-                    ? "bg-teal-500/15 dark:bg-[#22B8A7]/15 border-teal-500/40 text-teal-700 dark:text-[#22B8A7] font-medium"
-                    : "bg-white/60 dark:bg-[#151B1E] border-black/[0.04] dark:border-white/[0.06] text-zinc-700 dark:text-[#EEF2F1] hover:border-black/[0.1]"
+                    ? "bg-teal-500/15 dark:bg-[#22B8A7]/15 border-teal-500/40 text-teal-700 dark:text-[#22B8A7] font-semibold"
+                    : "bg-white/70 dark:bg-[#151B1E] border-black/[0.04] dark:border-white/[0.06] text-zinc-700 dark:text-[#EEF2F1] hover:border-black/[0.1]"
                 }`}
               >
                 <span>{t("allTagsFilterLabel")}</span>
@@ -143,10 +143,10 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                       setSelectedTagFilter(isSelected ? null : tag.id);
                       onClose();
                     }}
-                    className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between border transition-all cursor-pointer ${
+                    className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between border transition-all mui-ripple cursor-pointer ${
                       isSelected
-                        ? "bg-teal-500/15 dark:bg-[#22B8A7]/15 border-teal-500/40 text-teal-700 dark:text-[#22B8A7] font-medium"
-                        : "bg-white/60 dark:bg-[#151B1E] border-black/[0.04] dark:border-white/[0.06] text-zinc-700 dark:text-[#EEF2F1] hover:border-black/[0.1]"
+                        ? "bg-teal-500/15 dark:bg-[#22B8A7]/15 border-teal-500/40 text-teal-700 dark:text-[#22B8A7] font-semibold"
+                        : "bg-white/70 dark:bg-[#151B1E] border-black/[0.04] dark:border-white/[0.06] text-zinc-700 dark:text-[#EEF2F1] hover:border-black/[0.1]"
                     }`}
                   >
                     <div className="flex items-center space-x-2 truncate mr-2">
@@ -158,7 +158,9 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div className="flex items-center space-x-1.5 shrink-0">
-                      <span className="text-[10px] text-zinc-400">{count} 项</span>
+                      <span className="text-[10px] text-zinc-400">
+                        {t("itemsCount", { count })}
+                      </span>
                       {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                     </div>
                   </button>
@@ -173,7 +175,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                     onClick={() => setMode("manage")}
                     className="text-xs text-teal-600 dark:text-[#22B8A7] underline cursor-pointer"
                   >
-                    前往创建标签
+                    {t("newTag")}
                   </button>
                 </div>
               )}
@@ -182,8 +184,8 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
             /* Management Mode */
             <div className="space-y-4">
               {/* Create Tag Form */}
-              <form onSubmit={handleCreate} className="p-3 bg-white dark:bg-[#151B1E] rounded-xl border border-black/[0.06] dark:border-white/[0.08] space-y-2.5">
-                <span className="text-[11px] font-medium text-zinc-500 dark:text-[#8E9599] block">
+              <form onSubmit={handleCreate} className="p-3 bg-white dark:bg-[#151B1E] rounded-xl border border-black/[0.06] dark:border-white/[0.08] space-y-2.5 shadow-xs">
+                <span className="text-[11px] font-semibold text-zinc-500 dark:text-[#8E9599] uppercase tracking-wider block">
                   {t("newTag")}
                 </span>
                 <div className="flex items-center space-x-2">
@@ -192,25 +194,25 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
                     placeholder={t("tagName")}
-                    className="flex-1 px-2.5 py-1.5 rounded-lg border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.05] text-xs focus:outline-none focus:border-teal-500"
+                    className="flex-1 px-3 py-2 rounded-lg border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.05] text-xs focus:outline-none focus:border-teal-500"
                   />
                   <button
                     type="submit"
-                    className="px-3 py-1.5 bg-teal-600 dark:bg-[#22B8A7] hover:bg-teal-700 text-white rounded-lg font-medium cursor-pointer"
+                    className="px-3.5 py-2 bg-teal-600 dark:bg-[#22B8A7] hover:bg-teal-700 text-white rounded-lg font-medium cursor-pointer mui-ripple shadow-xs"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 {/* Color Palette */}
-                <div className="flex items-center space-x-1.5 pt-1">
+                <div className="flex items-center space-x-2 pt-1">
                   {TAG_PALETTE.map((color) => (
                     <button
                       key={color}
                       type="button"
                       onClick={() => setNewTagColor(color)}
-                      className={`w-4 h-4 rounded-full transition-transform cursor-pointer flex items-center justify-center ${
-                        newTagColor === color ? "scale-125 ring-2 ring-white/40" : "hover:scale-110"
+                      className={`w-5 h-5 rounded-full transition-transform cursor-pointer flex items-center justify-center ${
+                        newTagColor === color ? "scale-120 ring-2 ring-teal-500/50" : "hover:scale-110"
                       }`}
                       style={{ backgroundColor: color }}
                     >
@@ -222,8 +224,8 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
 
               {/* Tag List */}
               <div className="space-y-1.5">
-                <span className="text-[11px] font-medium text-zinc-500 dark:text-[#8E9599] block px-1">
-                  已创建的标签
+                <span className="text-[11px] font-semibold text-zinc-500 dark:text-[#8E9599] uppercase tracking-wider block px-1">
+                  {t("createdTags")}
                 </span>
 
                 {workspace.tags.map((tag) => {
@@ -232,7 +234,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                   return (
                     <div
                       key={tag.id}
-                      className="p-2.5 bg-white dark:bg-[#151B1E] rounded-xl border border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between"
+                      className="p-2.5 bg-white dark:bg-[#151B1E] rounded-xl border border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between shadow-xs"
                     >
                       {isEditing ? (
                         <div className="flex-1 flex items-center space-x-1.5">
@@ -245,9 +247,9 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                           <button
                             type="button"
                             onClick={saveEdit}
-                            className="px-2 py-1 bg-teal-600 text-white rounded text-[10px]"
+                            className="px-2.5 py-1 bg-teal-600 text-white rounded text-[10px] font-medium mui-ripple"
                           >
-                            保存
+                            {t("save")}
                           </button>
                         </div>
                       ) : (
@@ -256,7 +258,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                             className="w-2.5 h-2.5 rounded-full shrink-0"
                             style={{ backgroundColor: tag.colorHex }}
                           />
-                          <span className="truncate">{tag.name}</span>
+                          <span className="truncate font-medium">{tag.name}</span>
                         </div>
                       )}
 
@@ -265,14 +267,16 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                           <button
                             type="button"
                             onClick={() => startEdit(tag)}
-                            className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+                            title={t("edit")}
+                            className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white mui-ripple rounded"
                           >
                             <Edit2 className="w-3 h-3" />
                           </button>
                           <button
                             type="button"
                             onClick={() => deleteTag(tag.id)}
-                            className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-red-500"
+                            title={t("delete")}
+                            className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-red-500 mui-ripple rounded"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>

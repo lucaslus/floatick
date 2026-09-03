@@ -1,3 +1,5 @@
+import React from "react";
+import { useTranslation } from "react-i18next";
 import { Pin, Archive, Trash2 } from "lucide-react";
 import type { NoteItem } from "@/types";
 import { useNoteStore } from "@/stores/useNoteStore";
@@ -10,6 +12,7 @@ interface NoteItemRowProps {
 }
 
 export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
+  const { t } = useTranslation();
   const togglePin = useNoteStore((s) => s.togglePin);
   const toggleArchive = useNoteStore((s) => s.toggleArchive);
   const deleteNote = useNoteStore((s) => s.deleteNote);
@@ -23,44 +26,49 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
   return (
     <div
       onClick={() => onOpen(note)}
-      className={`group relative p-3 rounded-xl transition-all duration-150 border cursor-pointer ${
+      className={`group relative p-3 rounded-xl transition-all duration-150 border cursor-pointer select-none ${
         isPinned
-          ? "bg-teal-50/60 dark:bg-teal-950/20 border-teal-200/80 dark:border-teal-900/40 shadow-xs"
-          : "bg-white/60 dark:bg-zinc-800/60 border-black/[0.04] dark:border-white/[0.04] hover:border-black/[0.08] dark:hover:border-white/[0.08] shadow-xs"
+          ? "bg-teal-500/[0.08] dark:bg-[#22B8A7]/[0.09] border-teal-500/25 dark:border-[#22B8A7]/30 shadow-xs"
+          : "bg-white/70 dark:bg-[#1D2529] border-black/[0.04] dark:border-white/[0.06] hover:border-black/[0.1] dark:hover:border-white/[0.1] shadow-xs"
       }`}
     >
       {/* Top row: Title & Actions */}
       <div className="flex items-center justify-between space-x-2">
-        <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate flex items-center space-x-1.5">
-          {isPinned && <Pin className="w-3 h-3 text-teal-600 fill-teal-600 shrink-0" />}
-          <span>{note.title || "无标题笔记"}</span>
+        <h4 className="text-xs font-semibold text-zinc-900 dark:text-[#EEF2F1] truncate flex items-center space-x-1.5 tracking-tight">
+          {isPinned && <Pin className="w-3 h-3 text-teal-600 dark:text-[#22B8A7] fill-current shrink-0" />}
+          <span>{note.title || t("newNote")}</span>
         </h4>
 
         {/* Hover action icons */}
         <div
-          className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >
           <button
+            type="button"
             onClick={() => togglePin(note.id)}
-            title={isPinned ? "取消置顶" : "置顶笔记"}
-            className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
-              isPinned ? "text-teal-600" : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+            title={isPinned ? t("unpin") : t("pin")}
+            className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
+              isPinned
+                ? "text-teal-600 dark:text-[#22B8A7] bg-teal-500/15"
+                : "text-zinc-400 hover:text-zinc-800 dark:hover:text-white"
             }`}
           >
             <Pin className="w-3 h-3" />
           </button>
           <button
+            type="button"
             onClick={() => toggleArchive(note.id)}
-            title={isArchived ? "恢复笔记" : "归档笔记"}
-            className="w-5 h-5 rounded flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+            title={isArchived ? t("restore") : t("archive")}
+            className="w-6 h-6 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white mui-ripple cursor-pointer"
           >
             <Archive className="w-3 h-3" />
           </button>
           <button
+            type="button"
             onClick={() => deleteNote(note.id)}
-            title="删除笔记"
-            className="w-5 h-5 rounded flex items-center justify-center text-zinc-400 hover:text-red-600"
+            title={t("delete")}
+            className="w-6 h-6 rounded-md flex items-center justify-center text-zinc-400 hover:text-red-500 mui-ripple cursor-pointer"
           >
             <Trash2 className="w-3 h-3" />
           </button>
@@ -69,25 +77,26 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
 
       {/* Snippet */}
       {note.content && (
-        <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+        <p className="mt-1 text-[11px] text-zinc-500 dark:text-[#8E9599] line-clamp-2 leading-relaxed font-sans">
           {note.content}
         </p>
       )}
 
       {/* Bottom meta: tags and updated time */}
-      <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400">
-        <div className="flex items-center space-x-1 overflow-hidden">
+      <div className="mt-2.5 flex items-center justify-between text-[10.5px] text-zinc-400 dark:text-[#8E9599]">
+        <div className="flex items-center space-x-1.5 overflow-hidden">
           {tags.slice(0, 3).map((tag) => (
             <span
               key={tag.id}
-              className="px-1.5 py-0.2 rounded-full text-[9px] font-medium truncate"
+              className="inline-flex items-center space-x-1 px-2 py-0.2 rounded-full text-[9.5px] font-medium truncate"
               style={{
                 backgroundColor: `${tag.colorHex}22`,
                 color: tag.colorHex,
                 border: `1px solid ${tag.colorHex}44`,
               }}
             >
-              {tag.name}
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.colorHex }} />
+              <span>{tag.name}</span>
             </span>
           ))}
           {tags.length > 3 && <span>+{tags.length - 3}</span>}

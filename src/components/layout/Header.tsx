@@ -37,14 +37,14 @@ export const Header: React.FC<HeaderProps> = ({
     if (activeTab === "notes") {
       return isArchived
         ? `${t("archive")} · ${archivedNoteCount}`
-        : `${activeNoteCount} 条便签`;
+        : t("noteCount", { count: activeNoteCount });
     }
     if (isArchived) {
       return `${t("archive")} · ${archivedTodoCount}`;
     }
     return activeTodoCount === 0
       ? t("allClear")
-      : `${activeTodoCount} 项待完成`;
+      : t("tasksRemaining", { count: activeTodoCount });
   })();
 
   const handleToggleArchive = () => {
@@ -60,20 +60,20 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Left: Brand Mark + Status Text */}
       <div className="flex items-center space-x-3">
         <FloatickBrandMark size={36} />
-        <span className="text-[13px] font-medium text-zinc-600 dark:text-[#A0A6AA] tracking-tight">
+        <span className="text-[13px] font-semibold text-zinc-700 dark:text-[#A0A6AA] tracking-tight">
           {statusText}
         </span>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center space-x-0.5 text-zinc-500 dark:text-[#8E9599]">
+      <div className="flex items-center space-x-1 text-zinc-500 dark:text-[#8E9599]">
         {/* Archive Toggle */}
         <button
           onClick={handleToggleArchive}
           title={isArchived ? t("active") : t("archive")}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
             isArchived
-              ? "text-teal-600 dark:text-[#22B8A7] bg-teal-500/10"
+              ? "text-teal-600 dark:text-[#22B8A7] bg-teal-500/15 font-semibold"
               : "hover:text-zinc-900 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           }`}
         >
@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onOpenSettings}
           title={t("settings")}
-          className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-zinc-900 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+          className="w-8 h-8 rounded-full flex items-center justify-center hover:text-zinc-900 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors mui-ripple cursor-pointer"
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={handleCollapse}
           title={t("escToClose")}
-          className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-zinc-900 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+          className="w-8 h-8 rounded-full flex items-center justify-center hover:text-zinc-900 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors mui-ripple cursor-pointer"
         >
           <ChevronUp className="w-5 h-5" />
         </button>

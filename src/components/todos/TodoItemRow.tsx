@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Check,
   Play,
@@ -29,6 +30,8 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
   onOpenDeadlinePicker,
   onOpenTagAssignment,
 }) => {
+  const { t } = useTranslation();
+
   const toggleComplete = useTodoStore((s) => s.toggleComplete);
   const toggleDoing = useTodoStore((s) => s.toggleDoing);
   const archiveTodo = useTodoStore((s) => s.archiveTodo);
@@ -61,7 +64,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
     <div
       className={`group relative px-2.5 py-2 rounded-xl transition-all duration-150 select-none ${
         isDoing
-          ? "bg-teal-500/[0.08] dark:bg-[#22B8A7]/[0.09] border border-teal-500/20 dark:border-[#22B8A7]/25 shadow-xs"
+          ? "bg-teal-500/[0.08] dark:bg-[#22B8A7]/[0.09] border border-teal-500/25 dark:border-[#22B8A7]/30 shadow-xs"
           : "hover:bg-black/[0.035] dark:hover:bg-white/[0.045] border border-transparent"
       }`}
     >
@@ -71,7 +74,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
         <button
           type="button"
           onClick={() => toggleComplete(todo.id)}
-          className={`w-[21px] h-[21px] shrink-0 rounded-[7px] flex items-center justify-center border transition-all cursor-pointer ${
+          className={`w-[21px] h-[21px] shrink-0 rounded-[7px] flex items-center justify-center border transition-all mui-ripple cursor-pointer ${
             isCompleted
               ? "bg-teal-600 dark:bg-[#22B8A7] border-teal-600 dark:border-[#22B8A7] text-white shadow-xs"
               : "border-zinc-300 dark:border-white/25 hover:border-teal-500 dark:hover:border-[#22B8A7] bg-transparent"
@@ -105,8 +108,8 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
             <button
               type="button"
               onClick={() => toggleDoing(todo.id)}
-              title={isDoing ? "停止进行中" : "开始进行中"}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+              title={isDoing ? t("stopDoing") : t("startDoing")}
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
                 isDoing
                   ? "text-teal-600 dark:text-[#22B8A7] bg-teal-500/10"
                   : "text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
@@ -125,8 +128,8 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
             <button
               type="button"
               onClick={() => onOpenDeadlinePicker(todo)}
-              title={todo.dueAt ? "修改截止时间" : "设置截止时间"}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+              title={todo.dueAt ? t("editDeadline") : t("setDeadline")}
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
                 todo.dueAt
                   ? "text-teal-600 dark:text-[#22B8A7]"
                   : "text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
@@ -140,8 +143,8 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
           <button
             type="button"
             onClick={handleCopyMarkdown}
-            title={copied ? "已复制 Markdown!" : "复制为 Markdown"}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+            title={copied ? t("copied") : t("copyMarkdown")}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors mui-ripple cursor-pointer"
           >
             {copied ? (
               <Check className="w-3.5 h-3.5 text-teal-600 dark:text-[#22B8A7]" />
@@ -158,7 +161,8 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                 e.stopPropagation();
                 setShowMenu(!showMenu);
               }}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+              title={t("moreActions")}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors mui-ripple cursor-pointer"
             >
               <MoreHorizontal className="w-3.5 h-3.5" />
             </button>
@@ -183,7 +187,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                     className="w-full px-3 py-1.5 flex items-center space-x-2 text-zinc-700 dark:text-[#EEF2F1] hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-600 dark:hover:text-[#22B8A7]"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
-                    <span>编辑</span>
+                    <span>{t("edit")}</span>
                   </button>
 
                   {isArchived ? (
@@ -197,7 +201,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                       className="w-full px-3 py-1.5 flex items-center space-x-2 text-zinc-700 dark:text-[#EEF2F1] hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-600 dark:hover:text-[#22B8A7]"
                     >
                       <Undo className="w-3.5 h-3.5" />
-                      <span>恢复</span>
+                      <span>{t("restore")}</span>
                     </button>
                   ) : (
                     <button
@@ -210,7 +214,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                       className="w-full px-3 py-1.5 flex items-center space-x-2 text-zinc-700 dark:text-[#EEF2F1] hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600"
                     >
                       <Archive className="w-3.5 h-3.5" />
-                      <span>归档</span>
+                      <span>{t("archive")}</span>
                     </button>
                   )}
 
@@ -224,7 +228,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                     className="w-full px-3 py-1.5 flex items-center space-x-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>删除</span>
+                    <span>{t("delete")}</span>
                   </button>
                 </div>
               </>
@@ -238,9 +242,9 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
         <div className="pl-[31px] pt-1 flex flex-wrap items-center gap-1.5">
           {/* Doing Chip */}
           {isDoing && (
-            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-500/15 text-teal-700 dark:text-[#22B8A7] border border-teal-500/30">
+            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-teal-500/15 text-teal-700 dark:text-[#22B8A7] border border-teal-500/30">
               <span className="w-1.5 h-1.5 rounded-full bg-[#22B8A7] animate-pulse" />
-              <span>进行中</span>
+              <span>{t("doing")}</span>
             </span>
           )}
 
@@ -250,7 +254,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
               key={tag.id}
               type="button"
               onClick={() => onOpenTagAssignment(todo)}
-              className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-transform hover:scale-105 cursor-pointer"
+              className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-medium transition-transform hover:scale-105 mui-ripple cursor-pointer"
               style={{
                 backgroundColor: `${tag.colorHex}22`,
                 color: tag.colorHex,
@@ -270,7 +274,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
             <button
               type="button"
               onClick={() => onOpenDeadlinePicker(todo)}
-              className={`inline-flex items-center space-x-1 text-[10px] px-2 py-0.5 rounded-full transition-transform hover:scale-105 cursor-pointer ${
+              className={`inline-flex items-center space-x-1 text-[10.5px] px-2.5 py-0.5 rounded-full transition-transform hover:scale-105 mui-ripple cursor-pointer ${
                 deadlineInfo.isOverdue && !isCompleted
                   ? "bg-red-500/15 text-red-500 dark:text-red-400 border border-red-500/30 font-medium"
                   : "bg-black/[0.04] dark:bg-white/[0.06] text-zinc-600 dark:text-[#A0A6AA] border border-black/[0.04] dark:border-white/[0.06]"
@@ -278,7 +282,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
             >
               <Clock className="w-2.5 h-2.5" />
               <span>{deadlineInfo.label}</span>
-              {deadlineInfo.isOverdue && !isCompleted && <span>· 逾期</span>}
+              {deadlineInfo.isOverdue && !isCompleted && <span>· {t("overdue")}</span>}
             </button>
           )}
         </div>
