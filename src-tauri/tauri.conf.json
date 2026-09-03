@@ -15,8 +15,8 @@
       {
         "label": "main",
         "title": "Floatick",
-        "width": 380,
-        "height": 580,
+        "width": 440,
+        "height": 700,
         "resizable": false,
         "decorations": false,
         "transparent": true,

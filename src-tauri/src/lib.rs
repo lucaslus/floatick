@@ -32,7 +32,7 @@ pub fn run() {
                     if let Ok(Some(monitor)) = window.primary_monitor() {
                         let mon_pos = monitor.position();
                         let mon_size = monitor.size();
-                        let window_width = 380;
+                        let window_width = 440;
                         let window_x = mon_pos.x + mon_size.width as i32 - window_width - 24;
                         let window_y = mon_pos.y + 36;
                         let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(window_x, window_y)));
