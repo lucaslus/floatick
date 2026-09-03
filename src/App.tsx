@@ -68,8 +68,11 @@ export const App: React.FC = () => {
 
   return (
     <div className="w-full h-full p-2.5 flex flex-col items-center justify-center select-none bg-transparent font-sans">
-      {/* Signature Floatick 26px Rounded Panel Surface */}
-      <div className="w-full h-full flex flex-col rounded-[26px] overflow-hidden bg-[#F9FBFA] dark:bg-[#151B1E] text-zinc-900 dark:text-[#EEF2F1] border border-black/[0.08] dark:border-white/[0.09] shadow-2xl relative">
+      {/* Signature Floatick Luxury Glass Panel Surface */}
+      <div className="w-full h-full flex flex-col rounded-[26px] overflow-hidden glass-panel text-zinc-900 dark:text-[#F1F5F9] relative transition-all duration-300">
+        {/* Top ambient highlight line */}
+        <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
         {/* Panel Header */}
         <Header
           activeTab={activeTab}

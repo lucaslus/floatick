@@ -62,22 +62,22 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
 
   return (
     <div
-      className={`group relative px-2.5 py-2 rounded-xl transition-all duration-150 select-none ${
+      className={`group relative px-3 py-2.5 rounded-2xl transition-all duration-200 select-none ${
         isDoing
-          ? "bg-teal-500/[0.08] dark:bg-[#22B8A7]/[0.09] border border-teal-500/25 dark:border-[#22B8A7]/30 shadow-xs"
-          : "hover:bg-black/[0.035] dark:hover:bg-white/[0.045] border border-transparent"
+          ? "doing-glow"
+          : "hover:bg-white/[0.045] dark:hover:bg-white/[0.045] border border-transparent hover:border-black/[0.04] dark:hover:border-white/[0.06]"
       }`}
     >
-      {/* Top Row: Checkbox + Title + Right Hover Actions */}
-      <div className="flex items-center space-x-2.5">
-        {/* Checkbox: 21x21 rounded square */}
+      {/* Top Row: Checkbox + Title + Hover Dock Actions */}
+      <div className="flex items-center space-x-3">
+        {/* Checkbox: Custom tactile squircle */}
         <button
           type="button"
           onClick={() => toggleComplete(todo.id)}
-          className={`w-[21px] h-[21px] shrink-0 rounded-[7px] flex items-center justify-center border transition-all mui-ripple cursor-pointer ${
+          className={`w-[20px] h-[20px] shrink-0 rounded-[6px] flex items-center justify-center border transition-all tactile-btn cursor-pointer ${
             isCompleted
-              ? "bg-teal-600 dark:bg-[#22B8A7] border-teal-600 dark:border-[#22B8A7] text-white shadow-xs"
-              : "border-zinc-300 dark:border-white/25 hover:border-teal-500 dark:hover:border-[#22B8A7] bg-transparent"
+              ? "bg-teal-500 dark:bg-[#2DD4BF] border-teal-500 dark:border-[#2DD4BF] text-white dark:text-zinc-950 shadow-[0_2px_8px_rgba(45,212,191,0.35)]"
+              : "border-zinc-300 dark:border-white/20 hover:border-teal-500 dark:hover:border-[#2DD4BF] bg-transparent"
           }`}
         >
           {isCompleted && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -89,53 +89,53 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
           onClick={() => onEdit(todo)}
         >
           <span
-            className={`text-[13.5px] leading-5 block truncate ${
+            className={`text-[13px] leading-5 block truncate tracking-tight transition-colors ${
               isCompleted
-                ? "line-through text-zinc-400 dark:text-[#8E9599]"
+                ? "line-through text-zinc-400 dark:text-[#64748B]"
                 : isDoing
-                ? "font-medium text-zinc-900 dark:text-[#EEF2F1]"
-                : "text-zinc-800 dark:text-[#EEF2F1]"
+                ? "font-semibold text-zinc-900 dark:text-[#F1F5F9]"
+                : "font-medium text-zinc-800 dark:text-[#E2E8F0] group-hover:text-zinc-950 dark:group-hover:text-white"
             }`}
           >
             {todo.title}
           </span>
         </div>
 
-        {/* Right Hover Actions (Start doing, Alarm, Copy, More) */}
-        <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Right Hover Actions: Sleek Capsule Toolbar */}
+        <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 dark:bg-[#1E272E]/90 backdrop-blur-md px-1 py-0.5 rounded-xl border border-black/[0.06] dark:border-white/[0.08] shadow-xs">
           {/* Doing Play/Pause button */}
           {!isCompleted && !isArchived && (
             <button
               type="button"
               onClick={() => toggleDoing(todo.id)}
               title={isDoing ? t("stopDoing") : t("startDoing")}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
+              className={`w-6 h-6 rounded-lg flex items-center justify-center tactile-btn cursor-pointer ${
                 isDoing
-                  ? "text-teal-600 dark:text-[#22B8A7] bg-teal-500/10"
-                  : "text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  ? "text-teal-500 dark:text-[#2DD4BF] bg-teal-500/15"
+                  : "text-zinc-400 hover:text-zinc-800 dark:hover:text-[#F1F5F9] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
               }`}
             >
               {isDoing ? (
-                <Pause className="w-3.5 h-3.5 fill-current" />
+                <Pause className="w-3 h-3 fill-current" />
               ) : (
-                <Play className="w-3.5 h-3.5 fill-current" />
+                <Play className="w-3 h-3 fill-current" />
               )}
             </button>
           )}
 
-          {/* Deadline / Alarm Button */}
+          {/* Deadline Button */}
           {!isArchived && (
             <button
               type="button"
               onClick={() => onOpenDeadlinePicker(todo)}
               title={todo.dueAt ? t("editDeadline") : t("setDeadline")}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
+              className={`w-6 h-6 rounded-lg flex items-center justify-center tactile-btn cursor-pointer ${
                 todo.dueAt
-                  ? "text-teal-600 dark:text-[#22B8A7]"
-                  : "text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  ? "text-teal-500 dark:text-[#2DD4BF]"
+                  : "text-zinc-400 hover:text-zinc-800 dark:hover:text-[#F1F5F9] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
               }`}
             >
-              <Clock className="w-3.5 h-3.5" />
+              <Clock className="w-3 h-3" />
             </button>
           )}
 
@@ -144,12 +144,12 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
             type="button"
             onClick={handleCopyMarkdown}
             title={copied ? t("copied") : t("copyMarkdown")}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors mui-ripple cursor-pointer"
+            className="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-[#F1F5F9] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] tactile-btn cursor-pointer"
           >
             {copied ? (
-              <Check className="w-3.5 h-3.5 text-teal-600 dark:text-[#22B8A7]" />
+              <Check className="w-3 h-3 text-teal-500 dark:text-[#2DD4BF]" />
             ) : (
-              <Copy className="w-3.5 h-3.5" />
+              <Copy className="w-3 h-3" />
             )}
           </button>
 
@@ -162,9 +162,9 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                 setShowMenu(!showMenu);
               }}
               title={t("moreActions")}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors mui-ripple cursor-pointer"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-[#F1F5F9] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] tactile-btn cursor-pointer"
             >
-              <MoreHorizontal className="w-3.5 h-3.5" />
+              <MoreHorizontal className="w-3 h-3" />
             </button>
 
             {showMenu && (
@@ -176,7 +176,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                     setShowMenu(false);
                   }}
                 />
-                <div className="absolute right-0 top-8 z-50 w-28 bg-white dark:bg-[#1D2529] rounded-xl shadow-xl border border-black/[0.08] dark:border-white/[0.1] py-1 text-xs">
+                <div className="absolute right-0 top-7 z-50 w-28 bg-white dark:bg-[#1E272E] rounded-xl shadow-2xl border border-black/[0.08] dark:border-white/[0.1] py-1 text-xs animate-in fade-in zoom-in-95 duration-100">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -184,9 +184,9 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                       setShowMenu(false);
                       onEdit(todo);
                     }}
-                    className="w-full px-3 py-1.5 flex items-center space-x-2 text-zinc-700 dark:text-[#EEF2F1] hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-600 dark:hover:text-[#22B8A7]"
+                    className="w-full px-3 py-1.5 flex items-center space-x-2 text-zinc-700 dark:text-[#E2E8F0] hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-600 dark:hover:text-[#2DD4BF]"
                   >
-                    <Edit2 className="w-3.5 h-3.5" />
+                    <Edit2 className="w-3 h-3" />
                     <span>{t("edit")}</span>
                   </button>
 
@@ -198,9 +198,9 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                         setShowMenu(false);
                         restoreTodo(todo.id);
                       }}
-                      className="w-full px-3 py-1.5 flex items-center space-x-2 text-zinc-700 dark:text-[#EEF2F1] hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-600 dark:hover:text-[#22B8A7]"
+                      className="w-full px-3 py-1.5 flex items-center space-x-2 text-zinc-700 dark:text-[#E2E8F0] hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-600 dark:hover:text-[#2DD4BF]"
                     >
-                      <Undo className="w-3.5 h-3.5" />
+                      <Undo className="w-3 h-3" />
                       <span>{t("restore")}</span>
                     </button>
                   ) : (
@@ -211,9 +211,9 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                         setShowMenu(false);
                         archiveTodo(todo.id);
                       }}
-                      className="w-full px-3 py-1.5 flex items-center space-x-2 text-zinc-700 dark:text-[#EEF2F1] hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600"
+                      className="w-full px-3 py-1.5 flex items-center space-x-2 text-zinc-700 dark:text-[#E2E8F0] hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-500"
                     >
-                      <Archive className="w-3.5 h-3.5" />
+                      <Archive className="w-3 h-3" />
                       <span>{t("archive")}</span>
                     </button>
                   )}
@@ -227,7 +227,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                     }}
                     className="w-full px-3 py-1.5 flex items-center space-x-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3 h-3" />
                     <span>{t("delete")}</span>
                   </button>
                 </div>
@@ -237,47 +237,50 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
         </div>
       </div>
 
-      {/* Indented Sub-row (left indent 31px): Tags & Deadline badges */}
+      {/* Sub-row: Tags & Deadline badges (Indented) */}
       {(assignedTags.length > 0 || deadlineInfo || isDoing) && (
-        <div className="pl-[31px] pt-1 flex flex-wrap items-center gap-1.5">
-          {/* Doing Chip */}
+        <div className="pl-[32px] pt-1.5 flex flex-wrap items-center gap-1.5">
+          {/* Doing Status Pill */}
           {isDoing && (
-            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-teal-500/15 text-teal-700 dark:text-[#22B8A7] border border-teal-500/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#22B8A7] animate-pulse" />
+            <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-teal-500/15 text-teal-600 dark:text-[#2DD4BF] border border-teal-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF] shadow-[0_0_6px_#2DD4BF] animate-pulse" />
               <span>{t("doing")}</span>
             </span>
           )}
 
-          {/* Assigned Tags */}
+          {/* Assigned Tag Chips with Gemstone dot */}
           {assignedTags.map((tag) => (
             <button
               key={tag.id}
               type="button"
               onClick={() => onOpenTagAssignment(todo)}
-              className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-medium transition-transform hover:scale-105 mui-ripple cursor-pointer"
+              className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium transition-all hover:scale-105 tactile-btn cursor-pointer"
               style={{
-                backgroundColor: `${tag.colorHex}22`,
+                backgroundColor: `${tag.colorHex}18`,
                 color: tag.colorHex,
-                border: `1px solid ${tag.colorHex}44`,
+                border: `1px solid ${tag.colorHex}35`,
               }}
             >
               <span
                 className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: tag.colorHex }}
+                style={{
+                  backgroundColor: tag.colorHex,
+                  boxShadow: `0 0 6px ${tag.colorHex}88`,
+                }}
               />
               <span>{tag.name}</span>
             </button>
           ))}
 
-          {/* Deadline Badge */}
+          {/* Deadline Chip */}
           {deadlineInfo && (
             <button
               type="button"
               onClick={() => onOpenDeadlinePicker(todo)}
-              className={`inline-flex items-center space-x-1 text-[10.5px] px-2.5 py-0.5 rounded-full transition-transform hover:scale-105 mui-ripple cursor-pointer ${
+              className={`inline-flex items-center space-x-1 text-[10px] px-2.5 py-0.5 rounded-full transition-all hover:scale-105 tactile-btn cursor-pointer ${
                 deadlineInfo.isOverdue && !isCompleted
-                  ? "bg-red-500/15 text-red-500 dark:text-red-400 border border-red-500/30 font-medium"
-                  : "bg-black/[0.04] dark:bg-white/[0.06] text-zinc-600 dark:text-[#A0A6AA] border border-black/[0.04] dark:border-white/[0.06]"
+                  ? "bg-red-500/15 text-red-500 dark:text-red-400 border border-red-500/30 font-semibold shadow-[0_0_8px_rgba(239,68,68,0.25)]"
+                  : "bg-white/[0.04] text-zinc-600 dark:text-[#94A3B8] border border-black/[0.05] dark:border-white/[0.07]"
               }`}
             >
               <Clock className="w-2.5 h-2.5" />

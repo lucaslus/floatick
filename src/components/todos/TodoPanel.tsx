@@ -120,21 +120,34 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
       {/* Todo List Area */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
         {groupedTodos.length === 0 ? (
-          <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-2.5">
-            <CheckCircle2 className="w-12 h-12 text-teal-600/30 dark:text-[#22B8A7]/30" />
-            <p className="text-xs font-semibold text-zinc-700 dark:text-[#EEF2F1]">
-              {t("allClear")}
-            </p>
-            <p className="text-[11px] text-zinc-400 dark:text-[#8E9599] max-w-[220px]">
-              {t("allClearSub")}
-            </p>
+          <div className="h-full min-h-[340px] flex flex-col items-center justify-center text-center p-6 space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-teal-500/10 dark:bg-teal-500/15 border border-teal-500/20 flex items-center justify-center text-teal-500 dark:text-[#2DD4BF] shadow-[0_0_24px_rgba(45,212,191,0.15)]">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-zinc-800 dark:text-[#F1F5F9] tracking-tight">
+                {t("allClear")}
+              </p>
+              <p className="text-[11px] text-zinc-400 dark:text-[#94A3B8] max-w-[240px] mt-1 leading-relaxed">
+                {t("allClearSub")}
+              </p>
+            </div>
           </div>
         ) : (
           groupedTodos.map((group) => (
-            <div key={group.label} className="space-y-1">
-              <div className="px-2.5 text-[10.5px] font-semibold text-zinc-400 dark:text-[#8E9599] uppercase tracking-wider">
-                {group.label}
+            <div key={group.label} className="space-y-1.5">
+              {/* Category Divider Header */}
+              <div className="px-3 pt-1 flex items-center space-x-2">
+                <span className="text-[10px] font-semibold text-zinc-400 dark:text-[#64748B] uppercase tracking-[0.14em]">
+                  {group.label}
+                </span>
+                <div className="flex-1 h-[1px] bg-black/[0.04] dark:bg-white/[0.06]" />
+                <span className="text-[9.5px] font-mono text-zinc-400 dark:text-[#64748B]">
+                  {group.items.length}
+                </span>
               </div>
+
+              {/* Items List */}
               <div className="space-y-0.5">
                 {group.items.map((todo) => (
                   <TodoItemRow

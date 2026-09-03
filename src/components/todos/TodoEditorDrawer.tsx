@@ -29,7 +29,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const todos = useTodoStore((s) => s.todos);
   const addTodo = useTodoStore((s) => s.addTodo);
   const updateTodo = useTodoStore((s) => s.updateTodo);
@@ -117,26 +117,29 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
     }, 10);
   };
 
-  const deadlineInfo = dueAt ? formatDeadline(dueAt) : null;
+  const deadlineInfo = dueAt ? formatDeadline(dueAt, i18n.language) : null;
 
   return (
     <>
       {/* Scrim Overlay */}
       <div
-        className="absolute inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
+        className="absolute inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity duration-200"
         onClick={onClose}
       />
 
-      {/* Slide-up Bottom Drawer */}
-      <div className="absolute inset-x-0 bottom-0 z-50 h-[590px] rounded-t-[22px] bg-[#F9FBFA] dark:bg-[#1D2529] text-zinc-900 dark:text-[#EEF2F1] border-t border-black/[0.08] dark:border-white/[0.1] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-220">
+      {/* Slide-up Luxury Bottom Sheet */}
+      <div className="absolute inset-x-0 bottom-0 z-50 h-[590px] rounded-t-[26px] bg-[#141A1E] text-[#F1F5F9] border-t border-white/[0.12] shadow-[0_-20px_50px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-220">
+        {/* Grab Handle */}
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5 mb-0.5 pointer-events-none" />
+
         {/* Header */}
-        <div className="h-12 px-5 border-b border-black/[0.05] dark:border-white/[0.06] flex items-center justify-between">
-          <span className="text-xs font-semibold text-zinc-800 dark:text-[#EEF2F1] tracking-tight">
+        <div className="h-11 px-5 border-b border-white/[0.07] flex items-center justify-between">
+          <span className="text-xs font-semibold tracking-tight text-[#F1F5F9]">
             {isCreate ? t("newTodoDrawerTitle") : t("editTodoDrawerTitle")}
           </span>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors mui-ripple cursor-pointer"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-colors tactile-btn cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -146,7 +149,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
         <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
           {/* Title Field */}
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-500 dark:text-[#8E9599] uppercase tracking-wider mb-1.5">
+            <label className="block text-[10.5px] font-semibold text-[#94A3B8] uppercase tracking-[0.14em] mb-1.5">
               {t("todoTitleLabel")}
             </label>
             <input
@@ -155,13 +158,13 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t("todoTitleFieldHint")}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#151B1E] text-zinc-900 dark:text-[#EEF2F1] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600 dark:focus:border-[#22B8A7] text-xs transition-all shadow-xs"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-black/25 text-[#F1F5F9] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-[#2DD4BF] text-xs transition-all shadow-inner"
             />
           </div>
 
           {/* Tags Assignment Row */}
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-500 dark:text-[#8E9599] uppercase tracking-wider mb-1.5 flex items-center space-x-1">
+            <label className="block text-[10.5px] font-semibold text-[#94A3B8] uppercase tracking-[0.14em] mb-1.5 flex items-center space-x-1">
               <TagIcon className="w-3 h-3" />
               <span>{t("tags")}</span>
             </label>
@@ -173,7 +176,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                     key={tag.id}
                     type="button"
                     onClick={() => toggleTag(tag.id)}
-                    className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-medium transition-all mui-ripple cursor-pointer ${
+                    className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10.5px] font-medium transition-all tactile-btn cursor-pointer ${
                       isSelected
                         ? "ring-2 ring-teal-500/60 shadow-xs"
                         : "opacity-60 hover:opacity-100"
@@ -190,7 +193,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                 );
               })}
               {tagsWorkspace.tags.length === 0 && (
-                <span className="text-[11px] text-zinc-400 italic">
+                <span className="text-[11px] text-zinc-500 italic">
                   {t("noTagsYetMessage")}
                 </span>
               )}
@@ -199,16 +202,16 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
 
           {/* Deadline Trigger Row */}
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-500 dark:text-[#8E9599] uppercase tracking-wider mb-1.5 flex items-center space-x-1">
+            <label className="block text-[10.5px] font-semibold text-[#94A3B8] uppercase tracking-[0.14em] mb-1.5 flex items-center space-x-1">
               <Clock className="w-3 h-3" />
               <span>{t("deadline")}</span>
             </label>
             <button
               type="button"
               onClick={() => setShowDeadlinePicker(true)}
-              className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#151B1E] text-zinc-800 dark:text-[#EEF2F1] hover:border-teal-500 dark:hover:border-[#22B8A7] transition-colors mui-ripple cursor-pointer shadow-xs"
+              className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl border border-white/[0.08] bg-black/25 text-[#F1F5F9] hover:border-[#2DD4BF] transition-colors tactile-btn cursor-pointer shadow-inner"
             >
-              <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-[#22B8A7]" />
+              <Clock className="w-3.5 h-3.5 text-[#2DD4BF]" />
               <span className="font-medium">{deadlineInfo ? deadlineInfo.label : t("setDeadline")}</span>
             </button>
           </div>
@@ -216,19 +219,19 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
           {/* Content / Markdown Note */}
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[11px] font-semibold text-zinc-500 dark:text-[#8E9599] uppercase tracking-wider">
+              <label className="text-[10.5px] font-semibold text-[#94A3B8] uppercase tracking-[0.14em]">
                 {t("todoContentLabel")} (Markdown)
               </label>
 
               {/* Write / Preview Tab Switcher */}
-              <div className="flex items-center bg-black/[0.04] dark:bg-white/[0.06] rounded-lg p-0.5 border border-black/[0.03] dark:border-white/[0.04]">
+              <div className="flex items-center bg-black/30 rounded-lg p-0.5 border border-white/[0.06]">
                 <button
                   type="button"
                   onClick={() => setActiveTab("edit")}
                   className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-medium transition-all ${
                     activeTab === "edit"
-                      ? "bg-white dark:bg-[#151B1E] text-zinc-900 dark:text-white shadow-xs"
-                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
+                      ? "bg-[#1E272E] text-white shadow-xs"
+                      : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   {t("markdownWriteLabel")}
@@ -238,8 +241,8 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                   onClick={() => setActiveTab("preview")}
                   className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-medium transition-all ${
                     activeTab === "preview"
-                      ? "bg-white dark:bg-[#151B1E] text-zinc-900 dark:text-white shadow-xs"
-                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
+                      ? "bg-[#1E272E] text-white shadow-xs"
+                      : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   {t("markdownPreviewLabel")}
@@ -250,12 +253,12 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
             {activeTab === "edit" ? (
               <div className="space-y-1">
                 {/* Markdown Quick Toolbar */}
-                <div className="flex items-center space-x-0.5 px-1 py-1 rounded-t-xl bg-black/[0.03] dark:bg-white/[0.04] border-x border-t border-black/[0.08] dark:border-white/[0.1] text-zinc-500 dark:text-zinc-400">
+                <div className="flex items-center space-x-0.5 px-1.5 py-1 rounded-t-xl bg-black/30 border-x border-t border-white/[0.08] text-zinc-400">
                   <button
                     type="button"
                     onClick={() => insertMarkdown("**", "**")}
                     title={t("bold")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <Bold className="w-3 h-3" />
                   </button>
@@ -263,7 +266,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("*", "*")}
                     title={t("italic")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <Italic className="w-3 h-3" />
                   </button>
@@ -271,7 +274,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("- ")}
                     title={t("bulletList")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <List className="w-3 h-3" />
                   </button>
@@ -279,7 +282,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("- [ ] ")}
                     title={t("taskList")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <CheckSquare className="w-3 h-3" />
                   </button>
@@ -287,7 +290,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("`", "`")}
                     title={t("inlineCode")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <Code className="w-3 h-3" />
                   </button>
@@ -295,7 +298,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("[", "](url)")}
                     title={t("link")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <Link className="w-3 h-3" />
                   </button>
@@ -307,11 +310,11 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder={t("todoContentFieldHint")}
-                  className="w-full p-3 rounded-b-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#151B1E] text-zinc-900 dark:text-[#EEF2F1] focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600 dark:focus:border-[#22B8A7] font-mono text-[11.5px] leading-relaxed resize-none select-text shadow-xs"
+                  className="w-full p-3.5 rounded-b-xl border border-white/[0.08] bg-black/25 text-[#F1F5F9] focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-[#2DD4BF] font-mono text-[11.5px] leading-relaxed resize-none select-text shadow-inner"
                 />
               </div>
             ) : (
-              <div className="w-full min-h-[160px] max-h-[220px] overflow-y-auto p-4 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#151B1E] shadow-xs">
+              <div className="w-full min-h-[160px] max-h-[220px] overflow-y-auto p-4 rounded-xl border border-white/[0.08] bg-black/25 shadow-inner">
                 <FloatickMarkdown
                   content={content}
                   emptyMessage={t("markdownPreviewEmptyMessage")}
@@ -322,18 +325,18 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="h-14 px-5 border-t border-black/[0.05] dark:border-white/[0.06] flex items-center justify-end space-x-2.5 bg-black/[0.01] dark:bg-white/[0.01]">
+        <div className="h-14 px-5 border-t border-white/[0.07] flex items-center justify-end space-x-2.5 bg-black/15">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-zinc-600 dark:text-[#A0A6AA] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] text-xs font-medium transition-colors mui-ripple cursor-pointer"
+            className="px-4 py-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.08] text-xs font-medium transition-colors tactile-btn cursor-pointer"
           >
             {t("cancel")}
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="px-5 py-2 rounded-full bg-teal-600 hover:bg-teal-700 dark:bg-[#22B8A7] dark:hover:bg-[#1CA394] text-white font-medium text-xs shadow-md mui-ripple transition-all cursor-pointer"
+            className="px-6 py-2 rounded-full bg-gradient-to-r from-teal-500 to-teal-400 text-zinc-950 font-semibold text-xs shadow-[0_4px_16px_rgba(20,184,166,0.35)] tactile-btn transition-all cursor-pointer"
           >
             {isCreate ? t("createTodoAction") : t("saveChangesAction")}
           </button>

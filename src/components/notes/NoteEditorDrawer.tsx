@@ -107,14 +107,17 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
     <>
       {/* Scrim */}
       <div
-        className="absolute inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
+        className="absolute inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity duration-200"
         onClick={handleSaveAndClose}
       />
 
-      {/* Slide-up Bottom Drawer */}
-      <div className="absolute inset-x-0 bottom-0 z-50 h-[590px] rounded-t-[22px] bg-[#F9FBFA] dark:bg-[#1D2529] text-zinc-900 dark:text-[#EEF2F1] border-t border-black/[0.08] dark:border-white/[0.1] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-220">
+      {/* Slide-up Luxury Bottom Sheet */}
+      <div className="absolute inset-x-0 bottom-0 z-50 h-[590px] rounded-t-[26px] bg-[#141A1E] text-[#F1F5F9] border-t border-white/[0.12] shadow-[0_-20px_50px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-220">
+        {/* Grab Handle */}
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-2.5 mb-0.5 pointer-events-none" />
+
         {/* Header */}
-        <div className="h-12 px-5 border-b border-black/[0.05] dark:border-white/[0.06] flex items-center justify-between">
+        <div className="h-11 px-5 border-b border-white/[0.07] flex items-center justify-between">
           <div className="flex items-center space-x-1">
             {note && (
               <>
@@ -122,10 +125,10 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   type="button"
                   onClick={() => togglePin(note.id)}
                   title={note.pinnedAt ? t("unpin") : t("pin")}
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
                     note.pinnedAt
-                      ? "text-teal-600 dark:text-[#22B8A7] bg-teal-500/10"
-                      : "text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      ? "text-teal-400 bg-teal-500/15"
+                      : "text-zinc-400 hover:text-white hover:bg-white/[0.06]"
                   }`}
                 >
                   <Pin className="w-3.5 h-3.5" />
@@ -134,10 +137,10 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   type="button"
                   onClick={() => toggleArchive(note.id)}
                   title={note.archivedAt ? t("restore") : t("archive")}
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
                     note.archivedAt
-                      ? "text-amber-600 bg-amber-500/10"
-                      : "text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      ? "text-amber-400 bg-amber-500/15"
+                      : "text-zinc-400 hover:text-white hover:bg-white/[0.06]"
                   }`}
                 >
                   <Archive className="w-3.5 h-3.5" />
@@ -149,14 +152,14 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                     onClose();
                   }}
                   title={t("delete")}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] mui-ripple cursor-pointer"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-red-400 hover:bg-white/[0.06] tactile-btn cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </>
             )}
             {isCreate && (
-              <span className="text-xs font-semibold text-zinc-800 dark:text-[#EEF2F1] tracking-tight">
+              <span className="text-xs font-semibold text-[#F1F5F9] tracking-tight">
                 {t("newNote")}
               </span>
             )}
@@ -164,14 +167,14 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
 
           {/* Edit / Preview Tabs + Close */}
           <div className="flex items-center space-x-2">
-            <div className="flex items-center bg-black/[0.04] dark:bg-white/[0.06] rounded-lg p-0.5 border border-black/[0.03] dark:border-white/[0.04]">
+            <div className="flex items-center bg-black/30 rounded-lg p-0.5 border border-white/[0.06]">
               <button
                 type="button"
                 onClick={() => setActiveTab("edit")}
                 className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-medium transition-all ${
                   activeTab === "edit"
-                    ? "bg-white dark:bg-[#151B1E] text-zinc-900 dark:text-white shadow-xs"
-                    : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
+                    ? "bg-[#1E272E] text-white shadow-xs"
+                    : "text-zinc-400 hover:text-white"
                 }`}
               >
                 {t("markdownWriteLabel")}
@@ -181,8 +184,8 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                 onClick={() => setActiveTab("preview")}
                 className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-medium transition-all ${
                   activeTab === "preview"
-                    ? "bg-white dark:bg-[#151B1E] text-zinc-900 dark:text-white shadow-xs"
-                    : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
+                    ? "bg-[#1E272E] text-white shadow-xs"
+                    : "text-zinc-400 hover:text-white"
                 }`}
               >
                 {t("markdownPreviewLabel")}
@@ -192,7 +195,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
             <button
               type="button"
               onClick={handleSaveAndClose}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06] mui-ripple cursor-pointer"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/[0.08] tactile-btn cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -207,12 +210,12 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t("noteTitlePlaceholder")}
-            className="w-full text-sm font-semibold bg-transparent border-none outline-none text-zinc-900 dark:text-[#EEF2F1] placeholder:text-zinc-400 tracking-tight"
+            className="w-full text-sm font-semibold bg-transparent border-none outline-none text-[#F1F5F9] placeholder:text-[#64748B] tracking-tight"
           />
 
           {/* Tags Row */}
-          <div className="flex flex-wrap gap-1.5 items-center pb-2 border-b border-black/[0.04] dark:border-white/[0.06]">
-            <TagIcon className="w-3 h-3 text-zinc-400 mr-1" />
+          <div className="flex flex-wrap gap-1.5 items-center pb-2.5 border-b border-white/[0.07]">
+            <TagIcon className="w-3 h-3 text-[#64748B] mr-1" />
             {tagsWorkspace.tags.map((tag) => {
               const isSelected = selectedTagIds.includes(tag.id);
               return (
@@ -220,7 +223,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   key={tag.id}
                   type="button"
                   onClick={() => toggleTag(tag.id)}
-                  className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10.5px] font-medium transition-all mui-ripple cursor-pointer ${
+                  className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10.5px] font-medium transition-all tactile-btn cursor-pointer ${
                     isSelected
                       ? "ring-2 ring-teal-500/60 shadow-xs"
                       : "opacity-60 hover:opacity-100"
@@ -243,12 +246,12 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
             {activeTab === "edit" ? (
               <div className="h-full flex flex-col space-y-1">
                 {/* Markdown Toolbar */}
-                <div className="flex items-center space-x-0.5 px-1 py-1 rounded-t-xl bg-black/[0.03] dark:bg-white/[0.04] border-x border-t border-black/[0.08] dark:border-white/[0.1] text-zinc-500 dark:text-zinc-400">
+                <div className="flex items-center space-x-0.5 px-1.5 py-1 rounded-t-xl bg-black/30 border-x border-t border-white/[0.08] text-zinc-400">
                   <button
                     type="button"
                     onClick={() => insertMarkdown("**", "**")}
                     title={t("bold")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <Bold className="w-3 h-3" />
                   </button>
@@ -256,7 +259,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("*", "*")}
                     title={t("italic")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <Italic className="w-3 h-3" />
                   </button>
@@ -264,7 +267,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("- ")}
                     title={t("bulletList")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <List className="w-3 h-3" />
                   </button>
@@ -272,7 +275,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("- [ ] ")}
                     title={t("taskList")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <CheckSquare className="w-3 h-3" />
                   </button>
@@ -280,7 +283,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("`", "`")}
                     title={t("inlineCode")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <Code className="w-3 h-3" />
                   </button>
@@ -288,7 +291,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                     type="button"
                     onClick={() => insertMarkdown("[", "](url)")}
                     title={t("link")}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
+                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] hover:text-white tactile-btn"
                   >
                     <Link className="w-3 h-3" />
                   </button>
@@ -299,11 +302,11 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder={t("noteContentPlaceholder")}
-                  className="flex-1 w-full p-3 rounded-b-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#151B1E] text-zinc-900 dark:text-[#EEF2F1] focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600 dark:focus:border-[#22B8A7] font-mono text-[11.5px] leading-relaxed resize-none select-text shadow-xs"
+                  className="flex-1 w-full p-3.5 rounded-b-xl border border-white/[0.08] bg-black/25 text-[#F1F5F9] focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-[#2DD4BF] font-mono text-[11.5px] leading-relaxed resize-none select-text shadow-inner"
                 />
               </div>
             ) : (
-              <div className="w-full h-full overflow-y-auto p-4 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#151B1E] shadow-xs">
+              <div className="w-full h-full overflow-y-auto p-4 rounded-xl border border-white/[0.08] bg-black/25 shadow-inner">
                 <FloatickMarkdown
                   content={content}
                   emptyMessage={t("markdownPreviewEmptyMessage")}
@@ -314,12 +317,12 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="h-12 px-5 border-t border-black/[0.05] dark:border-white/[0.06] flex items-center justify-between text-[11px] text-zinc-400">
+        <div className="h-12 px-5 border-t border-white/[0.07] flex items-center justify-between text-[11px] text-[#94A3B8] bg-black/15">
           <span>{t("charactersCount", { count: content.length })}</span>
           <button
             type="button"
             onClick={handleSaveAndClose}
-            className="px-5 py-1.5 rounded-full bg-teal-600 hover:bg-teal-700 dark:bg-[#22B8A7] dark:hover:bg-[#1CA394] text-white font-medium text-xs shadow-md mui-ripple cursor-pointer transition-all"
+            className="px-6 py-1.5 rounded-full bg-gradient-to-r from-teal-500 to-teal-400 text-zinc-950 font-semibold text-xs shadow-[0_4px_16px_rgba(20,184,166,0.35)] tactile-btn cursor-pointer transition-all"
           >
             {t("finish")}
           </button>
