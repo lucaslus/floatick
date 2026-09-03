@@ -6,21 +6,21 @@ interface FloatickBrandMarkProps {
 }
 
 export const FloatickBrandMark: React.FC<FloatickBrandMarkProps> = ({
-  size = 32,
+  size = 38,
   className = "",
 }) => {
-  const radius = Math.round(size * 0.3);
-  const strokeWidth = size * 0.08;
+  const borderRadius = Math.round(size * 0.31);
+  const strokeWidth = size * 0.07;
 
   return (
     <div
       style={{
         width: size,
         height: size,
-        borderRadius: radius,
-        background: "linear-gradient(145deg, #223538 0%, #141E21 100%)",
-        border: "1px solid rgba(45, 212, 191, 0.25)",
-        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
+        borderRadius: `${borderRadius}px`,
+        background: "linear-gradient(135deg, #24383C 0%, #172326 100%)",
+        border: "1px solid rgba(64, 87, 90, 0.92)",
+        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.25)",
       }}
       className={`relative shrink-0 overflow-hidden flex items-center justify-center ${className}`}
     >
@@ -35,16 +35,16 @@ export const FloatickBrandMark: React.FC<FloatickBrandMarkProps> = ({
         {/* Back Checkmark */}
         <path
           d="M22 50 C27 54, 31 59, 36 64 C41 59, 47 52, 53 46"
-          stroke="#14B8A6"
-          strokeWidth={strokeWidth * 2.5}
+          stroke="#1DB3A8"
+          strokeWidth={strokeWidth * 2.8}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         {/* Front Checkmark */}
         <path
           d="M38 50 C43 55, 47 60, 52 64 C60 55, 68 46, 77 37"
-          stroke="#2DD4BF"
-          strokeWidth={strokeWidth * 2.5}
+          stroke="#2CCCBD"
+          strokeWidth={strokeWidth * 2.8}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
