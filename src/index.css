@@ -38,6 +38,9 @@
     background-color: transparent !important;
     overflow: hidden;
     font-family: var(--font-sans);
+    /* Enable GPU rendering context on root */
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 }
 
@@ -46,6 +49,9 @@
   background-color: #151B1E;
   border: 1px solid rgba(238, 242, 241, 0.08);
   box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  /* Dedicated Compositor Layer for 120Hz rendering */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .light .floatick-panel {
@@ -62,6 +68,21 @@
 
 .tactile-btn:active {
   transform: scale(0.965);
+}
+
+/* 120Hz / 60Hz Smooth Hardware Accelerated Scrolling */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+  transform: translateZ(0);
+}
+
+/* Hardware-accelerated sliding sheets (120Hz ProMotion friendly) */
+.sheet-slide-up {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 /* Custom sleek scrollbar */

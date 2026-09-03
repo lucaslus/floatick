@@ -105,7 +105,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
       />
 
       {/* Notes List */}
-      <div className="flex-1 overflow-y-auto px-4 pb-3 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 pb-3 space-y-3 smooth-scroll">
         {filteredNotes.length === 0 ? (
           <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-2">
             <FileText className="w-9 h-9 text-teal-500/40" />

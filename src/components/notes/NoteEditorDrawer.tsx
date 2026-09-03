@@ -112,7 +112,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
       />
 
       {/* Clean Bottom Sheet */}
-      <div className="absolute inset-x-0 bottom-0 z-50 h-[580px] rounded-t-2xl bg-[#161B1F] text-zinc-100 border-t border-white/[0.1] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200">
+      <div className="absolute inset-x-0 bottom-0 z-50 h-[580px] rounded-t-2xl bg-[#1D2529] text-[#EEF2F1] border-t border-white/[0.08] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200 sheet-slide-up">
         {/* Header */}
         <div className="h-11 px-4.5 border-b border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center space-x-1">
