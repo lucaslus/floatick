@@ -264,7 +264,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                 className="w-1.5 h-1.5 rounded-full shrink-0"
                 style={{ backgroundColor: tag.colorHex }}
               />
-              <span>{tag.name}</span>
+              <span className="truncate max-w-[120px]">{tag.name}</span>
             </button>
           ))}
 
@@ -279,9 +279,9 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
                   : "text-zinc-500 dark:text-zinc-400"
               }`}
             >
-              <Clock className="w-2.5 h-2.5" />
-              <span>{deadlineInfo.label}</span>
-              {deadlineInfo.isOverdue && !isCompleted && <span>· {t("overdue")}</span>}
+              <Clock className="w-2.5 h-2.5 shrink-0" />
+              <span className="truncate max-w-[140px]">{deadlineInfo.label}</span>
+              {deadlineInfo.isOverdue && !isCompleted && <span className="shrink-0">· {t("overdue")}</span>}
             </button>
           )}
         </div>

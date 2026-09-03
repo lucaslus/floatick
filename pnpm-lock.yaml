@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@fontsource/fira-code':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/google-sans':
+        specifier: ^5.3.1
+        version: 5.3.1
       '@tauri-apps/api':
         specifier: ^2.11.1
         version: 2.11.1
@@ -90,6 +96,12 @@ packages:
   '@babel/runtime@7.29.7':
     resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
+
+  '@fontsource/fira-code@5.3.0':
+    resolution: {integrity: sha512-EJL968RJRkakubAj/coU8pSUaeTE5UNoRjtzAr6kGiSZ3jWuN8/AKWHwym/PFUaQL1q7IL/H+EXs4358YhrTBQ==}
+
+  '@fontsource/google-sans@5.3.1':
+    resolution: {integrity: sha512-vPaxyKtWMAecphz5CHerhBAIhnRNzQs0dn4KEr8d9Zx5MsoRBXZgFG43Lso2h7w46HVb7S+ku1sdVkGvONz1kQ==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -1240,6 +1252,10 @@ packages:
 snapshots:
 
   '@babel/runtime@7.29.7': {}
+
+  '@fontsource/fira-code@5.3.0': {}
+
+  '@fontsource/google-sans@5.3.1': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

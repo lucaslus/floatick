@@ -211,12 +211,12 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                       key={color}
                       type="button"
                       onClick={() => setNewTagColor(color)}
-                      className={`w-5 h-5 rounded-full transition-transform cursor-pointer flex items-center justify-center ${
-                        newTagColor === color ? "scale-120 ring-2 ring-teal-500/50" : "hover:scale-110"
+                      className={`w-6 h-6 rounded-full transition-transform cursor-pointer flex items-center justify-center tactile-btn ${
+                        newTagColor === color ? "scale-115 ring-2 ring-teal-500/60 shadow-xs" : "hover:scale-105"
                       }`}
                       style={{ backgroundColor: color }}
                     >
-                      {newTagColor === color && <Check className="w-2.5 h-2.5 text-white stroke-[3]" />}
+                      {newTagColor === color && <Check className="w-3 h-3 text-white stroke-[3]" />}
                     </button>
                   ))}
                 </div>

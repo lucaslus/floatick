@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2 } from "lucide-react";
 import type { TodoItem } from "@/types";
@@ -90,6 +90,12 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
     setEditingTodoId(null);
     setIsEditorOpen(true);
   };
+
+  useEffect(() => {
+    const handler = () => handleOpenCreate();
+    window.addEventListener("floatick:new-item", handler);
+    return () => window.removeEventListener("floatick:new-item", handler);
+  }, []);
 
   const handleOpenEdit = (todo: TodoItem) => {
     setEditingTodoId(todo.id);

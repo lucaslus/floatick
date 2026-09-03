@@ -72,7 +72,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
           {/* Appearance Section */}
           <div className="space-y-1.5">
-            <span className="text-[11px] font-semibold text-zinc-400 dark:text-[#8E9599] uppercase tracking-wider block">
+            <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
               {t("appearanceSectionTitle")}
             </span>
             <div className="grid grid-cols-3 gap-1.5">
@@ -85,14 +85,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   key={id}
                   type="button"
                   onClick={() => updateTheme(id)}
-                  className={`p-2 rounded-xl flex flex-col items-center space-y-1 border transition-all cursor-pointer ${
+                  className={`p-2 rounded-xl flex flex-col items-center space-y-1 border transition-all tactile-btn cursor-pointer ${
                     settings.theme === id
-                      ? "bg-teal-500/15 dark:bg-[#22B8A7]/15 border-teal-500/50 dark:border-[#22B8A7]/50 text-teal-700 dark:text-[#22B8A7] font-medium"
-                      : "bg-white dark:bg-[#151B1E] border-black/[0.04] dark:border-white/[0.06] text-zinc-600 dark:text-[#8E9599] hover:border-black/[0.1]"
+                      ? "bg-teal-500/15 border-teal-500/40 text-teal-600 dark:text-teal-400 font-medium"
+                      : "bg-white dark:bg-[#181E22] border-black/[0.04] dark:border-white/[0.06] text-zinc-600 dark:text-zinc-400 hover:border-black/[0.1] dark:hover:border-white/[0.1]"
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
-                  <span className="text-[10px]">{label}</span>
+                  <span className="text-[10px] truncate max-w-[70px]">{label}</span>
                 </button>
               ))}
             </div>
@@ -100,7 +100,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
           {/* Language Section */}
           <div className="space-y-1.5">
-            <span className="text-[11px] font-semibold text-zinc-400 dark:text-[#8E9599] uppercase tracking-wider block">
+            <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
               {t("languageSectionTitle")}
             </span>
             <div className="grid grid-cols-3 gap-1.5">
@@ -113,14 +113,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   key={id}
                   type="button"
                   onClick={() => updateLanguage(id)}
-                  className={`p-1.5 rounded-xl flex items-center justify-center space-x-1 border transition-all cursor-pointer ${
+                  className={`p-1.5 rounded-xl flex items-center justify-center space-x-1 border transition-all tactile-btn cursor-pointer ${
                     settings.language === id
-                      ? "bg-teal-500/15 dark:bg-[#22B8A7]/15 border-teal-500/50 dark:border-[#22B8A7]/50 text-teal-700 dark:text-[#22B8A7] font-medium"
-                      : "bg-white dark:bg-[#151B1E] border-black/[0.04] dark:border-white/[0.06] text-zinc-600 dark:text-[#8E9599] hover:border-black/[0.1]"
+                      ? "bg-teal-500/15 border-teal-500/40 text-teal-600 dark:text-teal-400 font-medium"
+                      : "bg-white dark:bg-[#181E22] border-black/[0.04] dark:border-white/[0.06] text-zinc-600 dark:text-zinc-400 hover:border-black/[0.1] dark:hover:border-white/[0.1]"
                   }`}
                 >
-                  <Globe className="w-3 h-3" />
-                  <span className="text-[10px]">{label}</span>
+                  <Globe className="w-3 h-3 shrink-0" />
+                  <span className="text-[10px] truncate max-w-[65px]">{label}</span>
                 </button>
               ))}
             </div>
@@ -128,17 +128,19 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
           {/* Window Behavior */}
           <div className="space-y-1.5">
-            <span className="text-[11px] font-semibold text-zinc-400 dark:text-[#8E9599] uppercase tracking-wider block">
+            <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
               {t("windowSectionTitle")}
             </span>
-            <div className="bg-white dark:bg-[#151B1E] rounded-xl border border-black/[0.04] dark:border-white/[0.06] divide-y divide-black/[0.04] dark:divide-white/[0.04]">
+            <div className="bg-white dark:bg-[#181E22] rounded-xl border border-black/[0.04] dark:border-white/[0.06] divide-y divide-black/[0.04] dark:divide-white/[0.04]">
               <div className="p-2.5 flex items-center justify-between">
-                <span className="text-zinc-700 dark:text-[#EEF2F1] text-[11px]">{t("alwaysOnTopLabel")}</span>
+                <span className="text-zinc-700 dark:text-zinc-200 text-[11px] flex-1 mr-2 truncate">
+                  {t("alwaysOnTopLabel")}
+                </span>
                 <button
                   type="button"
                   onClick={() => updateAlwaysOnTop(!settings.alwaysOnTop)}
-                  className={`w-8 h-4.5 rounded-full transition-colors relative cursor-pointer ${
-                    settings.alwaysOnTop ? "bg-teal-600 dark:bg-[#22B8A7]" : "bg-zinc-300 dark:bg-zinc-700"
+                  className={`w-8 h-4.5 shrink-0 rounded-full transition-colors relative cursor-pointer ${
+                    settings.alwaysOnTop ? "bg-teal-600 dark:bg-teal-500" : "bg-zinc-300 dark:bg-zinc-700"
                   }`}
                 >
                   <div
@@ -150,12 +152,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               </div>
 
               <div className="p-2.5 flex items-center justify-between">
-                <span className="text-zinc-700 dark:text-[#EEF2F1] text-[11px]">{t("collapseWhenClickingOutsideLabel")}</span>
+                <span className="text-zinc-700 dark:text-zinc-200 text-[11px] flex-1 mr-2 truncate">
+                  {t("collapseWhenClickingOutsideLabel")}
+                </span>
                 <button
                   type="button"
                   onClick={() => updateCollapseOnBlur(!settings.collapseWhenClickingOutside)}
-                  className={`w-8 h-4.5 rounded-full transition-colors relative cursor-pointer ${
-                    settings.collapseWhenClickingOutside ? "bg-teal-600 dark:bg-[#22B8A7]" : "bg-zinc-300 dark:bg-zinc-700"
+                  className={`w-8 h-4.5 shrink-0 rounded-full transition-colors relative cursor-pointer ${
+                    settings.collapseWhenClickingOutside ? "bg-teal-600 dark:bg-teal-500" : "bg-zinc-300 dark:bg-zinc-700"
                   }`}
                 >
                   <div
@@ -170,16 +174,18 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
           {/* Startup Section */}
           <div className="space-y-1.5">
-            <span className="text-[11px] font-semibold text-zinc-400 dark:text-[#8E9599] uppercase tracking-wider block">
+            <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
               {t("startupSectionTitle")}
             </span>
-            <div className="bg-white dark:bg-[#151B1E] rounded-xl border border-black/[0.04] dark:border-white/[0.06] p-2.5 flex items-center justify-between">
-              <span className="text-zinc-700 dark:text-[#EEF2F1] text-[11px]">{t("openAtLoginLabel")}</span>
+            <div className="bg-white dark:bg-[#181E22] rounded-xl border border-black/[0.04] dark:border-white/[0.06] p-2.5 flex items-center justify-between">
+              <span className="text-zinc-700 dark:text-zinc-200 text-[11px] flex-1 mr-2 truncate">
+                {t("openAtLoginLabel")}
+              </span>
               <button
                 type="button"
                 onClick={handleToggleAutostart}
-                className={`w-8 h-4.5 rounded-full transition-colors relative cursor-pointer ${
-                  autostart ? "bg-teal-600 dark:bg-[#22B8A7]" : "bg-zinc-300 dark:bg-zinc-700"
+                className={`w-8 h-4.5 shrink-0 rounded-full transition-colors relative cursor-pointer ${
+                  autostart ? "bg-teal-600 dark:bg-teal-500" : "bg-zinc-300 dark:bg-zinc-700"
                 }`}
               >
                 <div
@@ -196,8 +202,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <span className="text-[11px] font-semibold text-zinc-400 dark:text-[#8E9599] uppercase tracking-wider block">
               {t("workingDirectorySectionTitle")}
             </span>
-            <div className="p-2.5 bg-white dark:bg-[#151B1E] rounded-xl border border-black/[0.04] dark:border-white/[0.06] flex items-center space-x-2 text-[11px] text-zinc-500 dark:text-[#8E9599]">
-              <Folder className="w-3.5 h-3.5 text-teal-600 dark:text-[#22B8A7]" />
+            <div className="p-2.5 bg-white dark:bg-[#181E22] rounded-xl border border-black/[0.04] dark:border-white/[0.06] flex items-center space-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+              <Folder className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
               <span className="font-mono">~/.floatick</span>
             </div>
           </div>
@@ -207,7 +213,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <button
               type="button"
               onClick={handleQuit}
-              className="w-full p-2.5 rounded-xl border border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/40 font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+              className="w-full p-2.5 rounded-xl border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/40 font-medium flex items-center justify-center space-x-1.5 transition-colors tactile-btn cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>{t("quit")}</span>

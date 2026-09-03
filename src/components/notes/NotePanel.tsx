@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FileText, Pin } from "lucide-react";
 import type { NoteItem } from "@/types";
@@ -29,6 +29,12 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
     setEditingNoteId(null);
     setIsEditorOpen(true);
   };
+
+  useEffect(() => {
+    const handler = () => handleOpenCreate();
+    window.addEventListener("floatick:new-item", handler);
+    return () => window.removeEventListener("floatick:new-item", handler);
+  }, []);
 
   const handleOpenEdit = (note: NoteItem) => {
     setEditingNoteId(note.id);

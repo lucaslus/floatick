@@ -60,6 +60,19 @@ export const App: React.FC = () => {
         e.preventDefault();
         setIsSettingsOpen(true);
       }
+
+      // Cmd+F -> Focus Search input
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement | null;
+        searchInput?.focus();
+      }
+
+      // Cmd+N -> New Item
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("floatick:new-item"));
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
