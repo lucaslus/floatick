@@ -17,6 +17,7 @@ interface NoteState {
   deleteNote: (id: string) => Promise<void>;
   togglePin: (id: string) => Promise<void>;
   toggleArchive: (id: string) => Promise<void>;
+  removeTagFromNotes: (tagId: string) => Promise<void>;
 }
 
 export const useNoteStore = create<NoteState>((set, get) => ({
@@ -99,6 +100,17 @@ export const useNoteStore = create<NoteState>((set, get) => ({
         updatedAt: now,
       };
     });
+    set({ notes: nextNotes });
+    await api.saveNotes(nextNotes);
+  },
+
+  removeTagFromNotes: async (tagId: string) => {
+    const hasTag = get().notes.some((n) => n.tagIds.includes(tagId));
+    if (!hasTag) return;
+    const nextNotes = get().notes.map((n) => ({
+      ...n,
+      tagIds: n.tagIds.filter((tId) => tId !== tagId),
+    }));
     set({ notes: nextNotes });
     await api.saveNotes(nextNotes);
   },

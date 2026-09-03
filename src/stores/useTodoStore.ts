@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { TodoItem } from "@/types";
 import { api } from "@/lib/api";
+import { useTagStore } from "./useTagStore";
 
 interface TodoState {
   todos: TodoItem[];
@@ -112,6 +113,8 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     const nextTodos = get().todos.filter((item) => item.id !== id);
     set({ todos: nextTodos });
     await api.saveTodos(nextTodos);
+    // Clean up tag assignments for this deleted todo
+    await useTagStore.getState().removeAssignmentForTodo(id);
   },
 
   archiveTodo: async (id: string) => {

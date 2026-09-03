@@ -12,9 +12,13 @@ import { getGroupLabel } from "@/lib/dateUtils";
 
 interface TodoPanelProps {
   onOpenTagFilter: () => void;
+  onOpenTagAssignment: (todoId: string) => void;
 }
 
-export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
+export const TodoPanel: React.FC<TodoPanelProps> = ({
+  onOpenTagFilter,
+  onOpenTagAssignment,
+}) => {
   const { t, i18n } = useTranslation();
 
   const todos = useTodoStore((s) => s.todos);
@@ -26,7 +30,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
   const activeScope = useTodoStore((s) => s.activeScope);
 
   const tagsWorkspace = useTagStore((s) => s.workspace);
-  const selectedTagFilter = useTagStore((s) => s.selectedTagFilter);
+  const selectedTagIds = useTagStore((s) => s.selectedTagIds);
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
@@ -48,10 +52,11 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
         if (!isDoing) return false;
       }
 
-      // Tag filter
-      if (selectedTagFilter) {
+      // Multi-Tag filter (OR match, exact same as Flutter)
+      if (selectedTagIds.length > 0) {
         const assigned = tagsWorkspace.assignments[item.id] || [];
-        if (!assigned.includes(selectedTagFilter)) return false;
+        const matchesTag = selectedTagIds.some((id) => assigned.includes(id));
+        if (!matchesTag) return false;
       }
 
       // Search query filter
@@ -64,7 +69,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
 
       return true;
     });
-  }, [todos, activeScope, isDoingFilter, selectedTagFilter, searchQuery, tagsWorkspace]);
+  }, [todos, activeScope, isDoingFilter, selectedTagIds, searchQuery, tagsWorkspace]);
 
   // Grouping by Date
   const groupedTodos = useMemo(() => {
@@ -118,7 +123,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
         showDoingFilter={activeScope === "active"}
         isDoingSelected={isDoingFilter}
         onToggleDoingFilter={() => setIsDoingFilter(!isDoingFilter)}
-        selectedTagCount={selectedTagFilter ? 1 : 0}
+        selectedTagCount={selectedTagIds.length}
         onOpenTagFilter={onOpenTagFilter}
         onAddNew={handleOpenCreate}
       />
@@ -151,7 +156,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
                     todo={todo}
                     onEdit={handleOpenEdit}
                     onOpenDeadlinePicker={(t) => setDeadliningTodo(t)}
-                    onOpenTagAssignment={handleOpenEdit}
+                    onOpenTagAssignment={() => onOpenTagAssignment(todo.id)}
                   />
                 ))}
               </div>

@@ -15,6 +15,20 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"todos" | "notes">("todos");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTagDrawerOpen, setIsTagDrawerOpen] = useState(false);
+  const [tagDrawerMode, setTagDrawerMode] = useState<"filter" | "assignment" | "manage">("filter");
+  const [tagDrawerTargetTodoId, setTagDrawerTargetTodoId] = useState<string | null>(null);
+
+  const handleOpenTagFilter = () => {
+    setTagDrawerMode("filter");
+    setTagDrawerTargetTodoId(null);
+    setIsTagDrawerOpen(true);
+  };
+
+  const handleOpenTagAssignment = (todoId: string) => {
+    setTagDrawerMode("assignment");
+    setTagDrawerTargetTodoId(todoId);
+    setIsTagDrawerOpen(true);
+  };
 
   const loadSettings = useSettingsStore((s) => s.loadSettings);
   const loadTodos = useTodoStore((s) => s.loadTodos);
@@ -97,9 +111,12 @@ export const App: React.FC = () => {
 
         {/* Main Content Panels */}
         {activeTab === "todos" ? (
-          <TodoPanel onOpenTagFilter={() => setIsTagDrawerOpen(true)} />
+          <TodoPanel
+            onOpenTagFilter={handleOpenTagFilter}
+            onOpenTagAssignment={handleOpenTagAssignment}
+          />
         ) : (
-          <NotePanel onOpenTagFilter={() => setIsTagDrawerOpen(true)} />
+          <NotePanel onOpenTagFilter={handleOpenTagFilter} />
         )}
 
         {/* Settings Drawer */}
@@ -111,6 +128,8 @@ export const App: React.FC = () => {
         {/* Tag Drawer */}
         <TagDrawer
           isOpen={isTagDrawerOpen}
+          initialMode={tagDrawerMode}
+          targetTodoId={tagDrawerTargetTodoId}
           onClose={() => setIsTagDrawerOpen(false)}
         />
       </div>

@@ -20,7 +20,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
   const searchQuery = useNoteStore((s) => s.searchQuery);
   const setSearchQuery = useNoteStore((s) => s.setSearchQuery);
 
-  const selectedTagFilter = useTagStore((s) => s.selectedTagFilter);
+  const selectedTagIds = useTagStore((s) => s.selectedTagIds);
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -46,8 +46,9 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
     return notes.filter((item) => {
       if (item.archivedAt) return false;
 
-      if (selectedTagFilter && !item.tagIds.includes(selectedTagFilter)) {
-        return false;
+      if (selectedTagIds.length > 0) {
+        const matchesTag = selectedTagIds.some((id) => item.tagIds.includes(id));
+        if (!matchesTag) return false;
       }
 
       if (searchQuery.trim()) {
@@ -59,7 +60,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
 
       return true;
     });
-  }, [notes, selectedTagFilter, searchQuery]);
+  }, [notes, selectedTagIds, searchQuery]);
 
   // Separate pinned and unpinned
   const pinnedNotes = useMemo(() => {
@@ -97,7 +98,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
         query={searchQuery}
         onQueryChange={setSearchQuery}
         showDoingFilter={false}
-        selectedTagCount={selectedTagFilter ? 1 : 0}
+        selectedTagCount={selectedTagIds.length}
         onOpenTagFilter={onOpenTagFilter}
         onAddNew={handleOpenCreate}
         placeholder={t("searchNotes")}

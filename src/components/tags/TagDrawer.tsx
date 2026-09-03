@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   X,
@@ -10,7 +10,10 @@ import {
   Plus,
 } from "lucide-react";
 import { useTagStore } from "@/stores/useTagStore";
+import { useTodoStore } from "@/stores/useTodoStore";
+import { useNoteStore } from "@/stores/useNoteStore";
 
+// Exact TagPalette colors from legacy/flutter/lib/features/todos/presentation/widgets/tag_palette.dart
 const TAG_PALETTE = [
   "#20B8A8", // Teal
   "#4C8FF5", // Blue
@@ -24,49 +27,122 @@ const TAG_PALETTE = [
 
 interface TagDrawerProps {
   isOpen: boolean;
+  initialMode?: "filter" | "assignment" | "manage";
+  targetTodoId?: string | null;
   onClose: () => void;
 }
 
-export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
+export const TagDrawer: React.FC<TagDrawerProps> = ({
+  isOpen,
+  initialMode = "filter",
+  targetTodoId = null,
+  onClose,
+}) => {
   const { t } = useTranslation();
+
   const workspace = useTagStore((s) => s.workspace);
-  const selectedTagFilter = useTagStore((s) => s.selectedTagFilter);
-  const setSelectedTagFilter = useTagStore((s) => s.setSelectedTagFilter);
+  const selectedTagIds = useTagStore((s) => s.selectedTagIds);
+  const toggleTagFilter = useTagStore((s) => s.toggleTagFilter);
+  const clearTagFilter = useTagStore((s) => s.clearTagFilter);
+  const toggleTodoTag = useTagStore((s) => s.toggleTodoTag);
   const createTag = useTagStore((s) => s.createTag);
   const updateTag = useTagStore((s) => s.updateTag);
   const deleteTag = useTagStore((s) => s.deleteTag);
 
-  const [mode, setMode] = useState<"filter" | "manage">("filter");
+  const todos = useTodoStore((s) => s.todos);
+  const notes = useNoteStore((s) => s.notes);
+
+  const [mode, setMode] = useState<"filter" | "assignment" | "manage">(initialMode);
+  const [returnMode, setReturnMode] = useState<"filter" | "assignment">("filter");
+
   const [tagNameInput, setTagNameInput] = useState("");
   const [selectedColor, setSelectedColor] = useState(TAG_PALETTE[0]);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [confirmDeleteTagId, setConfirmDeleteTagId] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setReturnMode(initialMode === "manage" ? "filter" : initialMode);
+      setTagNameInput("");
+      setSelectedColor(TAG_PALETTE[0]);
+      setEditingTagId(null);
+      setConfirmDeleteTagId(null);
+      setValidationError(null);
+    }
+  }, [isOpen, initialMode, targetTodoId]);
+
+  // Compute accurate active usage counts (Active Todos + Active Notes)
+  const usageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const tag of workspace.tags) {
+      counts[tag.id] = 0;
+    }
+
+    // Active todos
+    for (const todo of todos) {
+      if (todo.archivedAt) continue;
+      const assigned = workspace.assignments[todo.id] || [];
+      for (const tagId of assigned) {
+        if (counts[tagId] !== undefined) {
+          counts[tagId]++;
+        }
+      }
+    }
+
+    // Active notes
+    for (const note of notes) {
+      if (note.archivedAt) continue;
+      for (const tagId of note.tagIds) {
+        if (counts[tagId] !== undefined) {
+          counts[tagId]++;
+        }
+      }
+    }
+
+    return counts;
+  }, [workspace.tags, workspace.assignments, todos, notes]);
 
   if (!isOpen) return null;
 
-  // Compute tag usage counts
-  const usageCounts = workspace.tags.reduce<Record<string, number>>((acc, tag) => {
-    let count = 0;
-    for (const ids of Object.values(workspace.assignments)) {
-      if (ids.includes(tag.id)) count++;
-    }
-    acc[tag.id] = count;
-    return acc;
-  }, {});
+  const targetAssignedTagIds = targetTodoId
+    ? workspace.assignments[targetTodoId] || []
+    : [];
+
+  const handleOpenManage = () => {
+    setReturnMode(mode === "manage" ? "filter" : mode);
+    setMode("manage");
+    handleCancelEdit();
+  };
+
+  const handleBackFromManage = () => {
+    setMode(returnMode);
+    handleCancelEdit();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const name = tagNameInput.trim();
     if (!name) return;
 
-    if (editingTagId) {
-      await updateTag(editingTagId, name, selectedColor);
-      setEditingTagId(null);
-    } else {
-      await createTag(name, selectedColor);
+    try {
+      if (editingTagId) {
+        await updateTag(editingTagId, name, selectedColor);
+        setEditingTagId(null);
+      } else {
+        await createTag(name, selectedColor);
+      }
+      setTagNameInput("");
+      setSelectedColor(TAG_PALETTE[0]);
+      setValidationError(null);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === "Tag name already exists") {
+        setValidationError(t("tagNameAlreadyExistsMessage") || "标签名称已存在");
+      } else {
+        setValidationError(String(err));
+      }
     }
-    setTagNameInput("");
-    setSelectedColor(TAG_PALETTE[0]);
   };
 
   const handleStartEdit = (tag: { id: string; name: string; colorHex: string }) => {
@@ -74,12 +150,14 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
     setTagNameInput(tag.name);
     setSelectedColor(tag.colorHex);
     setConfirmDeleteTagId(null);
+    setValidationError(null);
   };
 
   const handleCancelEdit = () => {
     setEditingTagId(null);
     setTagNameInput("");
     setSelectedColor(TAG_PALETTE[0]);
+    setValidationError(null);
   };
 
   const handleDelete = async (tagId: string) => {
@@ -106,26 +184,27 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
             {mode === "manage" && (
               <button
                 type="button"
-                onClick={() => {
-                  setMode("filter");
-                  handleCancelEdit();
-                }}
-                title={t("filterByTagTitle")}
+                onClick={handleBackFromManage}
+                title={returnMode === "assignment" ? t("assignTagsTitle") || "分配标签" : t("filterByTagTitle")}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[#EEF2F1]/58 hover:text-[#EEF2F1] hover:bg-white/[0.06] transition-colors tactile-btn cursor-pointer -ml-1.5"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
             )}
             <span className="text-[14px] font-semibold text-[#EEF2F1] tracking-tight truncate">
-              {mode === "filter" ? t("filterByTagTitle") : t("manageTags")}
+              {mode === "filter"
+                ? t("filterByTagTitle")
+                : mode === "assignment"
+                ? t("assignTagsTitle") || "分配标签"
+                : t("manageTags")}
             </span>
           </div>
 
           <div className="flex items-center space-x-1 shrink-0">
-            {mode === "filter" && (
+            {mode !== "manage" && (
               <button
                 type="button"
-                onClick={() => setMode("manage")}
+                onClick={handleOpenManage}
                 className="text-[12px] font-semibold text-[#22B8A7] hover:underline px-2 py-1 rounded transition-colors tactile-btn cursor-pointer"
               >
                 {t("manageTags")}
@@ -141,18 +220,15 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* View 1: Filter Mode (TagSelectionRow) */}
+        {/* View 1: Filter Mode (TagFilterDrawer - Multi-Select Filter) */}
         {mode === "filter" && (
           <div className="flex-1 overflow-y-auto p-2.5 space-y-1 smooth-scroll">
-            {/* All Items Row */}
+            {/* All Items Row (Clears multi-selection) */}
             <button
               type="button"
-              onClick={() => {
-                setSelectedTagFilter(null);
-                onClose();
-              }}
+              onClick={clearTagFilter}
               className={`w-full h-11 px-3 rounded-xl flex items-center justify-between transition-colors tactile-btn cursor-pointer ${
-                selectedTagFilter === null
+                selectedTagIds.length === 0
                   ? "bg-[#22B8A7]/[0.12] text-[#22B8A7]"
                   : "text-[#EEF2F1]/85 hover:bg-white/[0.055]"
               }`}
@@ -163,7 +239,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                   {t("allTagsFilterLabel")}
                 </span>
               </div>
-              {selectedTagFilter === null && (
+              {selectedTagIds.length === 0 && (
                 <Check className="w-4 h-4 text-[#22B8A7] stroke-[2.5]" />
               )}
             </button>
@@ -175,16 +251,13 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
               </div>
             ) : (
               workspace.tags.map((tag) => {
-                const isSelected = selectedTagFilter === tag.id;
+                const isSelected = selectedTagIds.includes(tag.id);
                 const count = usageCounts[tag.id] ?? 0;
                 return (
                   <button
                     key={tag.id}
                     type="button"
-                    onClick={() => {
-                      setSelectedTagFilter(isSelected ? null : tag.id);
-                      onClose();
-                    }}
+                    onClick={() => toggleTagFilter(tag.id)}
                     className={`w-full h-11 px-3 rounded-xl flex items-center justify-between transition-colors tactile-btn cursor-pointer ${
                       isSelected
                         ? "bg-[#22B8A7]/[0.12] text-[#22B8A7]"
@@ -202,7 +275,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div className="flex items-center space-x-2 shrink-0">
-                      <span className="text-[11.5px] text-[#EEF2F1]/38">
+                      <span className="text-[11.5px] text-[#EEF2F1]/38 font-mono">
                         {count}
                       </span>
                       {isSelected && (
@@ -216,7 +289,54 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        {/* View 2: Management Mode (Search / Create & Edit) */}
+        {/* View 2: Assignment Mode (TagFilterDrawer.assignment - Assign to specific item) */}
+        {mode === "assignment" && targetTodoId && (
+          <div className="flex-1 overflow-y-auto p-2.5 space-y-1 smooth-scroll">
+            {workspace.tags.length === 0 ? (
+              <div className="py-12 text-center text-xs text-[#EEF2F1]/40 px-4">
+                {t("noTagsYetMessage")}
+              </div>
+            ) : (
+              workspace.tags.map((tag) => {
+                const isAssigned = targetAssignedTagIds.includes(tag.id);
+                const count = usageCounts[tag.id] ?? 0;
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => toggleTodoTag(targetTodoId, tag.id)}
+                    className={`w-full h-11 px-3 rounded-xl flex items-center justify-between transition-colors tactile-btn cursor-pointer ${
+                      isAssigned
+                        ? "bg-[#22B8A7]/[0.12] text-[#22B8A7]"
+                        : "text-[#EEF2F1]/85 hover:bg-white/[0.055]"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2.5 min-w-0 flex-1 mr-2">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: tag.colorHex }}
+                      />
+                      <span className="text-[13px] font-medium tracking-tight truncate">
+                        {tag.name}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center space-x-2 shrink-0">
+                      <span className="text-[11.5px] text-[#EEF2F1]/38 font-mono">
+                        {count}
+                      </span>
+                      {isAssigned && (
+                        <Check className="w-4 h-4 text-[#22B8A7] stroke-[2.5]" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* View 3: Management Mode (TagManagementDrawer) */}
         {mode === "manage" && (
           <div className="flex-1 flex flex-col min-h-0">
             {/* Top Create / Edit Section */}
@@ -226,8 +346,11 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                   type="text"
                   maxLength={30}
                   value={tagNameInput}
-                  onChange={(e) => setTagNameInput(e.target.value)}
-                  placeholder={editingTagId ? t("tagName") : "搜索或创建标签…"}
+                  onChange={(e) => {
+                    setTagNameInput(e.target.value);
+                    if (validationError) setValidationError(null);
+                  }}
+                  placeholder={editingTagId ? t("tagName") : t("searchOrCreateTagHint") || "搜索或创建标签…"}
                   className="w-full h-9.5 pl-3 pr-16 rounded-xl bg-[#1D2529] border border-white/[0.08] text-xs text-[#EEF2F1] placeholder:text-[#EEF2F1]/38 focus:outline-none focus:border-[#22B8A7] transition-colors"
                 />
 
@@ -253,6 +376,16 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                     )}
                   </button>
                 </div>
+              </div>
+
+              {/* Character limit and validation message */}
+              <div className="flex items-center justify-between text-[11px] px-1">
+                <span className={validationError ? "text-red-400 font-medium" : "text-[#EEF2F1]/38"}>
+                  {validationError || (editingTagId ? "编辑标签模式" : "创建标签模式")}
+                </span>
+                <span className="text-[#EEF2F1]/36 font-mono">
+                  {tagNameInput.length}/30
+                </span>
               </div>
 
               {/* TagPalette: 8 Circular Colors */}
@@ -316,7 +449,7 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({ isOpen, onClose }) => {
                       {/* Right: Usage count + Actions */}
                       <div className="flex items-center space-x-1.5 shrink-0">
                         {!isConfirming && (
-                          <span className="text-[11px] text-[#EEF2F1]/38 mr-1">
+                          <span className="text-[11px] text-[#EEF2F1]/38 mr-1 font-mono">
                             {count}
                           </span>
                         )}
