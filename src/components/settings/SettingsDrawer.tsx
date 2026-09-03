@@ -88,21 +88,24 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 { id: "system" as ThemePreference, label: t("themeSystemTooltip"), icon: Desktop },
                 { id: "light" as ThemePreference, label: t("themeLightTooltip"), icon: Sun },
                 { id: "dark" as ThemePreference, label: t("themeDarkTooltip"), icon: Moon },
-              ].map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => updateTheme(id)}
-                  className={`p-2 rounded-[8px] flex flex-col items-center space-y-1 transition-all tactile-btn cursor-pointer ${
-                    settings.theme === id
-                      ? "bg-[#22B8A7]/15 text-[#22B8A7] font-medium"
-                      : "bg-white/[0.04] text-zinc-400 hover:text-[#EEF2F1] hover:bg-white/[0.07]"
-                  }`}
-                >
-                  <Icon size={16} weight={settings.theme === id ? "fill" : "regular"} />
-                  <span className="text-[10px] truncate max-w-[70px]">{label}</span>
-                </button>
-              ))}
+              ].map(({ id, label, icon: Icon }) => {
+                const isActive = settings.theme === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => updateTheme(id)}
+                    title={label}
+                    className={`h-8.5 rounded-[8px] flex items-center justify-center transition-all tactile-btn cursor-pointer ${
+                      isActive
+                        ? "bg-[#22B8A7]/15 text-[#22B8A7]"
+                        : "bg-white/[0.04] text-zinc-400 hover:text-[#EEF2F1] hover:bg-white/[0.07]"
+                    }`}
+                  >
+                    <Icon size={18} weight={isActive ? "fill" : "regular"} />
+                  </button>
+                );
+              })}
             </div>
           </div>
 
