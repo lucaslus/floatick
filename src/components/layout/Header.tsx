@@ -56,58 +56,46 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="px-5 pt-4 pb-2.5 flex items-center justify-between select-none">
-      {/* Left: Brand Mark + Status Capsule */}
+    <header className="px-5 pt-3.5 pb-2 flex items-center justify-between select-none">
+      {/* Left: Brand + Crisp Status */}
       <div className="flex items-center space-x-2.5">
-        <FloatickBrandMark size={34} />
-        
-        {/* Status Capsule Badge */}
-        <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08] shadow-xs">
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              activeTodoCount > 0
-                ? "bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.6)] animate-pulse"
-                : "bg-zinc-400"
-            }`}
-          />
-          <span className="text-[12px] font-medium text-zinc-700 dark:text-[#CBD5E1] tracking-tight">
-            {statusText}
-          </span>
-        </div>
+        <FloatickBrandMark size={30} />
+        <span className="text-[13px] font-medium text-zinc-700 dark:text-zinc-300 tracking-tight">
+          {statusText}
+        </span>
       </div>
 
-      {/* Right: Tactile Actions */}
-      <div className="flex items-center space-x-1 text-zinc-400 dark:text-[#94A3B8]">
+      {/* Right: Minimal Actions */}
+      <div className="flex items-center space-x-0.5 text-zinc-400 dark:text-zinc-500">
         {/* Archive Toggle */}
         <button
           onClick={handleToggleArchive}
           title={isArchived ? t("active") : t("archive")}
-          className={`w-8 h-8 rounded-xl flex items-center justify-center tactile-btn cursor-pointer ${
+          className={`w-7 h-7 rounded-lg flex items-center justify-center tactile-btn cursor-pointer ${
             isArchived
-              ? "text-teal-400 bg-teal-500/15 border border-teal-500/30 font-medium"
-              : "hover:text-zinc-900 dark:hover:text-[#F1F5F9] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              ? "text-teal-500 dark:text-teal-400 bg-teal-500/10 font-medium"
+              : "hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
           }`}
         >
-          <Archive className="w-4 h-4" />
+          <Archive className="w-3.5 h-3.5" />
         </button>
 
         {/* Settings */}
         <button
           onClick={onOpenSettings}
           title={t("settings")}
-          className="w-8 h-8 rounded-xl flex items-center justify-center hover:text-zinc-900 dark:hover:text-[#F1F5F9] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] tactile-btn cursor-pointer"
+          className="w-7 h-7 rounded-lg flex items-center justify-center hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.05] tactile-btn cursor-pointer"
         >
-          <Settings className="w-4 h-4" />
+          <Settings className="w-3.5 h-3.5" />
         </button>
 
-        {/* Collapse with Esc hint */}
+        {/* Collapse */}
         <button
           onClick={handleCollapse}
           title={t("escToClose")}
-          className="h-8 px-2 rounded-xl flex items-center space-x-1 hover:text-zinc-900 dark:hover:text-[#F1F5F9] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] tactile-btn cursor-pointer"
+          className="w-7 h-7 rounded-lg flex items-center justify-center hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.05] tactile-btn cursor-pointer"
         >
           <ChevronUp className="w-4 h-4" />
-          <span className="kbd-badge hidden sm:inline-flex">Esc</span>
         </button>
       </div>
     </header>

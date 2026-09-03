@@ -26,16 +26,16 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
   return (
     <div
       onClick={() => onOpen(note)}
-      className={`group relative p-3 rounded-xl transition-all duration-150 border cursor-pointer select-none ${
+      className={`group relative p-2.5 rounded-xl transition-colors border cursor-pointer select-none ${
         isPinned
-          ? "bg-teal-500/[0.08] dark:bg-[#22B8A7]/[0.09] border-teal-500/25 dark:border-[#22B8A7]/30 shadow-xs"
-          : "bg-white/70 dark:bg-[#1D2529] border-black/[0.04] dark:border-white/[0.06] hover:border-black/[0.1] dark:hover:border-white/[0.1] shadow-xs"
+          ? "bg-teal-500/[0.06] border-teal-500/25"
+          : "bg-black/[0.02] dark:bg-white/[0.03] border-black/[0.04] dark:border-white/[0.05] hover:border-black/[0.08] dark:hover:border-white/[0.1]"
       }`}
     >
       {/* Top row: Title & Actions */}
       <div className="flex items-center justify-between space-x-2">
-        <h4 className="text-xs font-semibold text-zinc-900 dark:text-[#EEF2F1] truncate flex items-center space-x-1.5 tracking-tight">
-          {isPinned && <Pin className="w-3 h-3 text-teal-600 dark:text-[#22B8A7] fill-current shrink-0" />}
+        <h4 className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate flex items-center space-x-1.5 tracking-tight">
+          {isPinned && <Pin className="w-3 h-3 text-teal-600 dark:text-teal-400 fill-current shrink-0" />}
           <span>{note.title || t("newNote")}</span>
         </h4>
 
@@ -48,10 +48,10 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
             type="button"
             onClick={() => togglePin(note.id)}
             title={isPinned ? t("unpin") : t("pin")}
-            className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors mui-ripple cursor-pointer ${
+            className={`w-6 h-6 rounded flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
               isPinned
-                ? "text-teal-600 dark:text-[#22B8A7] bg-teal-500/15"
-                : "text-zinc-400 hover:text-zinc-800 dark:hover:text-white"
+                ? "text-teal-600 dark:text-teal-400 bg-teal-500/15"
+                : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
             }`}
           >
             <Pin className="w-3 h-3" />
@@ -60,7 +60,7 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
             type="button"
             onClick={() => toggleArchive(note.id)}
             title={isArchived ? t("restore") : t("archive")}
-            className="w-6 h-6 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white mui-ripple cursor-pointer"
+            className="w-6 h-6 rounded flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 tactile-btn cursor-pointer"
           >
             <Archive className="w-3 h-3" />
           </button>
@@ -68,7 +68,7 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
             type="button"
             onClick={() => deleteNote(note.id)}
             title={t("delete")}
-            className="w-6 h-6 rounded-md flex items-center justify-center text-zinc-400 hover:text-red-500 mui-ripple cursor-pointer"
+            className="w-6 h-6 rounded flex items-center justify-center text-zinc-400 hover:text-red-500 tactile-btn cursor-pointer"
           >
             <Trash2 className="w-3 h-3" />
           </button>
@@ -77,22 +77,21 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
 
       {/* Snippet */}
       {note.content && (
-        <p className="mt-1 text-[11px] text-zinc-500 dark:text-[#8E9599] line-clamp-2 leading-relaxed font-sans">
+        <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed font-sans">
           {note.content}
         </p>
       )}
 
-      {/* Bottom meta: tags and updated time */}
-      <div className="mt-2.5 flex items-center justify-between text-[10.5px] text-zinc-400 dark:text-[#8E9599]">
+      {/* Bottom meta */}
+      <div className="mt-2 flex items-center justify-between text-[10.5px] text-zinc-400 dark:text-zinc-500">
         <div className="flex items-center space-x-1.5 overflow-hidden">
           {tags.slice(0, 3).map((tag) => (
             <span
               key={tag.id}
-              className="inline-flex items-center space-x-1 px-2 py-0.2 rounded-full text-[9.5px] font-medium truncate"
+              className="inline-flex items-center space-x-1 px-1.5 py-0.2 rounded text-[9.5px] font-medium truncate"
               style={{
-                backgroundColor: `${tag.colorHex}22`,
+                backgroundColor: `${tag.colorHex}15`,
                 color: tag.colorHex,
-                border: `1px solid ${tag.colorHex}44`,
               }}
             >
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.colorHex }} />

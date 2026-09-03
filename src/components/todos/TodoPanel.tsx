@@ -105,7 +105,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {/* Action Bar (Search + Doing + Tag + Add) */}
+      {/* Action Bar */}
       <ActionBar
         query={searchQuery}
         onQueryChange={setSearchQuery}
@@ -118,36 +118,26 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
       />
 
       {/* Todo List Area */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-3 space-y-3">
         {groupedTodos.length === 0 ? (
-          <div className="h-full min-h-[340px] flex flex-col items-center justify-center text-center p-6 space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-teal-500/10 dark:bg-teal-500/15 border border-teal-500/20 flex items-center justify-center text-teal-500 dark:text-[#2DD4BF] shadow-[0_0_24px_rgba(45,212,191,0.15)]">
-              <CheckCircle2 className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-zinc-800 dark:text-[#F1F5F9] tracking-tight">
-                {t("allClear")}
-              </p>
-              <p className="text-[11px] text-zinc-400 dark:text-[#94A3B8] max-w-[240px] mt-1 leading-relaxed">
-                {t("allClearSub")}
-              </p>
-            </div>
+          <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-2">
+            <CheckCircle2 className="w-9 h-9 text-teal-500/40" />
+            <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              {t("allClear")}
+            </p>
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+              {t("allClearSub")}
+            </p>
           </div>
         ) : (
           groupedTodos.map((group) => (
-            <div key={group.label} className="space-y-1.5">
-              {/* Category Divider Header */}
-              <div className="px-3 pt-1 flex items-center space-x-2">
-                <span className="text-[10px] font-semibold text-zinc-400 dark:text-[#64748B] uppercase tracking-[0.14em]">
-                  {group.label}
-                </span>
-                <div className="flex-1 h-[1px] bg-black/[0.04] dark:bg-white/[0.06]" />
-                <span className="text-[9.5px] font-mono text-zinc-400 dark:text-[#64748B]">
-                  {group.items.length}
-                </span>
+            <div key={group.label} className="space-y-0.5">
+              {/* Clean category header */}
+              <div className="px-2.5 pt-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
+                {group.label}
               </div>
 
-              {/* Items List */}
+              {/* Items */}
               <div className="space-y-0.5">
                 {group.items.map((todo) => (
                   <TodoItemRow
@@ -164,14 +154,14 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
         )}
       </div>
 
-      {/* Slide-up Todo Editor Drawer */}
+      {/* Todo Editor Drawer */}
       <TodoEditorDrawer
         todoId={editingTodoId}
         isOpen={isEditorOpen}
         onClose={() => setIsEditorOpen(false)}
       />
 
-      {/* Standalone Deadline Picker Modal */}
+      {/* Deadline Picker Modal */}
       {deadliningTodo && (
         <TodoDeadlinePicker
           initialDueAt={deadliningTodo.dueAt}

@@ -67,12 +67,9 @@ export const App: React.FC = () => {
   }, [isSettingsOpen, isTagDrawerOpen]);
 
   return (
-    <div className="w-full h-full p-2.5 flex flex-col items-center justify-center select-none bg-transparent font-sans">
-      {/* Signature Floatick Luxury Glass Panel Surface */}
-      <div className="w-full h-full flex flex-col rounded-[26px] overflow-hidden glass-panel text-zinc-900 dark:text-[#F1F5F9] relative transition-all duration-300">
-        {/* Top ambient highlight line */}
-        <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-
+    <div className="w-full h-full p-2 flex flex-col items-center justify-center select-none bg-transparent font-sans">
+      {/* Precision Window Shell */}
+      <div className="w-full h-full flex flex-col rounded-[22px] overflow-hidden window-shell text-zinc-900 dark:text-zinc-100 relative">
         {/* Panel Header */}
         <Header
           activeTab={activeTab}
@@ -92,13 +89,13 @@ export const App: React.FC = () => {
           <NotePanel onOpenTagFilter={() => setIsTagDrawerOpen(true)} />
         )}
 
-        {/* Right Settings Drawer */}
+        {/* Settings Drawer */}
         <SettingsDrawer
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
         />
 
-        {/* Left Tag Drawer */}
+        {/* Tag Drawer */}
         <TagDrawer
           isOpen={isTagDrawerOpen}
           onClose={() => setIsTagDrawerOpen(false)}
