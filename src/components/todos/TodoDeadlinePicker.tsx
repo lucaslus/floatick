@@ -104,7 +104,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
         {/* Month Navigation */}
         <div className="flex items-center justify-between pt-3 px-1">
           <span className="text-xs font-semibold tracking-tight">
-            {format(currentMonth, i18n.language.startsWith("zh") ? "yyyy年 M月" : "MMMM yyyy", { locale: dateLocale })}
+            {format(currentMonth, t("dateFormatMonthYear"), { locale: dateLocale })}
           </span>
           <div className="flex items-center space-x-1">
             <button
@@ -167,7 +167,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
             <div className="flex items-center space-x-2 text-xs">
               <CalendarIcon className="w-3.5 h-3.5 text-teal-600 dark:text-[#22B8A7]" />
               <span className="font-medium">
-                {format(selectedDay, i18n.language.startsWith("zh") ? "M月d日" : "MMM d", { locale: dateLocale })}
+                {format(selectedDay, t("dateFormatMonthDay"), { locale: dateLocale })}
               </span>
             </div>
             <input

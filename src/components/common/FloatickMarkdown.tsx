@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -10,13 +11,16 @@ interface FloatickMarkdownProps {
 
 export const FloatickMarkdown: React.FC<FloatickMarkdownProps> = ({
   content,
-  emptyMessage = "暂无内容",
+  emptyMessage,
   className = "",
 }) => {
+  const { t } = useTranslation();
+  const defaultEmpty = emptyMessage || t("markdownPreviewEmptyMessage");
+
   if (!content || !content.trim()) {
     return (
       <div className="py-6 text-center text-xs text-zinc-400 dark:text-[#8E9599] italic">
-        {emptyMessage}
+        {defaultEmpty}
       </div>
     );
   }

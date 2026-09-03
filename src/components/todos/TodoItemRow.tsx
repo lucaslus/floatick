@@ -30,7 +30,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
   onOpenDeadlinePicker,
   onOpenTagAssignment,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const toggleComplete = useTodoStore((s) => s.toggleComplete);
   const toggleDoing = useTodoStore((s) => s.toggleDoing);
@@ -49,7 +49,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
   const assignedTagIds = tagsWorkspace.assignments[todo.id] || [];
   const assignedTags = tagsWorkspace.tags.filter((t) => assignedTagIds.includes(t.id));
 
-  const deadlineInfo = todo.dueAt ? formatDeadline(todo.dueAt) : null;
+  const deadlineInfo = todo.dueAt ? formatDeadline(todo.dueAt, i18n.language) : null;
 
   const handleCopyMarkdown = (e: React.MouseEvent) => {
     e.stopPropagation();

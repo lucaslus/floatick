@@ -73,6 +73,8 @@
   "todoTitleFieldHint": "标题",
   "todoContentLabel": "内容",
   "todoContentFieldHint": "使用 Markdown 添加更多说明…",
+  "noteTitlePlaceholder": "便签标题",
+  "noteContentPlaceholder": "使用 Markdown 输入便签内容…",
   "markdownWriteLabel": "编辑",
   "markdownPreviewLabel": "预览",
   "markdownPreviewEmptyMessage": "暂无可预览内容",
@@ -96,5 +98,14 @@
   "escToClose": "收起 (Esc)",
   "deleteConfirmationTitle": "删除此项？",
   "deleteConfirmationMessage": "此操作无法撤销。",
-  "itemsCount": "{{count}} 项"
+  "itemsCount": "{{count}} 项",
+  "bold": "加粗",
+  "italic": "斜体",
+  "bulletList": "无序列表",
+  "taskList": "任务清单",
+  "inlineCode": "行内代码",
+  "link": "超链接",
+  "charactersCount": "{{count}} 字符",
+  "dateFormatMonthYear": "yyyy年 M月",
+  "dateFormatMonthDay": "M月d日"
 }

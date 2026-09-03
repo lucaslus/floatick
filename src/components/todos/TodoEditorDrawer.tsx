@@ -254,7 +254,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("**", "**")}
-                    title="加粗"
+                    title={t("bold")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <Bold className="w-3 h-3" />
@@ -262,7 +262,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("*", "*")}
-                    title="斜体"
+                    title={t("italic")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <Italic className="w-3 h-3" />
@@ -270,7 +270,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("- ")}
-                    title="无序列表"
+                    title={t("bulletList")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <List className="w-3 h-3" />
@@ -278,7 +278,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("- [ ] ")}
-                    title="任务列表"
+                    title={t("taskList")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <CheckSquare className="w-3 h-3" />
@@ -286,7 +286,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("`", "`")}
-                    title="行内代码"
+                    title={t("inlineCode")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <Code className="w-3 h-3" />
@@ -294,7 +294,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("[", "](url)")}
-                    title="链接"
+                    title={t("link")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <Link className="w-3 h-3" />

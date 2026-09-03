@@ -14,7 +14,7 @@ interface NotePanelProps {
 }
 
 export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const notes = useNoteStore((s) => s.notes);
   const searchQuery = useNoteStore((s) => s.searchQuery);
@@ -70,7 +70,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
     const map = new Map<string, NoteItem[]>();
 
     for (const item of regularNotes) {
-      const label = getGroupLabel(item.updatedAt);
+      const label = getGroupLabel(item.updatedAt, i18n.language);
       if (!map.has(label)) {
         map.set(label, []);
       }
@@ -82,7 +82,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
     }
 
     return groups;
-  }, [regularNotes]);
+  }, [regularNotes, i18n.language]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0">

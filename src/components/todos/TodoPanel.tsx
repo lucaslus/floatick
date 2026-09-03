@@ -15,7 +15,7 @@ interface TodoPanelProps {
 }
 
 export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const todos = useTodoStore((s) => s.todos);
   const updateTodo = useTodoStore((s) => s.updateTodo);
@@ -72,7 +72,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
     const map = new Map<string, TodoItem[]>();
 
     for (const item of filteredTodos) {
-      const label = getGroupLabel(item.createdAt);
+      const label = getGroupLabel(item.createdAt, i18n.language);
       if (!map.has(label)) {
         map.set(label, []);
       }
@@ -84,7 +84,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ onOpenTagFilter }) => {
     }
 
     return groups;
-  }, [filteredTodos]);
+  }, [filteredTodos, i18n.language]);
 
   const handleOpenCreate = () => {
     setEditingTodoId(null);

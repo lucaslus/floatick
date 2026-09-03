@@ -206,7 +206,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={t("title")}
+            placeholder={t("noteTitlePlaceholder")}
             className="w-full text-sm font-semibold bg-transparent border-none outline-none text-zinc-900 dark:text-[#EEF2F1] placeholder:text-zinc-400 tracking-tight"
           />
 
@@ -247,7 +247,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("**", "**")}
-                    title="加粗"
+                    title={t("bold")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <Bold className="w-3 h-3" />
@@ -255,7 +255,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("*", "*")}
-                    title="斜体"
+                    title={t("italic")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <Italic className="w-3 h-3" />
@@ -263,7 +263,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("- ")}
-                    title="无序列表"
+                    title={t("bulletList")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <List className="w-3 h-3" />
@@ -271,7 +271,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("- [ ] ")}
-                    title="任务列表"
+                    title={t("taskList")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <CheckSquare className="w-3 h-3" />
@@ -279,7 +279,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("`", "`")}
-                    title="行内代码"
+                    title={t("inlineCode")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <Code className="w-3 h-3" />
@@ -287,7 +287,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("[", "](url)")}
-                    title="链接"
+                    title={t("link")}
                     className="w-6 h-6 rounded flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-white"
                   >
                     <Link className="w-3 h-3" />
@@ -298,7 +298,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
                   id="note-content-textarea"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder={t("content")}
+                  placeholder={t("noteContentPlaceholder")}
                   className="flex-1 w-full p-3 rounded-b-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#151B1E] text-zinc-900 dark:text-[#EEF2F1] focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600 dark:focus:border-[#22B8A7] font-mono text-[11.5px] leading-relaxed resize-none select-text shadow-xs"
                 />
               </div>
@@ -315,7 +315,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
 
         {/* Footer */}
         <div className="h-12 px-5 border-t border-black/[0.05] dark:border-white/[0.06] flex items-center justify-between text-[11px] text-zinc-400">
-          <span>{content.length} 字符</span>
+          <span>{t("charactersCount", { count: content.length })}</span>
           <button
             type="button"
             onClick={handleSaveAndClose}

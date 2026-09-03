@@ -73,6 +73,8 @@
   "todoTitleFieldHint": "Title",
   "todoContentLabel": "Content",
   "todoContentFieldHint": "Add markdown details…",
+  "noteTitlePlaceholder": "Note title",
+  "noteContentPlaceholder": "Write markdown note content…",
   "markdownWriteLabel": "Write",
   "markdownPreviewLabel": "Preview",
   "markdownPreviewEmptyMessage": "Nothing to preview yet",
@@ -96,5 +98,14 @@
   "escToClose": "Collapse (Esc)",
   "deleteConfirmationTitle": "Delete this item?",
   "deleteConfirmationMessage": "This action cannot be undone.",
-  "itemsCount": "{{count}} items"
+  "itemsCount": "{{count}} items",
+  "bold": "Bold",
+  "italic": "Italic",
+  "bulletList": "Bullet List",
+  "taskList": "Task List",
+  "inlineCode": "Inline Code",
+  "link": "Link",
+  "charactersCount": "{{count}} characters",
+  "dateFormatMonthYear": "MMMM yyyy",
+  "dateFormatMonthDay": "MMM d"
 }
