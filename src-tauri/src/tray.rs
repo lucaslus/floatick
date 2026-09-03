@@ -18,10 +18,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         .tooltip("Floatick")
         .on_menu_event(|app_handle, event| match event.id.as_ref() {
             "show" => {
-                if let Some(window) = app_handle.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
+                show_window(app_handle);
             }
             "quit" => {
                 app_handle.exit(0);
@@ -51,6 +48,7 @@ pub fn toggle_window_at_rect(app_handle: &AppHandle, rect: Rect) {
         if is_visible {
             let _ = window.hide();
         } else {
+            crate::mark_window_shown();
             // Position window below the tray icon using logical points
             let scale_factor = window.scale_factor().unwrap_or(2.0);
             let window_logical_size = window
@@ -79,5 +77,22 @@ pub fn toggle_window_at_rect(app_handle: &AppHandle, rect: Rect) {
             let _ = window.show();
             let _ = window.set_focus();
         }
+    }
+}
+
+pub fn show_window(app_handle: &AppHandle) {
+    if let Some(window) = app_handle.get_webview_window("main") {
+        crate::mark_window_shown();
+        if let Ok(Some(monitor)) = window.primary_monitor().or_else(|_| window.current_monitor()) {
+            let scale = monitor.scale_factor();
+            let mon_pos = monitor.position().to_logical::<f64>(scale);
+            let mon_size = monitor.size().to_logical::<f64>(scale);
+            let window_width = 440.0;
+            let window_x = mon_pos.x + mon_size.width - window_width - 20.0;
+            let window_y = mon_pos.y + 36.0;
+            let _ = window.set_position(Position::Logical(LogicalPosition::new(window_x, window_y)));
+        }
+        let _ = window.show();
+        let _ = window.set_focus();
     }
 }

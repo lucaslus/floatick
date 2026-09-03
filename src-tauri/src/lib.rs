@@ -3,7 +3,27 @@ pub mod models;
 pub mod storage;
 pub mod tray;
 
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{Manager, WindowEvent};
+
+fn current_time_millis() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+pub static LAST_SHOWN_MILLIS: AtomicU64 = AtomicU64::new(0);
+
+pub fn mark_window_shown() {
+    LAST_SHOWN_MILLIS.store(current_time_millis(), Ordering::SeqCst);
+}
+
+pub fn is_window_recently_shown(threshold_ms: u64) -> bool {
+    let last = LAST_SHOWN_MILLIS.load(Ordering::SeqCst);
+    current_time_millis().saturating_sub(last) < threshold_ms
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -29,28 +49,29 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
                 let is_autostart = std::env::args().any(|arg| arg == "--autostart");
                 if !is_autostart {
-                    if let Ok(Some(monitor)) = window.primary_monitor() {
-                        let scale = monitor.scale_factor();
-                        let mon_pos = monitor.position().to_logical::<f64>(scale);
-                        let mon_size = monitor.size().to_logical::<f64>(scale);
-                        let window_width = 440.0;
-                        let window_x = mon_pos.x + mon_size.width - window_width - 20.0;
-                        let window_y = mon_pos.y + 36.0;
-                        let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition::new(window_x, window_y)));
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
+                    tray::show_window(app.handle());
                 }
 
                 let w_clone = window.clone();
                 window.on_window_event(move |event| {
                     if let WindowEvent::Focused(false) = event {
-                        // Check if user enabled collapse on click outside
+                        if is_window_recently_shown(1000) {
+                            return;
+                        }
                         let collapse = storage::load_settings()
                             .map(|s| s.collapse_when_clicking_outside)
                             .unwrap_or(true);
                         if collapse {
-                            let _ = w_clone.hide();
+                            let w_clone2 = w_clone.clone();
+                            std::thread::spawn(move || {
+                                std::thread::sleep(std::time::Duration::from_millis(200));
+                                if is_window_recently_shown(1000) {
+                                    return;
+                                }
+                                if let Ok(false) = w_clone2.is_focused() {
+                                    let _ = w_clone2.hide();
+                                }
+                            });
                         }
                     }
                 });
@@ -74,6 +95,11 @@ pub fn run() {
             commands::set_autostart_enabled,
             commands::quit_app,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::Reopen { .. } = event {
+                tray::show_window(app_handle);
+            }
+        });
 }
