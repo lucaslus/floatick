@@ -18,6 +18,8 @@
 build/
 coverage/
 dist/
+node_modules/
+src-tauri/target/
 *.dmg
 *.xcarchive
 .build/
