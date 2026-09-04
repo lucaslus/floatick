@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { PushPin, Archive, Trash } from "@phosphor-icons/react";
+import { PushPin, Archive, Trash, PencilSimple } from "@phosphor-icons/react";
 import type { NoteItem } from "@/types";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { useTagStore } from "@/stores/useTagStore";
@@ -8,10 +8,11 @@ import { formatTime } from "@/lib/dateUtils";
 
 interface NoteItemRowProps {
   note: NoteItem;
-  onOpen: (note: NoteItem) => void;
+  onView: (note: NoteItem) => void;
+  onEdit: (note: NoteItem) => void;
 }
 
-export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
+export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onView, onEdit }) => {
   const { t } = useTranslation();
   const togglePin = useNoteStore((s) => s.togglePin);
   const toggleArchive = useNoteStore((s) => s.toggleArchive);
@@ -25,7 +26,7 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
 
   return (
     <div
-      onClick={() => onOpen(note)}
+      onClick={() => onView(note)}
       className={`group relative p-2.5 rounded-[8px] transition-colors cursor-pointer select-none ${
         isPinned
           ? "bg-[var(--color-teal-tint)] hover:bg-[var(--color-teal-tint-active)]"
@@ -74,6 +75,17 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onOpen }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center space-x-0.5 px-1 py-0.5 rounded-lg bg-[var(--color-bg-drawer)]/92 dark:bg-[var(--color-bg-drawer)]/92 backdrop-blur-md border border-[var(--color-border-drawer)]/70 shadow-sm">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(note);
+              }}
+              title={t("edit")}
+              className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+            >
+              <PencilSimple size={14} />
+            </button>
             <button
               type="button"
               onClick={() => togglePin(note.id)}

@@ -82,8 +82,11 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
     return groups;
   }, [filteredTodos, i18n.language]);
 
+  const setEditorMode = useTodoStore((s) => s.setEditorMode);
+
   const handleOpenCreate = () => {
     setEditingTodoId(null);
+    setEditorMode("edit");
     setIsEditorOpen(true);
   };
 
@@ -93,8 +96,15 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
     return () => window.removeEventListener("floatick:new-item", handler);
   }, []);
 
+  const handleOpenView = (todo: TodoItem) => {
+    setEditingTodoId(todo.id);
+    setEditorMode("view");
+    setIsEditorOpen(true);
+  };
+
   const handleOpenEdit = (todo: TodoItem) => {
     setEditingTodoId(todo.id);
+    setEditorMode("edit");
     setIsEditorOpen(true);
   };
 
@@ -142,6 +152,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
                   <TodoItemRow
                     key={todo.id}
                     todo={todo}
+                    onView={handleOpenView}
                     onEdit={handleOpenEdit}
                     onOpenDeadlinePicker={(t) => setDeadliningTodo(t)}
                     onOpenTagAssignment={() => onOpenTagAssignment(todo.id)}

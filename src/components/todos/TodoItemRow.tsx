@@ -18,6 +18,7 @@ import { formatDeadline, formatTime } from "@/lib/dateUtils";
 
 interface TodoItemRowProps {
   todo: TodoItem;
+  onView: (todo: TodoItem) => void;
   onEdit: (todo: TodoItem) => void;
   onOpenDeadlinePicker: (todo: TodoItem) => void;
   onOpenTagAssignment: (todo: TodoItem) => void;
@@ -25,6 +26,7 @@ interface TodoItemRowProps {
 
 export const TodoItemRow: React.FC<TodoItemRowProps> = ({
   todo,
+  onView,
   onEdit,
   onOpenDeadlinePicker,
   onOpenTagAssignment,
@@ -81,7 +83,8 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
 
   return (
     <div
-      className="group relative pl-[7px] pr-[5px] py-2 my-[2px] rounded-[8px] transition-colors duration-150 select-none hover:bg-[var(--color-row-hover)]"
+      onClick={() => onView(todo)}
+      className="group relative pl-[7px] pr-[5px] py-2 my-[2px] rounded-[8px] transition-colors duration-150 select-none hover:bg-[var(--color-row-hover)] cursor-pointer"
     >
       {/* Main Row: Checkbox + Full-width Title (Completely unobstructed on hover!) */}
       <div className="flex items-center min-h-[26px]">
@@ -89,7 +92,10 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
         <div className="shrink-0 flex items-center justify-center p-1">
           <button
             type="button"
-            onClick={() => toggleComplete(todo.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleComplete(todo.id);
+            }}
             className={`w-[16px] h-[16px] translate-y-[1px] rounded-[4px] flex items-center justify-center border-[1.3px] transition-all tactile-btn cursor-pointer ${
               isCompleted
                 ? "bg-[var(--color-teal-primary)] border-[var(--color-teal-primary)] text-white"
@@ -197,7 +203,10 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
             {/* Edit button */}
             <button
               type="button"
-              onClick={() => onEdit(todo)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(todo);
+              }}
               title={t("edit")}
               className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
             >

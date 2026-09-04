@@ -23,9 +23,11 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
 
   const setIsEditorOpen = useNoteStore((s) => s.setIsEditorOpen);
   const setEditingNoteId = useNoteStore((s) => s.setEditingNoteId);
+  const setEditorMode = useNoteStore((s) => s.setEditorMode);
 
   const handleOpenCreate = () => {
     setEditingNoteId(null);
+    setEditorMode("edit");
     setIsEditorOpen(true);
   };
 
@@ -35,8 +37,15 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
     return () => window.removeEventListener("floatick:new-item", handler);
   }, []);
 
+  const handleOpenView = (note: NoteItem) => {
+    setEditingNoteId(note.id);
+    setEditorMode("view");
+    setIsEditorOpen(true);
+  };
+
   const handleOpenEdit = (note: NoteItem) => {
     setEditingNoteId(note.id);
+    setEditorMode("edit");
     setIsEditorOpen(true);
   };
 
@@ -128,7 +137,8 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
                     <NoteItemRow
                       key={note.id}
                       note={note}
-                      onOpen={handleOpenEdit}
+                      onView={handleOpenView}
+                      onEdit={handleOpenEdit}
                     />
                   ))}
                 </div>
@@ -146,7 +156,8 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
                     <NoteItemRow
                       key={note.id}
                       note={note}
-                      onOpen={handleOpenEdit}
+                      onView={handleOpenView}
+                      onEdit={handleOpenEdit}
                     />
                   ))}
                 </div>

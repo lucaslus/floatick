@@ -8,10 +8,12 @@ interface NoteState {
   searchQuery: string;
   editingNoteId: string | null;
   isEditorOpen: boolean;
+  editorMode: "view" | "edit";
 
   setSearchQuery: (query: string) => void;
   setEditingNoteId: (id: string | null) => void;
   setIsEditorOpen: (val: boolean) => void;
+  setEditorMode: (mode: "view" | "edit") => void;
 
   loadNotes: () => Promise<void>;
   addNote: (title?: string, content?: string, tagIds?: string[]) => Promise<NoteItem>;
@@ -28,10 +30,12 @@ export const useNoteStore = create<NoteState>((set, get) => ({
   searchQuery: "",
   editingNoteId: null,
   isEditorOpen: false,
+  editorMode: "view",
 
   setSearchQuery: (query) => set({ searchQuery: query }),
   setEditingNoteId: (id) => set({ editingNoteId: id }),
   setIsEditorOpen: (val) => set({ isEditorOpen: val }),
+  setEditorMode: (mode) => set({ editorMode: mode }),
 
   loadNotes: async () => {
     try {

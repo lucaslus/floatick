@@ -59,6 +59,7 @@ export const App: React.FC = () => {
     if (params.get("mock") === "editor") {
       setTimeout(() => {
         useTodoStore.getState().setEditingTodoId("mock-todo-1");
+        useTodoStore.getState().setEditorMode("edit");
         useTodoStore.getState().setIsEditorOpen(true);
       }, 150);
     }

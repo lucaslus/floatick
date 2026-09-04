@@ -10,11 +10,13 @@ interface TodoState {
   activeScope: "active" | "archived";
   editingTodoId: string | null;
   isEditorOpen: boolean;
+  editorMode: "view" | "edit";
 
   setSearchQuery: (query: string) => void;
   setActiveScope: (scope: "active" | "archived") => void;
   setEditingTodoId: (id: string | null) => void;
   setIsEditorOpen: (val: boolean) => void;
+  setEditorMode: (mode: "view" | "edit") => void;
 
   loadTodos: () => Promise<void>;
   addTodo: (title: string, content?: string, tagId?: string) => Promise<TodoItem>;
@@ -32,11 +34,13 @@ export const useTodoStore = create<TodoState>((set, get) => ({
   activeScope: "active",
   editingTodoId: null,
   isEditorOpen: false,
+  editorMode: "view",
 
   setSearchQuery: (query) => set({ searchQuery: query }),
   setActiveScope: (scope) => set({ activeScope: scope }),
   setEditingTodoId: (id) => set({ editingTodoId: id }),
   setIsEditorOpen: (val) => set({ isEditorOpen: val }),
+  setEditorMode: (mode) => set({ editorMode: mode }),
 
   loadTodos: async () => {
     try {
