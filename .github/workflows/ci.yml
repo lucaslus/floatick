@@ -1,6 +1,9 @@
 name: CI
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -9,67 +12,91 @@ on:
 permissions:
   contents: read
 
-env:
-  FLUTTER_VERSION: 3.44.7
-
 jobs:
-  test:
-    name: Analyze and test
-    runs-on: macos-15
-    timeout-minutes: 35
+  frontend:
+    name: Frontend check & build
+    runs-on: macos-latest
+    timeout-minutes: 15
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
-      - name: Install Flutter
-        shell: bash
-        run: |
-          git clone \
-            --branch "$FLUTTER_VERSION" \
-            --depth 1 \
-            https://github.com/flutter/flutter.git \
-            "$RUNNER_TEMP/flutter"
-          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend (tsc & vite)
+        run: pnpm build
+
+      - name: Install website dependencies
+        run: pnpm --dir website install
+
+      - name: Build website (astro)
+        run: pnpm --dir website build
+
+  backend:
+    name: Rust check & test
+    runs-on: macos-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache cargo registry & target
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Cargo check
+        run: cargo check --manifest-path src-tauri/Cargo.toml
+
+      - name: Cargo test
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+  tauri-build:
+    name: Tauri smoke build
+    needs: [frontend, backend]
+    runs-on: macos-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry & target
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
 
       - name: Install dependencies
-        run: flutter pub get
+        run: pnpm install --frozen-lockfile
 
-      - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib test integration_test
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Test
-        run: flutter test
-
-      - name: Run macOS UI automation
-        run: tool/test/run_ui_tests.sh
-
-      - name: Build macOS release app
-        run: flutter build macos --release
-
-      - name: Prepare unsigned test app
-        run: |
-          tool/release/prepare_unsigned_app.sh \
-            build/macos/Build/Products/Release/Floatick.app
-
-      - name: Verify app architectures
-        shell: bash
-        run: |
-          app_path="build/macos/Build/Products/Release/Floatick.app"
-          executable_name=$(/usr/libexec/PlistBuddy \
-            -c 'Print :CFBundleExecutable' \
-            "$app_path/Contents/Info.plist")
-          architectures=$(lipo -archs "$app_path/Contents/MacOS/$executable_name")
-
-          if [[ "$architectures" != *arm64* || "$architectures" != *x86_64* ]]; then
-            echo "Expected a universal app, found: $architectures" >&2
-            exit 1
-          fi
-
-      - name: Smoke-test release app
-        run: |
-          tool/release/smoke_test_app.sh \
-            build/macos/Build/Products/Release/Floatick.app
+      - name: Build Tauri app (binary verification)
+        run: pnpm tauri build --no-bundle

@@ -1,0 +1,177 @@
+---
+import type { Locale } from '../content/site-copy';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const isEnglish = locale === 'en';
+
+const screenshots = [
+  {
+    image: '/images/floatick-screenshot-todos.png',
+    title: isEnglish ? 'Todos & Floating Capsule' : '待办列表',
+    alt: isEnglish
+      ? 'Floatick Todos list showing full-width cards and floating capsule'
+      : 'Floatick 待办列表界面，展示全宽卡片与悬浮操作胶囊',
+  },
+  {
+    image: '/images/floatick-screenshot-editor.png',
+    title: isEnglish ? 'TipTap Markdown Editor' : 'TipTap 富文本写作',
+    alt: isEnglish
+      ? 'Floatick TipTap rich text markdown editor drawer'
+      : 'Floatick TipTap 富文本编辑抽屉',
+    featured: true,
+  },
+  {
+    image: '/images/floatick-screenshot-notes.png',
+    title: isEnglish ? 'Timeline Quick Notes' : '随手记便签',
+    alt: isEnglish
+      ? 'Floatick Quick Notes view with pinned note and date grouping'
+      : 'Floatick 随手记便签界面，展示置顶笔记与日期分组',
+  },
+];
+---
+
+<div class="boundless-showcase" aria-label={isEnglish ? 'Product screenshots' : '产品界面展示'}>
+  <div class="showcase-track">
+    {screenshots.map((item) => (
+      <figure class={`showcase-card ${item.featured ? 'is-featured' : ''}`}>
+        <img
+          src={item.image}
+          alt={item.alt}
+          width="440"
+          height="700"
+          loading="eager"
+          decoding="async"
+          class="screenshot-img"
+        />
+        <figcaption class="card-caption">
+          <span class="caption-title">{item.title}</span>
+        </figcaption>
+      </figure>
+    ))}
+  </div>
+</div>
+
+<style>
+  /* Boundless container: zero enclosing background, zero stage border */
+  .boundless-showcase {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    margin-top: 40px;
+    margin-bottom: 8px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .showcase-track {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 28px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 6px 20px;
+  }
+
+  .showcase-card {
+    flex: 1 1 0;
+    max-width: 370px;
+    min-width: 280px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .showcase-card:hover {
+    transform: translateY(-8px);
+  }
+
+  .showcase-card.is-featured {
+    transform: translateY(-4px);
+  }
+
+  .showcase-card.is-featured:hover {
+    transform: translateY(-12px);
+  }
+
+  /* Floating macOS popover window image */
+  .screenshot-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    box-shadow:
+      0 26px 60px -12px rgba(0, 0, 0, 0.72),
+      0 10px 24px -8px rgba(0, 0, 0, 0.45);
+    transition: box-shadow 0.35s ease;
+  }
+
+  .showcase-card:hover .screenshot-img {
+    box-shadow:
+      0 36px 76px -12px rgba(0, 0, 0, 0.82),
+      0 16px 32px -8px rgba(0, 0, 0, 0.5),
+      0 0 36px rgba(41, 197, 184, 0.12);
+  }
+
+  /* Captions */
+  .card-caption {
+    margin-top: 14px;
+    text-align: center;
+    padding: 0 8px;
+  }
+
+  .caption-title {
+    color: var(--color-text, #f3f8f7);
+    font-size: 0.98rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    opacity: 0.92;
+  }
+
+  /* Responsive for tablet & mobile: smooth horizontal flow */
+  @media (max-width: 960px) {
+    .showcase-track {
+      gap: 18px;
+      overflow-x: auto;
+      justify-content: flex-start;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 24px;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .showcase-track::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .showcase-track::-webkit-scrollbar-thumb {
+      background: rgba(184, 214, 211, 0.2);
+      border-radius: 9999px;
+    }
+
+    .showcase-card {
+      flex: 0 0 310px;
+      max-width: 310px;
+      min-width: 310px;
+      scroll-snap-align: center;
+    }
+
+    .showcase-card.is-featured {
+      transform: none;
+    }
+
+    .showcase-card.is-featured:hover {
+      transform: translateY(-6px);
+    }
+  }
+</style>

@@ -19,10 +19,10 @@ export const ContentSwitcher: React.FC<ContentSwitcherProps> = ({
         <button
           type="button"
           onClick={() => onSelected("todos")}
-          className={`flex-1 h-full rounded-[8px] flex items-center justify-center text-[13px] transition-colors tactile-btn cursor-pointer ${
+          className={`flex-1 h-full rounded-[8px] flex items-center justify-center text-[13.5px] tactile-btn cursor-pointer ${
             selected === "todos"
-              ? "text-[#22B8A7] font-semibold bg-[#22B8A7]/[0.055]"
-              : "text-[#EEF2F1]/62 font-medium hover:bg-white/[0.055] hover:text-[#EEF2F1]/85"
+              ? "text-[var(--color-teal-primary)] font-semibold bg-[var(--color-teal-tint)]"
+              : "text-[var(--color-text-secondary)] font-medium hover:bg-[var(--color-hover-overlay)] hover:text-[var(--color-text-primary)]"
           }`}
         >
           {t("todos")}
@@ -32,10 +32,10 @@ export const ContentSwitcher: React.FC<ContentSwitcherProps> = ({
         <button
           type="button"
           onClick={() => onSelected("notes")}
-          className={`flex-1 h-full rounded-[8px] flex items-center justify-center text-[13px] transition-colors tactile-btn cursor-pointer ${
+          className={`flex-1 h-full rounded-[8px] flex items-center justify-center text-[13.5px] tactile-btn cursor-pointer ${
             selected === "notes"
-              ? "text-[#22B8A7] font-semibold bg-[#22B8A7]/[0.055]"
-              : "text-[#EEF2F1]/62 font-medium hover:bg-white/[0.055] hover:text-[#EEF2F1]/85"
+              ? "text-[var(--color-teal-primary)] font-semibold bg-[var(--color-teal-tint)]"
+              : "text-[var(--color-text-secondary)] font-medium hover:bg-[var(--color-hover-overlay)] hover:text-[var(--color-text-primary)]"
           }`}
         >
           {t("notes")}

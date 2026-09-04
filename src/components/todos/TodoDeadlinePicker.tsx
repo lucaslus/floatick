@@ -95,15 +95,15 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-[336px] rounded-[14px] bg-white dark:bg-[#1D2529] text-zinc-900 dark:text-[#EEF2F1] border border-black/[0.08] dark:border-white/[0.1] shadow-2xl overflow-hidden p-4.5 select-none transition-all">
+      <div className="w-[336px] rounded-[14px] bg-[var(--color-bg-drawer)] text-[var(--color-text-primary)] border border-[var(--color-border-drawer)] shadow-2xl overflow-hidden p-4.5 select-none transition-all">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.08]">
-          <span className="text-xs font-semibold tracking-tight text-zinc-800 dark:text-[#EEF2F1]">
+        <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border-drawer)]">
+          <span className="text-xs font-semibold tracking-tight text-[var(--color-text-primary)]">
             {t("setDeadline")}
           </span>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors mui-ripple"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors mui-ripple"
           >
             <X size={15} weight="bold" />
           </button>
@@ -118,14 +118,14 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors mui-ripple"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors mui-ripple"
             >
               <CaretLeft size={16} weight="bold" />
             </button>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors mui-ripple"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors mui-ripple"
             >
               <CaretRight size={16} weight="bold" />
             </button>
@@ -133,7 +133,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
         </div>
 
         {/* Weekday Row */}
-        <div className="grid grid-cols-7 gap-1 mt-2 text-center text-[10px] text-zinc-400 dark:text-[#8E9599] font-medium">
+        <div className="grid grid-cols-7 gap-1 mt-2 text-center text-[10px] text-[var(--color-text-subtle)] font-medium">
           {weekDayLabels.map((d, i) => (
             <div key={i} className="h-6 flex items-center justify-center">
               {d}
@@ -155,12 +155,12 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
                 onClick={() => setSelectedDay(day)}
                 className={`h-7.5 w-7.5 mx-auto rounded-full flex items-center justify-center text-[11px] font-medium transition-all mui-ripple ${
                   isSelected
-                    ? "bg-teal-600 dark:bg-[#22B8A7] text-white font-bold shadow-sm"
+                    ? "bg-[var(--color-teal-primary)] text-white font-bold shadow-sm"
                     : isCurrentToday
-                    ? "border border-teal-500 text-teal-600 dark:text-[#22B8A7] font-semibold"
+                    ? "border border-[var(--color-teal-primary)] text-[var(--color-teal-primary)] font-semibold"
                     : isCurrentMonth
-                    ? "text-zinc-800 dark:text-[#EEF2F1] hover:bg-black/[0.04] dark:hover:bg-white/[0.08]"
-                    : "text-zinc-400 dark:text-zinc-600 hover:bg-black/[0.02] dark:hover:bg-white/[0.04]"
+                    ? "text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
+                    : "text-[var(--color-text-subtle)] hover:bg-[var(--color-hover-overlay)]"
                 }`}
               >
                 {format(day, "d")}
@@ -170,10 +170,10 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
         </div>
 
         {/* Time & Deadline Input Section */}
-        <div className="mt-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2.5">
-          <div className="flex items-center justify-between bg-black/[0.03] dark:bg-black/25 p-2 rounded-[8px] border border-black/[0.04] dark:border-white/[0.06]">
+        <div className="mt-4 pt-3 border-t border-[var(--color-border-drawer)] space-y-2.5">
+          <div className="flex items-center justify-between bg-[var(--color-hover-overlay)] p-2 rounded-[8px] border border-[var(--color-border-panel)]">
             <div className="flex items-center space-x-2 text-xs">
-              <CalendarBlank size={15} weight="fill" className="text-[#22B8A7]" />
+              <CalendarBlank size={15} weight="fill" className="text-[var(--color-teal-primary)]" />
               <span className="font-medium">
                 {format(selectedDay, t("dateFormatMonthDay"), { locale: dateLocale })}
               </span>
@@ -182,26 +182,26 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
               type="time"
               value={timeStr}
               onChange={(e) => setTimeStr(e.target.value)}
-              className="px-2 py-0.5 rounded-[6px] bg-white dark:bg-white/10 text-xs font-mono text-zinc-900 dark:text-white border border-black/[0.08] dark:border-white/10 outline-none focus:border-teal-500 dark:focus:border-[#22B8A7]"
+              className="px-2 py-0.5 rounded-[6px] bg-[var(--color-bg-elevated)] text-xs font-mono text-[var(--color-text-primary)] border border-[var(--color-border-panel)] outline-none focus:border-[var(--color-teal-primary)]"
             />
           </div>
 
           {/* Reminder Selection */}
-          <div className="flex items-center justify-between bg-black/[0.03] dark:bg-black/25 p-2 rounded-[8px] border border-black/[0.04] dark:border-white/[0.06] text-xs">
+          <div className="flex items-center justify-between bg-[var(--color-hover-overlay)] p-2 rounded-[8px] border border-[var(--color-border-panel)] text-xs">
             <div className="flex items-center space-x-2">
-              <Bell size={15} weight="fill" className="text-[#22B8A7]" />
-              <span className="text-zinc-500 dark:text-[#8E9599] text-[11px]">{t("reminder")}</span>
+              <Bell size={15} weight="fill" className="text-[var(--color-teal-primary)]" />
+              <span className="text-[var(--color-text-subtle)] text-[11px]">{t("reminder")}</span>
             </div>
             <select
               value={reminderChoice}
               onChange={(e) => setReminderChoice(e.target.value)}
-              className="bg-transparent text-xs text-zinc-800 dark:text-white outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs text-[var(--color-text-primary)] outline-none cursor-pointer pr-1"
             >
-              <option value="atDeadline" className="dark:bg-[#1D2529]">{t("atDeadline")}</option>
-              <option value="10m" className="dark:bg-[#1D2529]">{t("tenMinutesBefore")}</option>
-              <option value="1h" className="dark:bg-[#1D2529]">{t("oneHourBefore")}</option>
-              <option value="1d" className="dark:bg-[#1D2529]">{t("oneDayBefore")}</option>
-              <option value="none" className="dark:bg-[#1D2529]">{t("noReminder")}</option>
+              <option value="atDeadline" className="bg-[var(--color-bg-drawer)]">{t("atDeadline")}</option>
+              <option value="10m" className="bg-[var(--color-bg-drawer)]">{t("tenMinutesBefore")}</option>
+              <option value="1h" className="bg-[var(--color-bg-drawer)]">{t("oneHourBefore")}</option>
+              <option value="1d" className="bg-[var(--color-bg-drawer)]">{t("oneDayBefore")}</option>
+              <option value="none" className="bg-[var(--color-bg-drawer)]">{t("noReminder")}</option>
             </select>
           </div>
         </div>
@@ -212,7 +212,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
             <button
               type="button"
               onClick={handleClear}
-              className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center space-x-1 cursor-pointer mui-ripple px-2 py-1 rounded-[6px]"
+              className="text-xs text-red-500 hover:text-red-400 flex items-center space-x-1 cursor-pointer mui-ripple px-2 py-1 rounded-[6px]"
             >
               <Trash size={14} />
               <span>{t("clearDeadline")}</span>
@@ -224,10 +224,10 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
           <button
             type="button"
             onClick={handleSave}
-            className="px-5 py-2 rounded-[8px] bg-teal-600 hover:bg-teal-700 dark:bg-[#22B8A7] dark:hover:bg-[#1CA394] text-white font-medium text-xs flex items-center space-x-1.5 shadow-md mui-ripple cursor-pointer"
+            title={t("save")}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-teal-primary)] hover:bg-[var(--color-teal-tint)] transition-colors tactile-btn cursor-pointer"
           >
-            <Check size={14} weight="bold" />
-            <span>{t("save")}</span>
+            <Check size={20} weight="bold" />
           </button>
         </div>
       </div>

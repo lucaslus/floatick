@@ -49,28 +49,31 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
                 let is_autostart = std::env::args().any(|arg| arg == "--autostart");
                 if !is_autostart {
-                    tray::show_window(app.handle());
+                    let app_handle = app.handle().clone();
+                    std::thread::spawn(move || {
+                        std::thread::sleep(std::time::Duration::from_millis(120));
+                        let h = app_handle.clone();
+                        let _ = app_handle.run_on_main_thread(move || {
+                            tray::show_window(&h);
+                        });
+                    });
                 }
 
                 let w_clone = window.clone();
+                let app_handle_for_events = app.handle().clone();
                 window.on_window_event(move |event| {
                     if let WindowEvent::Focused(false) = event {
-                        if is_window_recently_shown(1000) {
+                        if is_window_recently_shown(150) {
                             return;
                         }
                         let collapse = storage::load_settings()
                             .map(|s| s.collapse_when_clicking_outside)
                             .unwrap_or(true);
                         if collapse {
-                            let w_clone2 = w_clone.clone();
-                            std::thread::spawn(move || {
-                                std::thread::sleep(std::time::Duration::from_millis(200));
-                                if is_window_recently_shown(1000) {
-                                    return;
-                                }
-                                if let Ok(false) = w_clone2.is_focused() {
-                                    let _ = w_clone2.hide();
-                                }
+                            let app_h = app_handle_for_events.clone();
+                            let w = w_clone.clone();
+                            let _ = app_h.run_on_main_thread(move || {
+                                let _ = w.hide();
                             });
                         }
                     }

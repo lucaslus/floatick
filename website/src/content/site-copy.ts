@@ -44,25 +44,14 @@ type SiteCopy = {
   features: {
     eyebrow: string;
     title: string;
-    body: string;
+    body?: string;
     items: Feature[];
   };
   workflow: {
     eyebrow: string;
     title: string;
-    body: string;
+    body?: string;
     steps: WorkflowStep[];
-  };
-  agent: {
-    eyebrow: string;
-    title: string;
-    body: string;
-    sourceLabel: string;
-    sourceTitle: string;
-    sourceContent: string;
-    sourceTags: [string, string];
-    resultLabel: string;
-    copied: string;
   };
   privacy: {
     eyebrow: string;
@@ -74,7 +63,7 @@ type SiteCopy = {
   updates: {
     eyebrow: string;
     title: string;
-    body: string;
+    body?: string;
     latestLabel: string;
     version: string;
     date: string;
@@ -82,18 +71,10 @@ type SiteCopy = {
     highlights: string[];
     viewAll: string;
   };
-  community: {
-    eyebrow: string;
-    title: string;
-    body: string;
-    points: string[];
-    contribute: string;
-    suggest: string;
-  };
   faq: {
     eyebrow: string;
     title: string;
-    body: string;
+    body?: string;
     items: Array<{
       question: string;
       answer: string;
@@ -119,9 +100,9 @@ export const siteCopy: Record<Locale, SiteCopy> = {
   en: {
     meta: {
       lang: 'en',
-      title: 'Floatick — Floating Todos & Notes for macOS',
+      title: 'Floatick — Native macOS Menu Bar Todos & Notes',
       description:
-        'A free, open-source floating todo and quick notes app for macOS with a focused Doing state, deadlines, local reminders, Markdown, and local storage.',
+        'A lightweight, open-source macOS menu bar app for tasks and quick notes. Built with Tauri v2 and Rust.',
       canonicalPath: '/',
       alternatePath: '/zh/',
     },
@@ -134,196 +115,160 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       languageLabel: 'Read in Chinese',
     },
     hero: {
-      eyebrow: 'Floating todos, quick notes & deadlines · Local-first · Open source',
+      eyebrow: 'macOS Menu Bar Todos & Notes',
       titleBefore: 'Capture fast.',
       titleAccent: 'Finish with focus.',
       body:
-        'Floatick stays on your Mac as a small, draggable icon. Capture a todo or note, mark the task you are doing, add a deadline, and let a quiet in-app reminder bring it back at the right moment.',
+        'Lives quietly in your Menu Bar. Capture tasks and notes in seconds, without breaking your flow.',
       download: 'Download for macOS',
-      github: 'Explore on GitHub',
+      github: 'View on GitHub',
       compatibility: 'macOS 10.15+ · Apple silicon and Intel',
     },
     proof: [
-      { value: 'One click', label: 'Capture without changing context' },
-      { value: '3 states', label: 'Todo → Doing → Done' },
-      { value: 'On time', label: 'Deadlines and in-app reminders' },
-      { value: 'Local-first', label: 'Your workspace stays on your Mac' },
+      { value: 'One Click', label: 'Instant access right from your Menu Bar' },
+      { value: 'Lightweight', label: 'Sub-30MB footprint, fast and quiet' },
+      { value: 'On Time', label: 'Clear deadlines and gentle reminders' },
+      { value: 'Local-First', label: '100% on your Mac, zero cloud sync' },
     ],
     features: {
-      eyebrow: 'Core features',
-      title: 'Tasks and notes, close to the desktop.',
-      body:
-        'Capture, focus, and finish without keeping a full-size productivity app open.',
+      eyebrow: 'Features',
+      title: 'Everything you need, right at your fingertips.',
       items: [
         {
           number: '01',
-          title: 'A draggable desktop icon',
+          title: 'macOS Menu Bar',
           body:
-            'Place Floatick anywhere. It opens toward available screen space and collapses back to the same spot.',
+            'Lives in your status bar with a live pending badge. Click to open.',
         },
         {
           number: '02',
-          title: 'A visible Doing state',
+          title: 'Full-Width Cards',
           body:
-            'Move one task into Doing, give it a calm visual emphasis, and filter the list down to active work.',
+            'Long titles never truncate. Floating capsules reveal actions on hover.',
         },
         {
           number: '03',
-          title: 'Deadlines without notification noise',
+          title: 'Deadlines & Reminders',
           body:
-            'Set a due date and reminder from creation or the list. Floatick surfaces a compact in-app alert when it matters.',
+            'Set due dates with one click. Clear status without noisy banners.',
         },
         {
           number: '04',
-          title: 'A lightweight Notes space',
+          title: 'TipTap Markdown',
           body:
-            'Capture ideas, logs, and snippets with date grouping, search, pinning, autosave, and Markdown preview.',
+            'Press / for interactive checklists, headings, code blocks, and quotes.',
         },
         {
           number: '05',
-          title: 'Shared tags and fast retrieval',
+          title: 'Color Tags',
           body:
-            'Reuse colored tags across todos and notes, combine filters, archive finished work, and restore it later.',
+            'Shared color tags across tasks and notes for fast, flexible filtering.',
         },
         {
           number: '06',
-          title: 'Useful macOS controls',
+          title: 'Rust & Tauri 2',
           body:
-            'Start at login, stay above other apps, choose a theme, and control whether outside clicks collapse the panel.',
+            'Sub-30MB idle footprint, instant launch, and optional start at login.',
         },
       ],
     },
     workflow: {
-      eyebrow: 'From capture to action',
-      title: 'A small, explicit path from idea to done.',
-      body:
-        'Floatick keeps status and timing visible without turning a lightweight list into project management software.',
+      eyebrow: 'Workflow',
+      title: 'Capture, schedule, finish.',
       steps: [
         {
           label: 'Capture',
-          title: 'Capture a todo or quick note from the desktop.',
+          title: 'Quick capture in seconds',
           body:
-            'Open Floatick, choose the right space, add a title, and get back to what you were doing.',
+            'Click the icon or press ⌘N to jot down thoughts without breaking flow.',
         },
         {
-          label: 'Focus',
-          title: 'Mark what you are doing and set the time.',
+          label: 'Schedule',
+          title: 'Add deadlines and tags',
           body:
-            'Use Doing to spotlight active work, then add a deadline or reminder only when the task needs one.',
+            'Set due dates or color tags to keep your daily priorities clear.',
         },
         {
           label: 'Finish',
-          title: 'Complete it with one check.',
+          title: 'Check off and move on',
           body:
-            'Check the task off, archive it when you are ready, or copy the full context as Markdown.',
+            'Check tasks off or copy the full context as clean Markdown.',
         },
       ],
     },
-    agent: {
-      eyebrow: 'One-click Markdown',
-      title: 'Copy the whole todo.',
-      body:
-        'Copy the title and notes together, ready to paste into a document, message, or AI agent.',
-      sourceLabel: 'Todo',
-      sourceTitle: 'Prepare tomorrow’s project brief',
-      sourceContent:
-        'Summarize the goal, the open questions, and the first action to take.',
-      sourceTags: ['planning', 'tomorrow'],
-      resultLabel: 'Copied as Markdown',
-      copied:
-        '# Prepare tomorrow’s project brief\n\nSummarize the goal, the open questions, and the first action to take.',
-    },
     privacy: {
-      eyebrow: 'Local-first',
-      title: 'Stored on your Mac.',
+      eyebrow: 'Privacy & Storage',
+      title: 'Local-first. 100% on your Mac.',
       body:
-        'Floatick saves todos, notes, and settings as readable files in ~/.floatick. No account is required.',
+        'All your todos, notes, and settings are saved locally as plain files.',
       points: [
-        'Your todo and note data stays in a folder you can inspect and back up.',
-        'No sign-up, cloud workspace, or telemetry.',
-        'Floatick connects to the network only to check for app updates.',
+        'Plain text files: view, export, or back up anytime.',
+        'Zero tracking: no accounts, no cloud servers, no telemetry.',
+        '100% offline: connects only when checking for updates.',
       ],
-      pathLabel: 'Working directory',
+      pathLabel: 'Storage Directory',
     },
     updates: {
       eyebrow: 'Changelog',
-      title: 'See what changed.',
-      body:
-        'Each release lists its new features, fixes, and behavior changes.',
-      latestLabel: 'Latest release',
-      version: 'v0.3.4',
-      date: 'August 13, 2026',
-      dateTime: '2026-08-13',
+      title: "What's new",
+      latestLabel: 'Latest Release',
+      version: 'v0.4.0',
+      date: 'September 4, 2026',
+      dateTime: '2026-09-04',
       highlights: [
-        'Move tasks through Todo, Doing, and Done, and filter the list to active work.',
-        'Set deadlines and advance reminders from the editor or directly from the list.',
-        'Receive compact native in-app alerts while overdue work stays visible.',
+        'Full-width title layout with floating action capsules.',
+        'Instant click-to-complete separated from the editor drawer.',
+        'TipTap rich text editor with / slash commands and checklists.',
       ],
-      viewAll: 'Read the full changelog',
-    },
-    community: {
-      eyebrow: 'Open source',
-      title: 'Built in public.',
-      body:
-        'Floatick is MIT-licensed. Use it for free, report problems, or help improve the app.',
-      points: [
-        'Report a reproducible bug.',
-        'Suggest a feature or workflow.',
-        'Contribute code, tests, documentation, translations, or design.',
-      ],
-      contribute: 'Contribute on GitHub',
-      suggest: 'Suggest a feature',
+      viewAll: 'View Full Changelog',
     },
     faq: {
       eyebrow: 'FAQ',
-      title: 'Before you install.',
-      body:
-        'Quick answers about deadlines, notes, storage, compatibility, and Markdown copy.',
+      title: 'Frequently asked questions',
       items: [
         {
-          question: 'What is Floatick?',
+          question: 'What is Floatick designed for?',
           answer:
-            'Floatick is a free, open-source floating todo and notes app for macOS. It stays on the desktop as a draggable icon and expands when clicked.',
+            'Quick todos and notes in your macOS Menu Bar without the weight of complex project tools.',
         },
         {
-          question: 'Where does Floatick store my data?',
+          question: 'Where is my data stored?',
           answer:
-            'Floatick stores todos, notes, and preferences as readable files in ~/.floatick on your Mac. It does not require an account or cloud workspace.',
-        },
-        {
-          question: 'Can I use Floatick for quick notes?',
-          answer:
-            'Yes. Notes have their own searchable workspace with pinning, archiving, shared tags, automatic saving, and Markdown preview.',
+            'Locally in ~/.floatick on your Mac. Plain text files, no accounts, and zero cloud sync.',
         },
         {
           question: 'How do deadline reminders work?',
           answer:
-            'Set a deadline while creating or editing a todo, or directly from the list. Floatick shows a compact in-app reminder and keeps overdue work visible; it does not require macOS system notifications.',
+            'Set due dates with one click. Tasks highlight in-app when upcoming or overdue, without noisy banners.',
         },
         {
-          question: 'Does Floatick support Apple silicon and Intel Macs?',
+          question: 'Can I take notes with Floatick?',
           answer:
-            'Yes. The universal build supports Apple silicon and Intel Macs running macOS 10.15 or later.',
+            'Yes. Notes has a dedicated tab with TipTap Markdown editing, slash commands, and code blocks.',
         },
         {
-          question: 'Can I copy a todo as Markdown?',
+          question: 'Which Macs are supported?',
           answer:
-            'Yes. Floatick copies the title and notes together, ready to paste into a document or message.',
+            'Native universal binary for both Apple silicon and Intel, running macOS 10.15 or later.',
+        },
+        {
+          question: 'Can I copy tasks as Markdown?',
+          answer:
+            'Yes. Hover over any task card and click copy to export the title and notes as clean Markdown.',
         },
       ],
     },
     finalCta: {
       eyebrow: 'For macOS',
-      title: 'Keep tasks and thoughts on the desktop.',
-      body:
-        'Capture quickly, focus on what is active, and finish on time with a local-first Universal macOS app.',
-      download: 'Download Floatick',
-      github: 'View source',
+      title: 'Capture fast. Finish with focus.',
+      body: 'Free, open source, and local-first for macOS.',
+      download: 'Download for macOS',
+      github: 'View on GitHub',
     },
     footer: {
-      tagline: 'Local-first floating todos and notes for macOS.',
+      tagline: 'Local-first macOS Menu Bar todos and notes.',
       source: 'Source',
-      releases: 'Releases',
+      releases: 'Changelog',
       license: 'MIT License',
       language: '简体中文',
     },
@@ -331,210 +276,175 @@ export const siteCopy: Record<Locale, SiteCopy> = {
   zh: {
     meta: {
       lang: 'zh-CN',
-      title: 'Floatick — 放在桌面上的 macOS 待办和随手记',
+      title: 'Floatick — 常驻 macOS 菜单栏的待办与便签',
       description:
-        'Floatick 是一款免费开源的 macOS 小工具。点开就能记待办和笔记，也能标记进行中任务、设置截止时间和提醒；所有数据都保存在本机。',
+        'Floatick 是一款专为 macOS 设计的极简菜单栏待办与便签应用。点击即开，支持截止时间提醒、TipTap Markdown 编辑与本地隐私存储。',
       canonicalPath: '/zh/',
       alternatePath: '/',
     },
     nav: {
-      features: '功能',
-      workflow: '怎么用',
-      privacy: '数据与隐私',
+      features: '功能特性',
+      workflow: '使用流程',
+      privacy: '隐私与存储',
       changelog: '更新日志',
       download: '下载',
       languageLabel: 'Read in English',
     },
     hero: {
-      eyebrow: 'macOS 桌面待办与随手记 · 数据存在本机 · 免费开源',
-      titleBefore: '随手记下来，',
-      titleAccent: '专心做完它。',
+      eyebrow: 'macOS 菜单栏待办与便签',
+      titleBefore: '随手记，',
+      titleAccent: '专心做。',
       body:
-        'Floatick 平时收在桌面上的一个小图标里。点开就能记待办、写笔记，正在做的事可以标成“进行中”，需要时再加上截止时间和提醒。',
+        '常驻 macOS 菜单栏。点开即记待办与便签，轻巧随手，不扰专注。',
       download: '下载 macOS 版',
-      github: '在 GitHub 查看',
-      compatibility: '支持 macOS 10.15 及以上版本 · Apple 芯片和 Intel 都能用',
+      github: 'GitHub 源码',
+      compatibility: 'macOS 10.15+ · 原生支持 Apple 芯片与 Intel',
     },
     proof: [
-      { value: '点开就记', label: '不用来回切换应用' },
-      { value: '状态简单', label: '待办、进行中、已完成' },
-      { value: '到点提醒', label: '截止时间和应用内提醒' },
-      { value: '只存本机', label: '不用注册，也不会上传数据' },
+      { value: '点开即记', label: '常驻手边，不扰工作' },
+      { value: '轻巧极速', label: '极低内存，秒开秒关' },
+      { value: '到点提醒', label: '临近与逾期清晰标识' },
+      { value: '本地存储', label: '零账号，数据只在本机' },
     ],
     features: {
-      eyebrow: '主要功能',
-      title: '待办和笔记，就放在桌面手边。',
-      body:
-        '不用一直开着一个大而全的效率软件。想到什么就记下来，做完再勾掉。',
+      eyebrow: '核心特性',
+      title: '恰到好处的轻巧。',
       items: [
         {
           number: '01',
-          title: '拖到顺手的位置',
+          title: '常驻菜单栏',
           body:
-            '小图标可以放在桌面任意位置。点开时会自动朝有空间的方向展开，收起后还在原来的地方。',
+            '常驻右上角状态栏，角标显示未完成数，点击即开。',
         },
         {
           number: '02',
-          title: '一眼看到正在做什么',
+          title: '全宽卡片与悬浮胶囊',
           body:
-            '把当前任务标成“进行中”，它会更醒目。也可以只看正在做的任务，不被其他待办打扰。',
+            '长标题全宽展示无遮挡，悬浮呼出截止时间、编辑与复制。',
         },
         {
           number: '03',
-          title: '需要时再设截止时间',
+          title: '截止时间与提醒',
           body:
-            '新建或编辑待办时可以设置截止时间，也能直接在列表里修改。到点后，Floatick 会在应用内提醒你。',
+            '按需设定截止时间，临近与逾期清晰高亮，不弹吵闹通知。',
         },
         {
           number: '04',
-          title: '随手记点东西',
+          title: 'TipTap Markdown',
           body:
-            '灵感、工作记录、临时片段都可以放进笔记。支持按日期整理、搜索、置顶、自动保存和 Markdown 预览。',
+            '输入 / 唤出任务清单、多级标题、代码块与引用。',
         },
         {
           number: '05',
-          title: '用标签整理待办和笔记',
+          title: '彩色标签分类',
           body:
-            '待办和笔记可以共用同一套彩色标签，也能组合筛选。用完的内容可以归档，需要时再找回来。',
+            '待办与笔记共享彩色标签，支持快速多维度筛选。',
         },
         {
           number: '06',
-          title: '常用的 macOS 设置都有',
+          title: '极简省电架构',
           body:
-            '可以设置开机启动、窗口置顶、明暗主题，以及点到窗口外时要不要自动收起。',
+            '基于 Tauri 2 与 Rust 构建，内存占用极低，支持开机自启。',
         },
       ],
     },
     workflow: {
-      eyebrow: '用起来很简单',
-      title: '记下来，开始做，做完勾掉。',
-      body:
-        'Floatick 只保留真正用得上的状态和提醒，不会把简单的待办变成复杂的项目管理。',
+      eyebrow: '使用流程',
+      title: '记下，排期，完成。',
       steps: [
         {
-          label: '记下来',
-          title: '想到什么，点开就记。',
+          label: '捕捉',
+          title: '点击菜单栏随时记下',
           body:
-            '选择待办或笔记，写个标题，就可以继续忙手上的事。',
+            '点击图标或按 ⌘N，随时记下闪过的想法或任务。',
         },
         {
-          label: '开始做',
-          title: '把手头这件事标成“进行中”。',
+          label: '排期',
+          title: '按需添加时间与标签',
           body:
-            '需要卡时间时，再加上截止时间或提前提醒。',
+            '设定截止时间或分配彩色标签，轻重缓急一目了然。',
         },
         {
-          label: '做完了',
-          title: '勾一下，就完成了。',
+          label: '了结',
+          title: '做完随手勾销',
           body:
-            '做完可以直接归档；需要发给别人时，也能把标题和内容一起复制成 Markdown。',
+            '做完即勾，亦可一键完整复制为 Markdown 分享。',
         },
       ],
-    },
-    agent: {
-      eyebrow: '一键复制',
-      title: '把待办完整复制出去。',
-      body:
-        '标题和正文会一起复制成 Markdown，可以粘贴到文档、聊天窗口或其他工具里。',
-      sourceLabel: '待办',
-      sourceTitle: '准备明天的项目简报',
-      sourceContent: '整理目标、待确认的问题，以及下一步要做的第一件事。',
-      sourceTags: ['计划', '明天'],
-      resultLabel: '已复制为 Markdown',
-      copied:
-        '# 准备明天的项目简报\n\n整理目标、待确认的问题，以及下一步要做的第一件事。',
     },
     privacy: {
-      eyebrow: '数据只存在本机',
-      title: '不用注册，也不会上传。',
+      eyebrow: '隐私与存储',
+      title: '数据只存本机，完全属于你。',
       body:
-        '待办、笔记和设置都保存在这台 Mac 的 ~/.floatick 文件夹里。',
+        '所有待办、笔记与设置均保存在本地明文文件，不上传任何云端。',
       points: [
-        '文件就在本机，随时可以查看和备份。',
-        '不用账号，也没有云端工作区。',
-        '除了检查新版本，Floatick 不会主动联网。',
+        '明文文件：随时自由查看、导出与备份',
+        '零账号零追踪：无云端服务器，不收集任何数据',
+        '100% 离线：仅在手动检查更新时发起网络请求',
       ],
-      pathLabel: '保存位置',
+      pathLabel: '本地存储目录',
     },
     updates: {
       eyebrow: '更新日志',
-      title: '每个版本改了什么，都写清楚。',
-      body:
-        '新增功能、问题修复和使用上的变化，都会记录在这里。',
+      title: '持续打磨',
       latestLabel: '最新版本',
-      version: 'v0.3.4',
-      date: '2026 年 8 月 13 日',
-      dateTime: '2026-08-13',
+      version: 'v0.4.0',
+      date: '2026 年 9 月 4 日',
+      dateTime: '2026-09-04',
       highlights: [
-        '待办可以标成“进行中”，也能只看手头正在做的任务。',
-        '可以在编辑器或列表里设置截止时间和提前提醒。',
-        '到点后会在应用内提醒，逾期任务也会一直标出来。',
+        '全宽标题排版，次行悬浮操作胶囊',
+        '快速勾选与 TipTap 独立编辑抽屉',
+        'TipTap 斜杠命令、清单与代码块',
       ],
       viewAll: '查看完整更新日志',
     },
-    community: {
-      eyebrow: '免费开源',
-      title: '代码在 GitHub，欢迎一起改进。',
-      body:
-        'Floatick 使用 MIT 许可证。你可以免费使用，也可以提交问题、建议或代码。',
-      points: [
-        '遇到问题，可以提交能复现的 Bug。',
-        '有更顺手的用法，可以告诉我们。',
-        '也欢迎贡献代码、测试、文档、翻译或设计。',
-      ],
-      contribute: '去 GitHub 看看',
-      suggest: '提个建议',
-    },
     faq: {
       eyebrow: '常见问题',
-      title: '安装前，先回答几个常见问题。',
-      body:
-        '关于数据保存、提醒、系统支持和笔记功能，这里都有简短说明。',
+      title: '常见问题',
       items: [
         {
-          question: 'Floatick 是什么？',
+          question: 'Floatick 适合怎样的场景？',
           answer:
-            'Floatick 是一款免费开源的 macOS 桌面小工具。它平时是一个可以拖动的小图标，点一下就会展开待办和笔记。',
+            '适合想要在 macOS 菜单栏随时速记待办与碎片便签、不希望被庞杂工具打扰专注的用户。',
         },
         {
-          question: '数据保存在哪里？',
+          question: '我的数据保存在哪里？',
           answer:
-            '待办、笔记和设置都以可读文件保存在这台 Mac 的 ~/.floatick 文件夹里，不需要账号，也不会同步到云端。',
+            '保存在本机 ~/.floatick 目录下。明文存储，无需注册，不经过任何云端。',
         },
         {
-          question: '可以用 Floatick 随手记笔记吗？',
+          question: '截止时间提醒是如何工作的？',
           answer:
-            '可以。笔记有单独的页面，支持搜索、置顶、归档、标签、自动保存和 Markdown 预览。',
+            '为待办设定截止时间后，临近与逾期状态会在应用内清晰标记，没有吵闹的系统横幅。',
         },
         {
-          question: '截止时间到了会怎么提醒？',
+          question: '可以用 Floatick 记录便签笔记吗？',
           answer:
-            '新建或编辑待办时可以设置截止时间，也能直接在列表里修改。到点后 Floatick 会弹出一个简洁的应用内提醒，并继续标出逾期任务；不需要开启 macOS 系统通知。',
+            '可以。笔记拥有独立标签页与 TipTap Markdown 编辑抽屉，支持 / 命令与代码块。',
         },
         {
-          question: '支持 Apple 芯片和 Intel Mac 吗？',
+          question: '支持哪些 Mac 机型？',
           answer:
-            '支持。安装包同时支持 Apple 芯片和 Intel Mac，系统需要 macOS 10.15 或更高版本。',
+            '原生适配 Apple 芯片（M 系列）与 Intel 架构，支持 macOS 10.15 及以上系统。',
         },
         {
-          question: '可以把待办复制成 Markdown 吗？',
+          question: '可以把待办导出或分享吗？',
           answer:
-            '可以。标题和正文会一起复制，直接粘贴到文档或聊天里就行。',
+            '悬浮在卡片上点击复制，即可将标题与正文完整复制为 Markdown 格式。',
         },
       ],
     },
     finalCta: {
-      eyebrow: 'macOS',
-      title: '把待办和随手记放在桌面手边。',
-      body:
-        '点开就记，做完就勾。Floatick 免费开源，数据只存在本机，同时支持 Apple 芯片和 Intel Mac。',
-      download: '下载 Floatick',
-      github: '查看源代码',
+      eyebrow: '专为 macOS 打造',
+      title: '随手记，专心做。',
+      body: '免费开源 · 数据只存本机 · 原生支持 Apple 芯片与 Intel',
+      download: '下载 macOS 版',
+      github: '在 GitHub 查看',
     },
     footer: {
-      tagline: '放在 macOS 桌面上的待办和随手记，数据只存在本机。',
+      tagline: 'macOS 菜单栏轻量待办与便签',
       source: '源代码',
-      releases: '版本发布',
+      releases: '更新日志',
       license: 'MIT 许可证',
       language: 'English',
     },

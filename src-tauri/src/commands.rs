@@ -68,9 +68,7 @@ pub fn toggle_window(app_handle: AppHandle) -> Result<(), String> {
         if window.is_visible().unwrap_or(false) {
             window.hide().map_err(|e| e.to_string())?;
         } else {
-            crate::mark_window_shown();
-            window.show().map_err(|e| e.to_string())?;
-            window.set_focus().map_err(|e| e.to_string())?;
+            crate::tray::show_window(&app_handle);
         }
     }
     Ok(())

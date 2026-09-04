@@ -22,17 +22,47 @@ const defaultSettings: AppSettings = {
 
 function applyTheme(theme: ThemePreference) {
   const root = document.documentElement;
-  if (theme === "dark") {
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  // Disable all CSS transitions during theme switch so all elements (header, search bar, buttons, list)
+  // switch 100% synchronously in a single atomic frame without any staggered delay or lag.
+  root.classList.add("disable-transitions");
+
+  if (isDark) {
     root.classList.add("dark");
-  } else if (theme === "light") {
-    root.classList.remove("dark");
+    root.classList.remove("light");
   } else {
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
+    root.classList.remove("dark");
+    root.classList.add("light");
+  }
+
+  // Force reflow to immediately apply theme tokens while transitions are disabled
+  void root.offsetHeight;
+
+  // Restore micro-interactions on the next frame for hover/focus states
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      root.classList.remove("disable-transitions");
+    });
+  });
+}
+
+// Reactively respond to OS light/dark changes when following system theme
+if (typeof window !== "undefined" && window.matchMedia) {
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const handleSystemThemeChange = () => {
+    const currentTheme = useSettingsStore.getState().settings.theme;
+    if (currentTheme === "system") {
+      applyTheme("system");
     }
+  };
+  if (mediaQuery.addEventListener) {
+    mediaQuery.addEventListener("change", handleSystemThemeChange);
+  } else {
+    // Legacy Safari/WebKit fallback
+    mediaQuery.addListener(handleSystemThemeChange);
   }
 }
 

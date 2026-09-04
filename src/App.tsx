@@ -5,6 +5,8 @@ import { TodoPanel } from "@/components/todos/TodoPanel";
 import { NotePanel } from "@/components/notes/NotePanel";
 import { SettingsDrawer } from "@/components/settings/SettingsDrawer";
 import { TagDrawer } from "@/components/tags/TagDrawer";
+import { TodoEditorDrawer } from "@/components/todos/TodoEditorDrawer";
+import { NoteEditorDrawer } from "@/components/notes/NoteEditorDrawer";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useTagStore } from "@/stores/useTagStore";
@@ -30,6 +32,14 @@ export const App: React.FC = () => {
     setIsTagDrawerOpen(true);
   };
 
+  const isTodoEditorOpen = useTodoStore((s) => s.isEditorOpen);
+  const setIsTodoEditorOpen = useTodoStore((s) => s.setIsEditorOpen);
+  const editingTodoId = useTodoStore((s) => s.editingTodoId);
+
+  const isNoteEditorOpen = useNoteStore((s) => s.isEditorOpen);
+  const setIsNoteEditorOpen = useNoteStore((s) => s.setIsEditorOpen);
+  const editingNoteId = useNoteStore((s) => s.editingNoteId);
+
   const loadSettings = useSettingsStore((s) => s.loadSettings);
   const loadTodos = useTodoStore((s) => s.loadTodos);
   const loadTags = useTagStore((s) => s.loadTags);
@@ -41,6 +51,28 @@ export const App: React.FC = () => {
     loadTodos();
     loadTags();
     loadNotes();
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "notes") {
+      setActiveTab("notes");
+    }
+    if (params.get("mock") === "editor") {
+      setTimeout(() => {
+        useTodoStore.getState().setEditingTodoId("mock-todo-1");
+        useTodoStore.getState().setIsEditorOpen(true);
+      }, 150);
+    }
+    if (params.get("mock") === "settings") {
+      setTimeout(() => {
+        setIsSettingsOpen(true);
+      }, 150);
+    }
+    if (params.get("mock") === "tags") {
+      setTimeout(() => {
+        setTagDrawerMode("manage");
+        setIsTagDrawerOpen(true);
+      }, 150);
+    }
   }, [loadSettings, loadTodos, loadTags, loadNotes]);
 
   // Global Keyboard shortcuts
@@ -54,6 +86,14 @@ export const App: React.FC = () => {
         }
         if (isTagDrawerOpen) {
           setIsTagDrawerOpen(false);
+          return;
+        }
+        if (isTodoEditorOpen) {
+          setIsTodoEditorOpen(false);
+          return;
+        }
+        if (isNoteEditorOpen) {
+          setIsNoteEditorOpen(false);
           return;
         }
         api.hideWindow();
@@ -85,18 +125,31 @@ export const App: React.FC = () => {
       // Cmd+N -> New Item
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
         e.preventDefault();
+        if (isSettingsOpen || isTagDrawerOpen || isTodoEditorOpen || isNoteEditorOpen) return;
         window.dispatchEvent(new CustomEvent("floatick:new-item"));
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isSettingsOpen, isTagDrawerOpen]);
+  }, [isSettingsOpen, isTagDrawerOpen, isTodoEditorOpen, isNoteEditorOpen]);
+
+  const isScreenshotMode =
+    typeof window !== "undefined" &&
+    window.location.search.includes("screenshot");
 
   return (
-    <div className="w-full h-full p-2 flex flex-col items-center justify-center select-none bg-transparent font-sans">
+    <div
+      className={`w-full h-full ${
+        isScreenshotMode ? "p-0" : "p-2"
+      } flex flex-col items-center justify-center select-none bg-transparent font-sans`}
+    >
       {/* Refined Floatick Panel Surface */}
-      <div className="w-full h-full flex flex-col rounded-[14px] overflow-hidden floatick-panel text-[#EEF2F1] relative">
+      <div
+        className={`w-full h-full flex flex-col ${
+          isScreenshotMode ? "rounded-[16px]" : "rounded-[14px]"
+        } overflow-hidden floatick-panel relative`}
+      >
         {/* Panel Header */}
         <Header
           activeTab={activeTab}
@@ -123,6 +176,20 @@ export const App: React.FC = () => {
         <SettingsDrawer
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
+        />
+
+        {/* Todo Editor Full Subview */}
+        <TodoEditorDrawer
+          todoId={editingTodoId}
+          isOpen={isTodoEditorOpen}
+          onClose={() => setIsTodoEditorOpen(false)}
+        />
+
+        {/* Note Editor Full Subview */}
+        <NoteEditorDrawer
+          noteId={editingNoteId}
+          isOpen={isNoteEditorOpen}
+          onClose={() => setIsNoteEditorOpen(false)}
         />
 
         {/* Tag Drawer */}

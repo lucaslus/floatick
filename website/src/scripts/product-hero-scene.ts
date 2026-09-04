@@ -49,7 +49,6 @@ type ProductSceneCopy = {
   search: string;
   today: string;
   tasks: [TaskPreview, TaskPreview, TaskPreview];
-  doingLabel: string;
   overdueLabel: string;
   drawerTitle: string;
   calendarMonth: string;
@@ -151,7 +150,6 @@ const DEFAULT_COPY: ProductSceneCopy = {
     { title: 'Polish the product story', tag: 'Focus', time: '11:30' },
     { title: 'Send the release notes', tag: 'Launch', time: '16:20' },
   ],
-  doingLabel: 'Doing',
   overdueLabel: 'Overdue',
   drawerTitle: 'Set deadline',
   calendarMonth: 'August 2026',
@@ -244,7 +242,6 @@ function readSceneCopy(stage: HTMLElement): ProductSceneCopy {
         time: dataValue(stage, 'taskThreeTime', DEFAULT_COPY.tasks[2].time),
       },
     ],
-    doingLabel: dataValue(stage, 'doingLabel', DEFAULT_COPY.doingLabel),
     overdueLabel: dataValue(stage, 'overdueLabel', DEFAULT_COPY.overdueLabel),
     drawerTitle: dataValue(stage, 'drawerTitle', DEFAULT_COPY.drawerTitle),
     calendarMonth: dataValue(
@@ -714,6 +711,29 @@ function drawMoreIcon(
   context.restore();
 }
 
+function drawEditIcon(
+  context: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  size = 20,
+  color = COLORS.textMuted,
+) {
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = 2.2;
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.beginPath();
+  context.moveTo(cx - 7, cy + 6);
+  context.lineTo(cx - 7, cy + 2);
+  context.lineTo(cx + 3, cy - 8);
+  context.lineTo(cx + 7, cy - 4);
+  context.lineTo(cx - 3, cy + 6);
+  context.closePath();
+  context.stroke();
+  context.restore();
+}
+
 function drawTag(
   context: CanvasRenderingContext2D,
   x: number,
@@ -722,15 +742,14 @@ function drawTag(
   color: string,
 ) {
   context.font = '700 22px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-  const width = Math.min(180, context.measureText(label).width + 52);
-  roundedRect(context, x, y, width, 38, 19, `${color}20`, `${color}aa`);
+  const textWidth = context.measureText(label).width;
   context.beginPath();
-  context.arc(x + 18, y + 19, 5, 0, Math.PI * 2);
+  context.arc(x + 8, y + 19, 4.5, 0, Math.PI * 2);
   context.fillStyle = color;
   context.fill();
   context.fillStyle = color;
-  context.fillText(label, x + 31, y + 27);
-  return width;
+  context.fillText(label, x + 20, y + 26);
+  return textWidth + 28;
 }
 
 function drawStatusBadge(
@@ -888,9 +907,8 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
     const taskStarts = [500, 770, 1040];
     copy.tasks.forEach((task, index) => {
       const y = taskStarts[index];
-      const isDoing = index === 1;
       const isOverdue = index === 2;
-      if (isDoing) {
+      if (index === 0) {
         roundedRect(
           context,
           56,
@@ -898,28 +916,18 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
           888,
           206,
           22,
-          'rgba(21, 116, 110, 0.18)',
-          'rgba(45, 212, 199, 0.34)',
-        );
-      } else if (index === 0) {
-        roundedRect(
-          context,
-          56,
-          y - 18,
-          888,
-          206,
-          22,
-          'rgba(255, 255, 255, 0.032)',
+          'rgba(255, 255, 255, 0.035)',
         );
       }
 
+      // Checkbox: 42x42 aligned with title text
       roundedRect(
         context,
         66,
-        y + 4,
-        54,
-        54,
-        16,
+        y + 14,
+        42,
+        42,
+        12,
         'transparent',
         '#6e7e80',
       );
@@ -927,43 +935,27 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
       context.fillStyle = COLORS.text;
       context.font =
         '690 31px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-      context.fillText(task.title, 150, y + 43);
+      context.fillText(task.title, 136, y + 43);
 
-      const tagWidth = drawTag(
+      drawTag(
         context,
-        150,
+        136,
         y + 78,
         task.tag,
         tagColors[index],
       );
-      drawTagIcon(
-        context,
-        150 + tagWidth + 25,
-        y + 97,
-        18,
-        COLORS.accent,
-      );
 
-      if (isDoing) {
-        drawStatusBadge(
-          context,
-          150 + tagWidth + 58,
-          y + 78,
-          copy.doingLabel,
-          COLORS.accent,
-        );
-      }
       if (isOverdue) {
         const overdueWidth = drawStatusBadge(
           context,
-          150,
+          136,
           y + 128,
           copy.overdueLabel,
           '#ff9e88',
         );
         drawAlarmIcon(
           context,
-          150 + overdueWidth + 31,
+          136 + overdueWidth + 31,
           y + 147,
           27,
           '#ff9e88',
@@ -977,29 +969,37 @@ function createMainPanelTexture(copy: ProductSceneCopy) {
       context.fillText(task.time, 918, y + 145);
       context.textAlign = 'start';
 
-      if (isDoing) {
-        const actionCenterY = y + 38;
-        const actionCenters = [738, 794, 850, 906] as const;
+      // Floating action capsule on sub-row for hovered item
+      if (index === 0) {
+        roundedRect(
+          context,
+          696,
+          y + 74,
+          224,
+          44,
+          22,
+          'rgba(28, 44, 48, 0.88)',
+          'rgba(45, 212, 199, 0.3)',
+        );
 
-        context.globalAlpha = 0.88;
-        drawPlayIcon(
+        const actionCenters = [728, 780, 834, 888] as const;
+        drawAlarmIcon(
           context,
           actionCenters[0],
-          actionCenterY,
+          y + 96,
           24,
           COLORS.accent,
         );
-        drawAlarmIcon(
+        drawEditIcon(
           context,
           actionCenters[1],
-          actionCenterY,
-          28,
+          y + 96,
+          20,
           COLORS.accent,
         );
-
-        context.globalAlpha = 0.68;
-        drawCopyIcon(context, actionCenters[2], actionCenterY, 24);
-        drawMoreIcon(context, actionCenters[3], actionCenterY);
+        context.globalAlpha = 0.82;
+        drawCopyIcon(context, actionCenters[2], y + 96, 22);
+        drawMoreIcon(context, actionCenters[3], y + 96);
         context.globalAlpha = 1;
       }
     });
@@ -1598,6 +1598,8 @@ function buildProductScene(
   coinAssembly.position.copy(COIN_BASE_POSITION);
   coinAssembly.rotation.z = -0.12;
   coinAssembly.add(coin, coinFace);
+  // Floatick has migrated to a native macOS Menu Bar app; hide the old floating desk coin
+  coinAssembly.visible = false;
   productContent.add(coinAssembly);
   disposables.push(
     logoTexture,

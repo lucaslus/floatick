@@ -6,7 +6,7 @@ import {
 } from '../config/site-links';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import DownloadIcon from './DownloadIcon.astro';
-import ProductHero3D from './ProductHero3D.astro';
+import ProductScreenshots from './ProductScreenshots.astro';
 
 interface Props {
   locale: Locale;
@@ -17,8 +17,6 @@ const copy = siteCopy[locale];
 const isEnglish = locale === 'en';
 const languageHref = isEnglish ? '/zh/' : '/';
 const changelogHref = isEnglish ? '/changelog/' : '/zh/changelog/';
-const featureRequestUrl =
-  'https://github.com/lucaslus/floatick/issues/new?labels=enhancement';
 ---
 
 <SiteLayout
@@ -133,7 +131,7 @@ const featureRequestUrl =
         </div>
       </div>
 
-      <ProductHero3D locale={locale} />
+      <ProductScreenshots locale={locale} />
     </section>
 
     <section
@@ -159,7 +157,6 @@ const featureRequestUrl =
       <div class="section-heading" data-reveal>
         <p class="eyebrow">{copy.features.eyebrow}</p>
         <h2>{copy.features.title}</h2>
-        <p>{copy.features.body}</p>
       </div>
 
       <div class="feature-grid">
@@ -184,7 +181,6 @@ const featureRequestUrl =
         <div class="section-heading section-heading-centered" data-reveal>
           <p class="eyebrow">{copy.workflow.eyebrow}</p>
           <h2>{copy.workflow.title}</h2>
-          <p>{copy.workflow.body}</p>
         </div>
 
         <ol class="workflow-list">
@@ -201,44 +197,6 @@ const featureRequestUrl =
             ))
           }
         </ol>
-      </div>
-    </section>
-
-    <section class="section agent-section shell">
-      <div class="agent-copy" data-reveal>
-        <p class="eyebrow">{copy.agent.eyebrow}</p>
-        <h2>{copy.agent.title}</h2>
-        <p>{copy.agent.body}</p>
-      </div>
-
-      <div class="handoff-demo" data-reveal>
-        <article class="task-card">
-          <p class="demo-label">{copy.agent.sourceLabel}</p>
-          <div class="task-title">
-            <span class="checkbox" aria-hidden="true"></span>
-            <h3>{copy.agent.sourceTitle}</h3>
-          </div>
-          <p>{copy.agent.sourceContent}</p>
-          <div class="tag-row" aria-hidden="true">
-            {
-              copy.agent.sourceTags.map((tag) => (
-                <span>{tag}</span>
-              ))
-            }
-          </div>
-        </article>
-
-        <div class="copy-flow" aria-hidden="true">
-          <span></span>
-        </div>
-
-        <article class="markdown-card">
-          <div class="markdown-header">
-            <p class="demo-label">{copy.agent.resultLabel}</p>
-            <span>MD</span>
-          </div>
-          <pre>{copy.agent.copied}</pre>
-        </article>
       </div>
     </section>
 
@@ -268,7 +226,6 @@ const featureRequestUrl =
       <div class="updates-copy" data-reveal>
         <p class="eyebrow">{copy.updates.eyebrow}</p>
         <h2>{copy.updates.title}</h2>
-        <p>{copy.updates.body}</p>
         <a class="text-link" href={changelogHref}>
           {copy.updates.viewAll}
           <span aria-hidden="true">↗</span>
@@ -291,50 +248,10 @@ const featureRequestUrl =
       </article>
     </section>
 
-    <section class="section community-section">
-      <div class="shell community-grid">
-        <div data-reveal>
-          <p class="eyebrow">{copy.community.eyebrow}</p>
-          <h2>{copy.community.title}</h2>
-          <p class="community-body">{copy.community.body}</p>
-          <div class="hero-actions">
-            <a
-              class="button button-primary"
-              href={repositoryUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {copy.community.contribute}
-            </a>
-            <a
-              class="button button-secondary"
-              href={featureRequestUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {copy.community.suggest}
-            </a>
-          </div>
-        </div>
-
-        <ol class="community-points">
-          {
-            copy.community.points.map((point, index) => (
-              <li data-reveal style={`--reveal-delay: ${index * 80}ms`}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <p>{point}</p>
-              </li>
-            ))
-          }
-        </ol>
-      </div>
-    </section>
-
     <section class="section faq-section shell" id="faq">
       <div class="section-heading" data-reveal>
         <p class="eyebrow">{copy.faq.eyebrow}</p>
         <h2>{copy.faq.title}</h2>
-        <p>{copy.faq.body}</p>
       </div>
 
       <div class="faq-list">

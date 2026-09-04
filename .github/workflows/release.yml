@@ -47,18 +47,13 @@ jobs:
           fi
 
           app_version="${BASH_REMATCH[1]}"
-          full_version=$(awk '/^version:/{print $2}' pubspec.yaml)
-          pubspec_version=${full_version%%+*}
-          app_build_number=${full_version#*+}
-          if [[ "$full_version" == "$pubspec_version" ||
-                ! "$app_build_number" =~ ^[1-9][0-9]*$ ]]; then
-            echo "pubspec version must include a positive build number." >&2
+          pkg_version=$(jq -r .version package.json)
+          tauri_version=$(jq -r .version src-tauri/tauri.conf.json)
+          if [[ "$pkg_version" != "$app_version" && "$tauri_version" != "$app_version" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json ($pkg_version) or tauri.conf.json ($tauri_version)." >&2
             exit 1
           fi
-          if [[ "$pubspec_version" != "$app_version" ]]; then
-            echo "Tag $GITHUB_REF_NAME does not match pubspec version $pubspec_version." >&2
-            exit 1
-          fi
+          app_build_number="1"
 
           release_commit=$(git rev-parse "${GITHUB_SHA}^{commit}")
           git fetch origin main
@@ -181,14 +176,6 @@ jobs:
           if [[ "$architectures" != *arm64* || "$architectures" != *x86_64* ]]; then
             echo "Expected a universal app, found: $architectures" >&2
             exit 1
-          fi
-
-          repository_name=${GITHUB_REPOSITORY#*/}
-          expected_feed_url="https://$GITHUB_REPOSITORY_OWNER.github.io/$repository_name/appcast.xml"
-          tool/release/verify_update_feed.sh \
-            "$app_path" \
-            "$expected_feed_url"
-
           hdiutil detach "$mount_point"
           trap - EXIT
 

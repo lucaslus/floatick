@@ -19,57 +19,57 @@ export const FloatickMarkdown: React.FC<FloatickMarkdownProps> = ({
 
   if (!content || !content.trim()) {
     return (
-      <div className="py-6 text-center text-xs text-zinc-400 dark:text-[#8E9599] italic">
+      <div className="py-6 text-center text-xs text-[var(--color-text-subtle)] italic">
         {defaultEmpty}
       </div>
     );
   }
 
   return (
-    <div className={`text-xs text-zinc-800 dark:text-[#EEF2F1]/90 select-text ${className}`}>
+    <div className={`text-[13.5px] leading-[1.65] font-sans text-[var(--color-text-primary)] select-text ${className}`}>
       <Markdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className="text-[15px] font-bold text-zinc-900 dark:text-[#EEF2F1] mt-3.5 mb-2 pb-1 border-b border-black/[0.06] dark:border-white/[0.08] tracking-tight">
+            <h1 className="text-[17px] font-bold text-[var(--color-text-primary)] mt-3.5 mb-2 pb-1 border-b border-[var(--color-border-panel)] tracking-tight">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-[13.5px] font-semibold text-zinc-900 dark:text-[#EEF2F1] mt-3 mb-1.5 tracking-tight">
+            <h2 className="text-[15px] font-semibold text-[var(--color-text-primary)] mt-3 mb-1.5 tracking-tight">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-[12.5px] font-semibold text-zinc-900 dark:text-[#EEF2F1] mt-2.5 mb-1">
+            <h3 className="text-[13.5px] font-semibold text-[var(--color-text-primary)] mt-2.5 mb-1">
               {children}
             </h3>
           ),
           p: ({ children }) => (
-            <p className="text-xs leading-[1.65] text-zinc-800 dark:text-[#EEF2F1]/90 mb-2 last:mb-0">
+            <p className="text-[13.5px] leading-[1.65] text-[var(--color-text-primary)] mb-2 last:mb-0">
               {children}
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc list-inside text-xs text-zinc-800 dark:text-[#EEF2F1]/90 my-2 pl-1 space-y-1">
+            <ul className="list-disc list-inside text-[13.5px] leading-[1.65] text-[var(--color-text-primary)] my-2 pl-1 space-y-1">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside text-xs text-zinc-800 dark:text-[#EEF2F1]/90 my-2 pl-1 space-y-1">
+            <ol className="list-decimal list-inside text-[13.5px] leading-[1.65] text-[var(--color-text-primary)] my-2 pl-1 space-y-1">
               {children}
             </ol>
           ),
           li: ({ children }) => (
-            <li className="text-xs leading-relaxed">{children}</li>
+            <li className="text-[13.5px] leading-relaxed">{children}</li>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-[3px] border-teal-500 dark:border-[#22B8A7] bg-teal-500/[0.08] dark:bg-[#22B8A7]/[0.1] px-3.5 py-2 rounded-r-xl my-2.5 text-xs italic text-zinc-700 dark:text-[#EEF2F1]/85">
+            <blockquote className="border-l-[3px] border-[var(--color-teal-primary)] bg-[var(--color-teal-tint)] px-3.5 py-2 rounded-r-lg my-2.5 text-[13px] italic text-[var(--color-text-secondary)]">
               {children}
             </blockquote>
           ),
           pre: ({ children }) => (
-            <pre className="p-3.5 rounded-xl bg-black/[0.05] dark:bg-black/50 border border-black/[0.06] dark:border-white/[0.08] font-mono text-[11.5px] overflow-x-auto my-2.5 text-zinc-900 dark:text-[#EEF2F1] leading-relaxed">
+            <pre className="p-3.5 rounded-xl bg-[var(--color-hover-overlay)] border border-[var(--color-border-panel)] font-mono text-[12px] overflow-x-auto my-2.5 text-[var(--color-text-primary)] leading-relaxed">
               {children}
             </pre>
           ),
@@ -80,7 +80,7 @@ export const FloatickMarkdown: React.FC<FloatickMarkdownProps> = ({
             }
             return (
               <code
-                className="font-mono text-[11px] px-1.5 py-0.5 rounded-md bg-black/[0.06] dark:bg-white/[0.1] text-teal-700 dark:text-[#2CCCBD] font-medium"
+                className="font-mono text-[11px] px-1.5 py-0.5 rounded-md bg-[var(--color-hover-overlay)] text-[var(--color-teal-primary)] font-medium"
                 {...props}
               >
                 {children}
@@ -92,36 +92,36 @@ export const FloatickMarkdown: React.FC<FloatickMarkdownProps> = ({
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-teal-600 dark:text-[#22B8A7] underline underline-offset-2 hover:opacity-80 transition-opacity font-medium"
+              className="text-[var(--color-teal-primary)] underline underline-offset-2 hover:opacity-80 transition-opacity font-medium"
             >
               {children}
             </a>
           ),
-          hr: () => <hr className="my-3.5 border-black/[0.08] dark:border-white/[0.1]" />,
+          hr: () => <hr className="my-3.5 border-[var(--color-border-panel)]" />,
           table: ({ children }) => (
             <div className="overflow-x-auto my-2.5">
-              <table className="w-full text-xs border-collapse border border-black/[0.08] dark:border-white/[0.1] rounded-xl overflow-hidden">
+              <table className="w-full text-xs border-collapse border border-[var(--color-border-panel)] rounded-xl overflow-hidden">
                 {children}
               </table>
             </div>
           ),
           th: ({ children }) => (
-            <th className="bg-black/[0.04] dark:bg-white/[0.06] px-3 py-1.5 text-left font-semibold border-b border-black/[0.08] dark:border-white/[0.1]">
+            <th className="bg-[var(--color-hover-overlay)] px-3 py-1.5 text-left font-semibold border-b border-[var(--color-border-panel)]">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-3 py-1.5 border-b border-black/[0.04] dark:border-white/[0.05]">
+            <td className="px-3 py-1.5 border-b border-[var(--color-border-panel)]">
               {children}
             </td>
           ),
           strong: ({ children }) => (
-            <strong className="font-semibold text-zinc-900 dark:text-[#EEF2F1]">
+            <strong className="font-semibold text-[var(--color-text-primary)]">
               {children}
             </strong>
           ),
           em: ({ children }) => (
-            <em className="italic text-zinc-800 dark:text-[#EEF2F1]/90">
+            <em className="italic text-[var(--color-text-primary)]">
               {children}
             </em>
           ),

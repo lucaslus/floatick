@@ -6,7 +6,6 @@ import { useTodoStore } from "@/stores/useTodoStore";
 import { useTagStore } from "@/stores/useTagStore";
 import { ActionBar } from "@/components/common/ActionBar";
 import { TodoItemRow } from "./TodoItemRow";
-import { TodoEditorDrawer } from "./TodoEditorDrawer";
 import { TodoDeadlinePicker } from "./TodoDeadlinePicker";
 import { getGroupLabel } from "@/lib/dateUtils";
 
@@ -25,15 +24,13 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
   const updateTodo = useTodoStore((s) => s.updateTodo);
   const searchQuery = useTodoStore((s) => s.searchQuery);
   const setSearchQuery = useTodoStore((s) => s.setSearchQuery);
-  const isDoingFilter = useTodoStore((s) => s.isDoingFilter);
-  const setIsDoingFilter = useTodoStore((s) => s.setIsDoingFilter);
   const activeScope = useTodoStore((s) => s.activeScope);
 
   const tagsWorkspace = useTagStore((s) => s.workspace);
   const selectedTagIds = useTagStore((s) => s.selectedTagIds);
 
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+  const setIsEditorOpen = useTodoStore((s) => s.setIsEditorOpen);
+  const setEditingTodoId = useTodoStore((s) => s.setEditingTodoId);
 
   // Standalone Deadline Picker on row
   const [deadliningTodo, setDeadliningTodo] = useState<TodoItem | null>(null);
@@ -45,12 +42,6 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
       const isArchived = !!item.archivedAt;
       if (activeScope === "active" && isArchived) return false;
       if (activeScope === "archived" && !isArchived) return false;
-
-      // Doing filter
-      if (isDoingFilter) {
-        const isDoing = !!item.startedAt && !item.completedAt && !item.archivedAt;
-        if (!isDoing) return false;
-      }
 
       // Multi-Tag filter (OR match, exact same as Flutter)
       if (selectedTagIds.length > 0) {
@@ -69,7 +60,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
 
       return true;
     });
-  }, [todos, activeScope, isDoingFilter, selectedTagIds, searchQuery, tagsWorkspace]);
+  }, [todos, activeScope, selectedTagIds, searchQuery, tagsWorkspace]);
 
   // Grouping by Date
   const groupedTodos = useMemo(() => {
@@ -120,9 +111,6 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
       <ActionBar
         query={searchQuery}
         onQueryChange={setSearchQuery}
-        showDoingFilter={activeScope === "active"}
-        isDoingSelected={isDoingFilter}
-        onToggleDoingFilter={() => setIsDoingFilter(!isDoingFilter)}
         selectedTagCount={selectedTagIds.length}
         onOpenTagFilter={onOpenTagFilter}
         onAddNew={handleOpenCreate}
@@ -132,11 +120,11 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
       <div className="flex-1 overflow-y-auto px-4 pb-3 space-y-3 smooth-scroll">
         {groupedTodos.length === 0 ? (
           <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-2">
-            <CheckCircle size={40} weight="duotone" className="text-[#22B8A7]/40" />
-            <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <CheckCircle size={42} weight="duotone" className="text-[var(--color-teal-primary)]/50" />
+            <p className="text-[13.5px] font-semibold text-[var(--color-text-primary)]">
               {t("allClear")}
             </p>
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+            <p className="text-[12px] font-medium text-[var(--color-text-subtle)]">
               {t("allClearSub")}
             </p>
           </div>
@@ -144,7 +132,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
           groupedTodos.map((group) => (
             <div key={group.label} className="space-y-0.5">
               {/* Clean category header */}
-              <div className="px-2.5 pt-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
+              <div className="px-2.5 pt-1 text-[11.5px] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
                 {group.label}
               </div>
 
@@ -164,13 +152,6 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
           ))
         )}
       </div>
-
-      {/* Todo Editor Drawer */}
-      <TodoEditorDrawer
-        todoId={editingTodoId}
-        isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
-      />
 
       {/* Deadline Picker Modal */}
       {deadliningTodo && (

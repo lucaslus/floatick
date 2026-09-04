@@ -58,21 +58,21 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Left: 38px Brand Mark + Status Text */}
       <div className="flex items-center space-x-[11px] min-w-0 flex-1 mr-2">
         <FloatickBrandMark size={38} />
-        <span className="text-[12.5px] font-medium text-[#EEF2F1]/62 dark:text-[#EEF2F1]/62 truncate tracking-normal">
+        <span className="text-[13px] font-medium text-[var(--color-text-secondary)] truncate tracking-tight">
           {statusText}
         </span>
       </div>
 
       {/* Right: Icon Buttons */}
-      <div className="flex items-center space-x-1 shrink-0 text-[#EEF2F1]/62 dark:text-[#EEF2F1]/62">
+      <div className="flex items-center space-x-1 shrink-0 text-[var(--color-text-secondary)]">
         {/* Archive */}
         <button
           onClick={handleToggleArchive}
           title={isArchived ? t("active") : t("archive")}
           className={`w-8 h-8 rounded-lg flex items-center justify-center tactile-btn cursor-pointer ${
             isArchived
-              ? "text-[#22B8A7] bg-[#22B8A7]/15"
-              : "hover:text-[#EEF2F1] hover:bg-white/[0.055]"
+              ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
+              : "hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
           }`}
         >
           <Archive size={18} weight={isArchived ? "fill" : "regular"} />
@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onOpenSettings}
           title={t("settings")}
-          className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-[#EEF2F1] hover:bg-white/[0.055] tactile-btn cursor-pointer"
+          className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
         >
           <GearSix size={18} />
         </button>
@@ -91,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={handleCollapse}
           title={t("escToClose")}
-          className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-[#EEF2F1] hover:bg-white/[0.055] tactile-btn cursor-pointer"
+          className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
         >
           <CaretUp size={18} weight="bold" />
         </button>

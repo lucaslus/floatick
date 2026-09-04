@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Note, PushPin } from "@phosphor-icons/react";
 import type { NoteItem } from "@/types";
@@ -6,7 +6,6 @@ import { useNoteStore } from "@/stores/useNoteStore";
 import { useTagStore } from "@/stores/useTagStore";
 import { ActionBar } from "@/components/common/ActionBar";
 import { NoteItemRow } from "./NoteItemRow";
-import { NoteEditorDrawer } from "./NoteEditorDrawer";
 import { getGroupLabel } from "@/lib/dateUtils";
 
 interface NotePanelProps {
@@ -22,8 +21,8 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
 
   const selectedTagIds = useTagStore((s) => s.selectedTagIds);
 
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const setIsEditorOpen = useNoteStore((s) => s.setIsEditorOpen);
+  const setEditingNoteId = useNoteStore((s) => s.setEditingNoteId);
 
   const handleOpenCreate = () => {
     setEditingNoteId(null);
@@ -97,11 +96,9 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
       <ActionBar
         query={searchQuery}
         onQueryChange={setSearchQuery}
-        showDoingFilter={false}
         selectedTagCount={selectedTagIds.length}
         onOpenTagFilter={onOpenTagFilter}
         onAddNew={handleOpenCreate}
-        placeholder={t("searchNotes")}
         addTooltip={t("newNote")}
       />
 
@@ -109,11 +106,11 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
       <div className="flex-1 overflow-y-auto px-4 pb-3 space-y-3 smooth-scroll">
         {filteredNotes.length === 0 ? (
           <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-2">
-            <Note size={40} weight="duotone" className="text-[#22B8A7]/40" />
-            <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <Note size={42} weight="duotone" className="text-[var(--color-teal-primary)]/50" />
+            <p className="text-[13.5px] font-semibold text-[var(--color-text-primary)]">
               {t("noNotes")}
             </p>
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+            <p className="text-[12px] font-medium text-[var(--color-text-subtle)]">
               {t("noNotesSub")}
             </p>
           </div>
@@ -122,7 +119,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
             {/* Pinned Section */}
             {pinnedNotes.length > 0 && (
               <div className="space-y-0.5">
-                <div className="px-2.5 pt-1 text-[11px] font-medium text-[#22B8A7] flex items-center space-x-1">
+                <div className="px-2.5 pt-1 text-[11.5px] font-semibold text-[var(--color-teal-primary)] uppercase tracking-wider flex items-center space-x-1">
                   <PushPin size={12} weight="fill" />
                   <span>{t("pinnedNotes")}</span>
                 </div>
@@ -141,7 +138,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
             {/* Date Grouped Regular Notes */}
             {groupedNotes.map((group) => (
               <div key={group.label} className="space-y-0.5">
-                <div className="px-2.5 pt-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
+                <div className="px-2.5 pt-1 text-[11.5px] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
                   {group.label}
                 </div>
                 <div className="space-y-0.5">
@@ -158,13 +155,6 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
           </>
         )}
       </div>
-
-      {/* Note Editor Drawer */}
-      <NoteEditorDrawer
-        noteId={editingNoteId}
-        isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
-      />
     </div>
   );
 };

@@ -7,19 +7,18 @@ interface TodoState {
   todos: TodoItem[];
   isLoaded: boolean;
   searchQuery: string;
-  isDoingFilter: boolean;
   activeScope: "active" | "archived";
   editingTodoId: string | null;
+  isEditorOpen: boolean;
 
   setSearchQuery: (query: string) => void;
-  setIsDoingFilter: (val: boolean) => void;
   setActiveScope: (scope: "active" | "archived") => void;
   setEditingTodoId: (id: string | null) => void;
+  setIsEditorOpen: (val: boolean) => void;
 
   loadTodos: () => Promise<void>;
   addTodo: (title: string, content?: string, tagId?: string) => Promise<TodoItem>;
   toggleComplete: (id: string) => Promise<void>;
-  toggleDoing: (id: string) => Promise<void>;
   updateTodo: (id: string, updates: Partial<TodoItem>) => Promise<void>;
   deleteTodo: (id: string) => Promise<void>;
   archiveTodo: (id: string) => Promise<void>;
@@ -30,14 +29,14 @@ export const useTodoStore = create<TodoState>((set, get) => ({
   todos: [],
   isLoaded: false,
   searchQuery: "",
-  isDoingFilter: false,
   activeScope: "active",
   editingTodoId: null,
+  isEditorOpen: false,
 
   setSearchQuery: (query) => set({ searchQuery: query }),
-  setIsDoingFilter: (val) => set({ isDoingFilter: val }),
   setActiveScope: (scope) => set({ activeScope: scope }),
   setEditingTodoId: (id) => set({ editingTodoId: id }),
+  setIsEditorOpen: (val) => set({ isEditorOpen: val }),
 
   loadTodos: async () => {
     try {
@@ -79,22 +78,6 @@ export const useTodoStore = create<TodoState>((set, get) => ({
       return {
         ...item,
         completedAt: isCompleted ? null : now,
-        startedAt: isCompleted ? item.startedAt : null, // stop doing when completing
-      };
-    });
-    set({ todos: nextTodos });
-    await api.saveTodos(nextTodos);
-  },
-
-  toggleDoing: async (id: string) => {
-    const now = new Date().toISOString();
-    const nextTodos = get().todos.map((item) => {
-      if (item.id !== id) return item;
-      const isDoing = !!item.startedAt && !item.completedAt && !item.archivedAt;
-      return {
-        ...item,
-        startedAt: isDoing ? null : now,
-        completedAt: null, // clear completed if starting Doing
       };
     });
     set({ todos: nextTodos });

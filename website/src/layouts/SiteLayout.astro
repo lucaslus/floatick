@@ -43,8 +43,8 @@ const softwareId = new URL('/#software', Astro.site).href;
 const webpageId = `${canonicalUrl.href}#webpage`;
 const socialImageAlt =
   lang === 'en'
-    ? 'Floatick floating todos and quick notes for macOS with Doing status, deadlines, reminders, and shared tags'
-    : 'Floatick 的 macOS 桌面待办与随手记，包含进行中任务、截止时间、提醒和标签';
+    ? 'Floatick macOS menu bar todos and quick notes with TipTap Markdown editor, deadlines, and shared tags'
+    : 'Floatick 的 macOS 菜单栏待办与随手记，包含 TipTap 斜杠命令 Markdown 编辑器、截止时间与标签';
 
 const websiteSchema = {
   '@type': 'WebSite',
@@ -102,8 +102,8 @@ const softwareSchema = {
     height: 800,
   },
   featureList: [
-    'Floating desktop todo list',
-    'Todo, Doing, and Done task states',
+    'Menu bar floating todo list',
+    'TipTap rich text Markdown editor with slash commands',
     'Deadlines and compact in-app reminders',
     'Local-first task storage',
     'Lightweight local notes',

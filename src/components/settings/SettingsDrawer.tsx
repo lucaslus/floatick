@@ -5,9 +5,9 @@ import {
   Sun,
   Moon,
   Desktop,
-  FolderSimple,
+  Copy,
+  Check,
   SignOut,
-  Globe,
 } from "@phosphor-icons/react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { api } from "@/lib/api";
@@ -17,6 +17,27 @@ interface SettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const ToggleSwitch: React.FC<{
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}> = ({ checked, onChange }) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    onClick={() => onChange(!checked)}
+    className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer shrink-0 focus:outline-none ${
+      checked ? "bg-[var(--color-teal-primary)]" : "bg-black/15 dark:bg-white/18"
+    }`}
+  >
+    <div
+      className={`w-4 h-4 rounded-full bg-white shadow-xs absolute top-0.5 transition-transform ${
+        checked ? "translate-x-4.5" : "translate-x-0.5"
+      }`}
+    />
+  </button>
+);
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   isOpen,
@@ -30,6 +51,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const updateCollapseOnBlur = useSettingsStore((s) => s.updateCollapseOnBlur);
 
   const [autostart, setAutostart] = useState(false);
+  const [copiedPath, setCopiedPath] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -49,194 +71,195 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     }
   };
 
+  const handleCopyPath = () => {
+    navigator.clipboard.writeText("~/.floatick");
+    setCopiedPath(true);
+    setTimeout(() => setCopiedPath(false), 1800);
+  };
+
   const handleQuit = async () => {
     await api.quitApp();
   };
 
   return (
-    <>
-      {/* Scrim */}
-      <div
-        className="absolute inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
-        onClick={onClose}
-      />
+    <div className="absolute inset-0 z-50 bg-[var(--color-bg-panel)] text-[var(--color-text-primary)] flex flex-col select-none animate-in fade-in duration-150">
+      {/* Header */}
+      <div className="h-12 px-4 border-b border-[var(--color-border-panel)] flex items-center justify-between shrink-0 bg-[var(--color-bg-panel)]">
+        <span className="text-[14px] font-semibold text-[var(--color-text-primary)] tracking-tight">
+          {t("settingsTitle")}
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          title={t("escToClose")}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
+        >
+          <X size={16} weight="bold" />
+        </button>
+      </div>
 
-      {/* Right Slide-in Drawer */}
-      <div className="absolute top-0 right-0 bottom-0 z-50 w-[276px] bg-[#F9FBFA] dark:bg-[#1D2529] text-zinc-900 dark:text-[#EEF2F1] border-l border-black/[0.08] dark:border-white/[0.1] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-220">
-        {/* Header */}
-        <div className="h-12 px-4 border-b border-black/[0.05] dark:border-white/[0.06] flex items-center justify-between">
-          <span className="text-xs font-semibold text-zinc-800 dark:text-[#EEF2F1]">
-            {t("settingsTitle")}
+      {/* Settings Body */}
+      <div className="flex-1 overflow-y-auto px-4 py-3.5 space-y-4 no-scrollbar">
+        {/* Appearance & Language */}
+        <div>
+          <span className="text-[12px] font-medium text-[var(--color-text-subtle)] px-1 block mb-1.5">
+            {t("appearanceSectionTitle")}
           </span>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08] cursor-pointer"
-          >
-            <X size={15} weight="bold" />
-          </button>
+          <div className="bg-[var(--color-bg-elevated)] rounded-xl border border-[var(--color-border-panel)] divide-y divide-[var(--color-border-panel)] overflow-hidden">
+            {/* Theme */}
+            <div className="px-3.5 py-2 flex items-center justify-between min-h-[44px]">
+              <span className="text-[13px] text-[var(--color-text-primary)]">
+                {t("themeLabel")}
+              </span>
+              <div className="flex items-center p-0.5 bg-[var(--color-hover-overlay)] rounded-lg shrink-0">
+                {[
+                  { id: "system" as ThemePreference, label: t("themeSystemTooltip"), icon: Desktop },
+                  { id: "light" as ThemePreference, label: t("themeLightTooltip"), icon: Sun },
+                  { id: "dark" as ThemePreference, label: t("themeDarkTooltip"), icon: Moon },
+                ].map(({ id, label, icon: Icon }) => {
+                  const isActive = settings.theme === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => updateTheme(id)}
+                      className={`px-2.5 py-1 text-[11.5px] rounded-md transition-all flex items-center space-x-1.5 cursor-pointer tactile-btn ${
+                        isActive
+                          ? "bg-[var(--color-bg-drawer)] text-[var(--color-teal-primary)] font-medium shadow-xs"
+                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      }`}
+                    >
+                      <Icon size={14} weight={isActive ? "fill" : "regular"} />
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Language */}
+            <div className="px-3.5 py-2 flex items-center justify-between min-h-[44px]">
+              <span className="text-[13px] text-[var(--color-text-primary)]">
+                {t("languageLabel")}
+              </span>
+              <div className="flex items-center p-0.5 bg-[var(--color-hover-overlay)] rounded-lg shrink-0">
+                {[
+                  { id: "zh" as LanguagePreference, label: "中文" },
+                  { id: "en" as LanguagePreference, label: "English" },
+                  { id: "system" as LanguagePreference, label: "Auto" },
+                ].map(({ id, label }) => {
+                  const isActive = settings.language === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => updateLanguage(id)}
+                      className={`px-2.5 py-1 text-[11.5px] rounded-md transition-all cursor-pointer tactile-btn ${
+                        isActive
+                          ? "bg-[var(--color-bg-drawer)] text-[var(--color-teal-primary)] font-medium shadow-xs"
+                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      }`}
+                    >
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-          {/* Appearance Section */}
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
-              {t("appearanceSectionTitle")}
-            </span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {[
-                { id: "system" as ThemePreference, label: t("themeSystemTooltip"), icon: Desktop },
-                { id: "light" as ThemePreference, label: t("themeLightTooltip"), icon: Sun },
-                { id: "dark" as ThemePreference, label: t("themeDarkTooltip"), icon: Moon },
-              ].map(({ id, label, icon: Icon }) => {
-                const isActive = settings.theme === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => updateTheme(id)}
-                    title={label}
-                    className={`h-8.5 rounded-[8px] flex items-center justify-center transition-all tactile-btn cursor-pointer ${
-                      isActive
-                        ? "bg-[#22B8A7]/15 text-[#22B8A7]"
-                        : "bg-white/[0.04] text-zinc-400 hover:text-[#EEF2F1] hover:bg-white/[0.07]"
-                    }`}
-                  >
-                    <Icon size={18} weight={isActive ? "fill" : "regular"} />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Language Section */}
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
-              {t("languageSectionTitle")}
-            </span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {[
-                { id: "system" as LanguagePreference, label: t("languageSystemTooltip") },
-                { id: "zh" as LanguagePreference, label: t("languageSimplifiedChineseTooltip") },
-                { id: "en" as LanguagePreference, label: t("languageEnglishTooltip") },
-              ].map(({ id, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => updateLanguage(id)}
-                  className={`p-1.5 rounded-[8px] flex items-center justify-center space-x-1 transition-all tactile-btn cursor-pointer ${
-                    settings.language === id
-                      ? "bg-[#22B8A7]/15 text-[#22B8A7] font-medium"
-                      : "bg-white/[0.04] text-zinc-400 hover:text-[#EEF2F1] hover:bg-white/[0.07]"
-                  }`}
-                >
-                  <Globe size={13} weight={settings.language === id ? "fill" : "regular"} className="shrink-0" />
-                  <span className="text-[10px] truncate max-w-[65px]">{label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Window Behavior */}
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
-              {t("windowSectionTitle")}
-            </span>
-            <div className="bg-white dark:bg-[#181E22] rounded-[8px] border border-black/[0.04] dark:border-white/[0.06] divide-y divide-black/[0.04] dark:divide-white/[0.04]">
-              <div className="p-2.5 flex items-center justify-between">
-                <span className="text-zinc-700 dark:text-zinc-200 text-[11px] flex-1 mr-2 truncate">
-                  {t("alwaysOnTopLabel")}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => updateAlwaysOnTop(!settings.alwaysOnTop)}
-                  className={`w-8 h-4.5 shrink-0 rounded-full transition-colors relative cursor-pointer ${
-                    settings.alwaysOnTop ? "bg-teal-600 dark:bg-teal-500" : "bg-zinc-300 dark:bg-zinc-700"
-                  }`}
-                >
-                  <div
-                    className={`w-3.5 h-3.5 rounded-full bg-white transition-transform absolute top-0.5 ${
-                      settings.alwaysOnTop ? "translate-x-4" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="p-2.5 flex items-center justify-between">
-                <span className="text-zinc-700 dark:text-zinc-200 text-[11px] flex-1 mr-2 truncate">
-                  {t("collapseWhenClickingOutsideLabel")}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => updateCollapseOnBlur(!settings.collapseWhenClickingOutside)}
-                  className={`w-8 h-4.5 shrink-0 rounded-full transition-colors relative cursor-pointer ${
-                    settings.collapseWhenClickingOutside ? "bg-teal-600 dark:bg-teal-500" : "bg-zinc-300 dark:bg-zinc-700"
-                  }`}
-                >
-                  <div
-                    className={`w-3.5 h-3.5 rounded-full bg-white transition-transform absolute top-0.5 ${
-                      settings.collapseWhenClickingOutside ? "translate-x-4" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Startup Section */}
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
-              {t("startupSectionTitle")}
-            </span>
-            <div className="bg-white dark:bg-[#181E22] rounded-[8px] border border-black/[0.04] dark:border-white/[0.06] p-2.5 flex items-center justify-between">
-              <span className="text-zinc-700 dark:text-zinc-200 text-[11px] flex-1 mr-2 truncate">
+        {/* Preferences */}
+        <div>
+          <span className="text-[12px] font-medium text-[var(--color-text-subtle)] px-1 block mb-1.5">
+            {t("preferencesSectionTitle")}
+          </span>
+          <div className="bg-[var(--color-bg-elevated)] rounded-xl border border-[var(--color-border-panel)] divide-y divide-[var(--color-border-panel)] overflow-hidden">
+            {/* Launch at Login */}
+            <div className="px-3.5 py-2.5 flex items-center justify-between min-h-[44px]">
+              <span className="text-[13px] text-[var(--color-text-primary)]">
                 {t("openAtLoginLabel")}
+              </span>
+              <ToggleSwitch
+                checked={autostart}
+                onChange={handleToggleAutostart}
+              />
+            </div>
+
+            {/* Always on Top */}
+            <div className="px-3.5 py-2.5 flex items-center justify-between min-h-[44px]">
+              <span className="text-[13px] text-[var(--color-text-primary)]">
+                {t("alwaysOnTopLabel")}
+              </span>
+              <ToggleSwitch
+                checked={settings.alwaysOnTop}
+                onChange={updateAlwaysOnTop}
+              />
+            </div>
+
+            {/* Collapse on Blur */}
+            <div className="px-3.5 py-2.5 flex items-center justify-between min-h-[44px]">
+              <span className="text-[13px] text-[var(--color-text-primary)]">
+                {t("collapseWhenClickingOutsideLabel")}
+              </span>
+              <ToggleSwitch
+                checked={settings.collapseWhenClickingOutside}
+                onChange={updateCollapseOnBlur}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* About & Data */}
+        <div>
+          <span className="text-[12px] font-medium text-[var(--color-text-subtle)] px-1 block mb-1.5">
+            {t("aboutSectionTitle")}
+          </span>
+          <div className="bg-[var(--color-bg-elevated)] rounded-xl border border-[var(--color-border-panel)] divide-y divide-[var(--color-border-panel)] overflow-hidden">
+            {/* Storage Path */}
+            <div className="px-3.5 py-2 flex items-center justify-between min-h-[44px]">
+              <span className="text-[13px] text-[var(--color-text-primary)]">
+                {t("workingDirectorySectionTitle")}
               </span>
               <button
                 type="button"
-                onClick={handleToggleAutostart}
-                className={`w-8 h-4.5 shrink-0 rounded-full transition-colors relative cursor-pointer ${
-                  autostart ? "bg-teal-600 dark:bg-teal-500" : "bg-zinc-300 dark:bg-zinc-700"
-                }`}
+                onClick={handleCopyPath}
+                title={t("copyPath")}
+                className="flex items-center space-x-1.5 px-2 py-1 rounded-md text-[12px] font-mono text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors cursor-pointer tactile-btn"
               >
-                <div
-                  className={`w-3.5 h-3.5 rounded-full bg-white transition-transform absolute top-0.5 ${
-                    autostart ? "translate-x-4" : "translate-x-0.5"
-                  }`}
-                />
+                <span>~/.floatick</span>
+                {copiedPath ? (
+                  <Check size={13} weight="bold" className="text-[var(--color-teal-primary)]" />
+                ) : (
+                  <Copy size={13} weight="regular" className="text-[var(--color-text-subtle)]" />
+                )}
               </button>
             </div>
-          </div>
 
-          {/* Working Directory Section */}
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-semibold text-zinc-400 dark:text-[#8E9599] uppercase tracking-wider block">
-              {t("workingDirectorySectionTitle")}
-            </span>
-            <div className="p-2.5 bg-white dark:bg-[#181E22] rounded-[8px] border border-black/[0.04] dark:border-white/[0.06] flex items-center space-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-              <FolderSimple size={15} weight="fill" className="text-teal-600 dark:text-teal-400" />
-              <span className="font-mono">~/.floatick</span>
+            {/* Version */}
+            <div className="px-3.5 py-2.5 flex items-center justify-between min-h-[44px]">
+              <span className="text-[13px] text-[var(--color-text-primary)]">
+                {t("versionLabel")}
+              </span>
+              <span className="text-[12px] font-mono text-[var(--color-text-subtle)]">
+                v0.4.0
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Quit Button */}
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={handleQuit}
-              className="w-full p-2.5 rounded-[8px] text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/25 hover:bg-red-100 dark:hover:bg-red-950/45 font-medium flex items-center justify-center space-x-1.5 transition-colors tactile-btn cursor-pointer"
-            >
-              <SignOut size={15} weight="bold" />
-              <span>{t("quit")}</span>
-            </button>
-          </div>
-
-          {/* Version Info */}
-          <div className="text-center pt-1 text-[10px] text-zinc-400 dark:text-[#8E9599]">
-            Floatick v0.4.0 (macOS)
-          </div>
+        {/* Quit Action */}
+        <div className="pt-2 flex justify-center">
+          <button
+            type="button"
+            onClick={handleQuit}
+            className="text-[12px] text-red-500/80 hover:text-red-600 hover:bg-red-500/8 px-3 py-1.5 rounded-lg transition-colors cursor-pointer tactile-btn flex items-center space-x-1.5 font-medium"
+          >
+            <SignOut size={14} weight="bold" />
+            <span>{t("quitFloatick")}</span>
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };

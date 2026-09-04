@@ -10,24 +10,23 @@ const { locale } = Astro.props;
 const demoCopy = {
   en: {
     ariaLabel:
-      'Interactive three-dimensional Floatick workspace showing Todos, Notes, a task in progress, deadlines, and the floating icon',
+      'Interactive three-dimensional Floatick workspace showing Todos, Notes, deadlines, and the macOS Menu Bar status extra',
     remaining: '13 tasks remaining',
     todosTab: 'Todos',
     notesTab: 'Notes',
-    search: 'Search todos',
+    search: 'Search',
     today: 'Today',
     tasks: [
       { title: 'Review the launch checklist', tag: 'Work', time: '09:10' },
       { title: 'Polish the product story', tag: 'Focus', time: '11:30' },
       { title: 'Send the release notes', tag: 'Launch', time: '16:20' },
     ],
-    doingLabel: 'Doing',
     overdueLabel: 'Overdue',
     drawerTitle: 'Set deadline',
-    calendarMonth: 'August 2026',
+    calendarMonth: 'September 2026',
     calendarWeekdays: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
     deadlineLabel: 'Deadline',
-    dueDate: 'Aug 12, 2026',
+    dueDate: 'Sep 12, 2026',
     dueTime: '18:30',
     reminderLabel: 'Reminder',
     reminderValue: 'At deadline',
@@ -35,24 +34,23 @@ const demoCopy = {
   },
   zh: {
     ariaLabel:
-      'Floatick 的桌面预览，展示待办、笔记、进行中任务、截止时间和悬浮图标',
+      'Floatick 菜单栏应用预览，展示待办、笔记、截止时间和 macOS 菜单栏图标',
     remaining: '还有 13 项没完成',
     todosTab: '待办',
     notesTab: '笔记',
-    search: '搜索待办',
+    search: '搜索',
     today: '今天',
     tasks: [
       { title: '检查发布清单', tag: '工作', time: '09:10' },
       { title: '完善产品介绍', tag: '专注', time: '11:30' },
       { title: '发送版本说明', tag: '发布', time: '16:20' },
     ],
-    doingLabel: '进行中',
     overdueLabel: '已逾期',
     drawerTitle: '设置截止时间',
-    calendarMonth: '2026 年 8 月',
+    calendarMonth: '2026 年 9 月',
     calendarWeekdays: ['日', '一', '二', '三', '四', '五', '六'],
     deadlineLabel: '截止时间',
-    dueDate: '2026 年 8 月 12 日',
+    dueDate: '2026 年 9 月 12 日',
     dueTime: '18:30',
     reminderLabel: '提醒',
     reminderValue: '到期时提醒',
@@ -80,7 +78,6 @@ const copy = demoCopy[locale];
   data-task-three-title={copy.tasks[2].title}
   data-task-three-tag={copy.tasks[2].tag}
   data-task-three-time={copy.tasks[2].time}
-  data-doing-label={copy.doingLabel}
   data-overdue-label={copy.overdueLabel}
   data-drawer-title={copy.drawerTitle}
   data-calendar-month={copy.calendarMonth}
