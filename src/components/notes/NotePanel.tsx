@@ -128,7 +128,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
             {/* Pinned Section */}
             {pinnedNotes.length > 0 && (
               <div className="space-y-0.5">
-                <div className="px-2.5 pt-1 text-[11.5px] font-semibold text-[var(--color-teal-primary)] uppercase tracking-wider flex items-center space-x-1">
+                <div className="px-2.5 pt-1 text-[12px] font-medium text-[var(--color-teal-primary)] flex items-center space-x-1">
                   <PushPin size={12} weight="fill" />
                   <span>{t("pinnedNotes")}</span>
                 </div>
@@ -148,7 +148,7 @@ export const NotePanel: React.FC<NotePanelProps> = ({ onOpenTagFilter }) => {
             {/* Date Grouped Regular Notes */}
             {groupedNotes.map((group) => (
               <div key={group.label} className="space-y-0.5">
-                <div className="px-2.5 pt-1 text-[11.5px] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
+                <div className="px-2.5 pt-1 text-[12px] font-medium text-[var(--color-text-subtle)]">
                   {group.label}
                 </div>
                 <div className="space-y-0.5">

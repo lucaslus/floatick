@@ -142,7 +142,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({
           groupedTodos.map((group) => (
             <div key={group.label} className="space-y-0.5">
               {/* Clean category header */}
-              <div className="px-2.5 pt-1 text-[11.5px] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
+              <div className="px-2.5 pt-1 text-[12px] font-medium text-[var(--color-text-subtle)]">
                 {group.label}
               </div>
 

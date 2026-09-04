@@ -379,7 +379,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                     onClick={() => setShowTagMenu(false)}
                   />
                   <div className="absolute left-0 top-7.5 z-40 w-48 bg-[var(--color-bg-drawer)] rounded-xl shadow-2xl border border-[var(--color-border-drawer)] py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-56 overflow-y-auto smooth-scroll">
-                    <div className="px-3 py-1 text-[11px] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
+                    <div className="px-3 py-1 text-[11.5px] font-medium text-[var(--color-text-subtle)]">
                       {t("tags")}
                     </div>
                     {tagsWorkspace.tags.length === 0 ? (

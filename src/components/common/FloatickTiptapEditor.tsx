@@ -434,7 +434,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
                 className="absolute right-0 top-full mt-1.5 z-50 w-44 bg-[var(--color-bg-drawer)] rounded-xl shadow-2xl border border-[var(--color-border-drawer)] p-1 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="px-2.5 pt-1 pb-1 text-[10px] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
+                <div className="px-2.5 pt-1 pb-1 text-[11px] font-medium text-[var(--color-text-subtle)]">
                   更多格式
                 </div>
 
@@ -833,7 +833,7 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
             style={{ top: `${menuCoords.top}px`, left: `${menuCoords.left}px` }}
             className="slash-menu-scrollbar absolute z-50 w-64 max-h-[290px] overflow-y-auto rounded-xl bg-[var(--color-bg-drawer)] text-[var(--color-text-primary)] border border-[var(--color-border-drawer)] shadow-lg dark:shadow-2xl p-1.5 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 pr-1.5"
           >
-            <div className="px-2 pt-1 pb-1.5 text-[10px] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider select-none">
+            <div className="px-2 pt-1 pb-1.5 text-[11px] font-medium text-[var(--color-text-subtle)] select-none">
               常用模块
             </div>
             {filteredCommands.map((cmd, index) => {
