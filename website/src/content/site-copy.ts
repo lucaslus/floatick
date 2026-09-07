@@ -1,4 +1,4 @@
-import { previewRelease, stableRelease } from '../config/site-links';
+import { stableRelease } from '../config/site-links';
 
 export type Locale = 'en' | 'zh';
 
@@ -39,7 +39,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
     meta: {
       lang: 'en',
       title: 'Floatick — A little space for todos & notes',
-      description: 'Todos and notes, close at hand on your Mac. Free, open source, and saved on your device. Meet the upcoming Floatick menu bar app.',
+      description: 'Todos and notes, close at hand on your Mac. Free, open source, and saved on your device. Keep everyday tasks and ideas in your Mac menu bar.',
       canonicalPath: '/',
       alternatePath: '/zh/',
     },
@@ -53,7 +53,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       download: 'Download for macOS',
       github: 'View source',
       compatibility: 'macOS 10.15+ · Apple silicon & Intel',
-      releaseNote: `Download v${stableRelease.version} · Previewing v${previewRelease.version}`,
+      releaseNote: `Current release · v${stableRelease.version}`,
       facts: ['Free & open source', 'No account needed', 'Saved on your Mac'],
     },
     features: {
@@ -77,10 +77,10 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       eyebrow: 'Before you start',
       title: 'A few useful answers.',
       items: [
-        { question: 'Which version am I downloading?', answer: `The download is v${stableRelease.version}, the current release with a floating desktop icon. This page previews the menu bar app and new editor in v${previewRelease.version}, which is still in development.` },
+        { question: 'Which version am I downloading?', answer: `The download is v${stableRelease.version}, with the menu bar app and editor shown on this page. One Universal installer works on Apple silicon and Intel Macs.` },
         { question: 'Will it work on my Mac?', answer: 'The current release supports macOS 10.15 and later, on both Apple silicon and Intel. The same download works for both.' },
         { question: 'Can I sync or back up my notes?', answer: 'Floatick does not sync between devices. Your todos, notes, tags, and settings are saved in ~/.floatick. Copy that folder to keep a backup.' },
-        { question: 'How do due dates and reminders work?', answer: 'In v0.3.4, you can set a deadline and receive an in-app reminder. The v0.4 preview shows due dates and overdue status in the list; reminder delivery is not available in this preview yet.' },
+        { question: 'How do due dates and reminders work?', answer: 'You can set due dates and see overdue tasks in the list. v0.4.0 does not yet include the reminder popups from v0.3.4.' },
       ],
     },
     finalCta: {
@@ -96,7 +96,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
     meta: {
       lang: 'zh-CN',
       title: 'Floatick — 随手记，专心做。',
-      description: '给待办和笔记一个顺手的位置。Floatick 免费开源，无需注册，数据保存在本机。看看即将到来的 Mac 菜单栏新版。',
+      description: '给待办和笔记一个顺手的位置。Floatick 免费开源，无需注册，数据保存在本机。从 Mac 菜单栏随手记下日常任务和灵感。',
       canonicalPath: '/zh/',
       alternatePath: '/',
     },
@@ -110,7 +110,7 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       download: '下载 macOS 版',
       github: '查看源码',
       compatibility: 'macOS 10.15+ · Apple 芯片与 Intel',
-      releaseNote: `下载 v${stableRelease.version} · 页面展示 v${previewRelease.version} 预览`,
+      releaseNote: `当前正式版 · v${stableRelease.version}`,
       facts: ['免费开源', '无需注册', '数据只存本机'],
     },
     features: {
@@ -134,10 +134,10 @@ export const siteCopy: Record<Locale, SiteCopy> = {
       eyebrow: '开始之前',
       title: '你可能想知道。',
       items: [
-        { question: '现在下载的是哪个版本？', answer: `当前下载为 v${stableRelease.version}，使用桌面浮动图标。页面展示的菜单栏界面与新版编辑器属于 v${previewRelease.version} 预览，仍在开发中，尚未发布。` },
+        { question: '现在下载的是哪个版本？', answer: `当前下载为 v${stableRelease.version}，包含页面展示的菜单栏界面和新版编辑器。同一个安装包支持 Apple 芯片和 Intel Mac。` },
         { question: '我的 Mac 能用吗？', answer: '当前正式版支持 macOS 10.15 及以上系统。Apple 芯片和 Intel Mac 使用同一个安装包。' },
         { question: '可以同步或备份数据吗？', answer: '目前不支持设备间同步。待办、笔记、标签和设置都保存在 ~/.floatick 文件夹中，复制整个文件夹即可备份。' },
-        { question: '截止时间到了会怎么提醒？', answer: 'v0.3.4 支持设定截止时间和应用内提醒。v0.4 预览目前会在列表标明截止时间与逾期状态，尚未提供到点弹出提醒。' },
+        { question: '截止时间到了会怎么提醒？', answer: '可以设置截止时间，在列表查看到期和逾期状态。v0.4.0 暂未迁移 v0.3.4 的到点弹出提醒。' },
       ],
     },
     finalCta: {

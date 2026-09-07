@@ -15,11 +15,10 @@ Simplified Chinese at `/zh/`.
 
 ## Product preview and downloads
 
-The homepage previews the upcoming menu bar app. The current public download is
-v0.3.4. `src/config/site-links.ts` keeps the public version, pinned download URL,
-and development preview together. Update that file when publishing a release,
-then update the preview notices and reminder details in `site-copy.ts` and
-`changelog.ts`. Do not label a development build as the latest published release.
+The homepage shows the v0.4.0 menu bar app. `src/config/site-links.ts` keeps the
+public version and pinned download URL together. Update it after publishing a
+release, alongside the version notices in `site-copy.ts` and `changelog.ts`.
+Do not label a development build as the latest published release.
 
 The six `public/images/product-{todos,notes,editor}-{en,zh}.png` images are 2×
 captures of the real React interface at 440 × 700 CSS pixels, populated with
