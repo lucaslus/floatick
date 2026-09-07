@@ -92,7 +92,7 @@ jobs:
           cargo test --manifest-path src-tauri/Cargo.toml --locked
 
       - name: Build macOS release bundles
-        run: pnpm tauri build --target universal-apple-darwin --bundles dmg
+        run: pnpm tauri build --target universal-apple-darwin --bundles app,dmg
 
       - name: Verify app version, architectures, and startup
         env:
