@@ -1,5 +1,5 @@
 import type { Locale } from './site-copy';
-import { previewRelease, repositoryUrl } from '../config/site-links';
+import { repositoryUrl } from '../config/site-links';
 
 export type ChangelogEntry = {
   version: string;
@@ -85,21 +85,21 @@ export const changelogCopy: Record<Locale, ChangelogCopy> = {
 export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
   en: [
     {
-      version: `v${previewRelease.version}`,
-      status: 'preview',
-      date: 'September 4, 2026',
-      dateTime: '2026-09-04',
+      version: 'v0.4.0',
+      date: 'September 7, 2026',
+      dateTime: '2026-09-07',
       title: 'A new home in your menu bar',
       summary:
-        'In development: a menu bar app with a new editor for todos and notes. The current download is still v0.3.4.',
+        'A new menu bar app and editor for todos and notes, rebuilt with Tauri while keeping your existing local data.',
       highlights: [
         'Open from the menu bar and see how many tasks are left.',
+        'Fix competing tray and blur events that could briefly close and reopen the panel.',
         'Switch between reading and editing, with checklists, headings, and Markdown copy.',
         'Find tasks and notes with shared tags and combined filters.',
-        'See due dates and overdue tasks in the list. Reminder delivery is not available in this preview yet.',
+        'See due dates and overdue tasks. Reminder popups and the built-in update checker are not yet included in v0.4.0.',
       ],
-      sourceUrl: previewRelease.sourceUrl,
-      compareUrl: `${repositoryUrl}/compare/v0.3.4...refactor/tauri`,
+      releaseUrl: `${repositoryUrl}/releases/tag/v0.4.0`,
+      compareUrl: `${repositoryUrl}/compare/v0.3.4...v0.4.0`,
     },
     {
       version: 'v0.3.4',
@@ -212,21 +212,21 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
   ],
   zh: [
     {
-      version: `v${previewRelease.version}`,
-      status: 'preview',
-      date: '2026 年 9 月 4 日',
-      dateTime: '2026-09-04',
+      version: 'v0.4.0',
+      date: '2026 年 9 月 7 日',
+      dateTime: '2026-09-07',
       title: '待办和笔记，搬到菜单栏',
       summary:
-        '正在开发中的新版：从菜单栏打开待办和笔记，搭配新的阅读与编辑界面。当前可下载的正式版仍为 v0.3.4。',
+        '从菜单栏打开待办和笔记，搭配新的阅读与编辑界面。底层改为 Tauri，继续使用原有的本地数据。',
       highlights: [
         '点击菜单栏图标展开，角标显示未完成待办数。',
+        '修复托盘与失焦事件竞争造成的面板闪关、重开。',
         '可切换阅读与编辑，支持任务清单、标题和 Markdown 复制。',
         '待办和笔记共用彩色标签，支持组合筛选。',
-        '在列表中查看截止时间与逾期状态；预览版尚未提供到点弹出提醒。',
+        '查看截止时间与逾期状态；v0.4.0 暂未提供到点弹出提醒和内置更新检查。',
       ],
-      sourceUrl: previewRelease.sourceUrl,
-      compareUrl: `${repositoryUrl}/compare/v0.3.4...refactor/tauri`,
+      releaseUrl: `${repositoryUrl}/releases/tag/v0.4.0`,
+      compareUrl: `${repositoryUrl}/compare/v0.3.4...v0.4.0`,
     },
     {
       version: 'v0.3.4',
