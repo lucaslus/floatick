@@ -107,7 +107,7 @@ jobs:
           executable_name=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$info_plist")
           executable="$app_path/Contents/MacOS/$executable_name"
           [[ "$installed_version" == "$APP_VERSION" && "$installed_build" == "$APP_BUILD_NUMBER" ]]
-          lipo -verify_arch arm64 x86_64 "$executable"
+          lipo "$executable" -verify_arch arm64 x86_64
           "$executable" > "$RUNNER_TEMP/floatick-startup.log" 2>&1 &
           app_pid=$!
           trap 'kill "$app_pid" 2>/dev/null || true' EXIT
