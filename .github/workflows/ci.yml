@@ -13,6 +13,17 @@ permissions:
   contents: read
 
 jobs:
+  required-check:
+    name: Analyze and test
+    needs: [frontend, backend, tauri-build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all build and test jobs to pass
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: echo "$RESULTS" | jq -e 'all(.[]; .result == "success")'
+
   frontend:
     name: Frontend check & build
     runs-on: macos-latest

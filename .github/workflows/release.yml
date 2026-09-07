@@ -49,11 +49,12 @@ jobs:
           app_version="${BASH_REMATCH[1]}"
           pkg_version=$(jq -r .version package.json)
           tauri_version=$(jq -r .version src-tauri/tauri.conf.json)
-          if [[ "$pkg_version" != "$app_version" && "$tauri_version" != "$app_version" ]]; then
+          cargo_version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' src-tauri/Cargo.toml | head -n 1)
+          if [[ "$pkg_version" != "$app_version" || "$tauri_version" != "$app_version" || "$cargo_version" != "$app_version" ]]; then
             echo "Tag $GITHUB_REF_NAME does not match package.json ($pkg_version) or tauri.conf.json ($tauri_version)." >&2
             exit 1
           fi
-          app_build_number="1"
+          app_build_number=$(jq -r .bundle.macOS.bundleVersion src-tauri/tauri.conf.json)
 
           release_commit=$(git rev-parse "${GITHUB_SHA}^{commit}")
           git fetch origin main
@@ -176,6 +177,7 @@ jobs:
           if [[ "$architectures" != *arm64* || "$architectures" != *x86_64* ]]; then
             echo "Expected a universal app, found: $architectures" >&2
             exit 1
+          fi
           hdiutil detach "$mount_point"
           trap - EXIT
 
@@ -197,6 +199,10 @@ jobs:
           {
             cat .github/release-notes-header.md
             printf '\n\n'
+            if [[ -f ".github/release-notes/$APP_VERSION.md" ]]; then
+              cat ".github/release-notes/$APP_VERSION.md"
+              printf '\n\n'
+            fi
             cat "$generated_notes"
           } > "$final_notes"
 
@@ -318,7 +324,7 @@ jobs:
           CANDIDATE_TAG: ${{ needs.verify.outputs.candidate_tag }}
         shell: bash
         run: |
-          if git ls-remote --exit-code --tags origin \
+          if git ls-remote --exit-code --tags "https://github.com/$GITHUB_REPOSITORY.git" \
             "refs/tags/$CANDIDATE_TAG" >/dev/null 2>&1; then
             gh api \
               --method DELETE \

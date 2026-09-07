@@ -43,8 +43,9 @@ The static output is written to `dist/`.
 
 ## Cloudflare Pages
 
-Deployment is intentionally deferred while the website is developed locally.
-When enabled, configure Pages with:
+Cloudflare Pages is connected to this repository. Pushes to `main` deploy the
+production website; development branches receive preview deployments. GitHub
+reports the result through the `Cloudflare Pages` check. The project uses:
 
 ```text
 Root directory: website

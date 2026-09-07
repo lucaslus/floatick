@@ -1,6 +1,6 @@
 [package]
 name = "floatick"
-version = "1.0.0"
+version = "0.4.0"
 description = "A focused, local-first floating todo and note app for macOS"
 authors = ["Lucas"]
 edition = "2021"
