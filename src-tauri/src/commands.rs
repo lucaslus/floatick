@@ -57,7 +57,7 @@ pub fn save_settings(settings: AppSettings) -> Result<(), String> {
 #[tauri::command]
 pub fn hide_window(app_handle: AppHandle) -> Result<(), String> {
     if let Some(window) = app_handle.get_webview_window("main") {
-        window.hide().map_err(|e| e.to_string())?;
+        crate::panel::hide_window(&window).map_err(|e| e.to_string())?;
     }
     Ok(())
 }
@@ -66,7 +66,7 @@ pub fn hide_window(app_handle: AppHandle) -> Result<(), String> {
 pub fn toggle_window(app_handle: AppHandle) -> Result<(), String> {
     if let Some(window) = app_handle.get_webview_window("main") {
         if window.is_visible().unwrap_or(false) {
-            window.hide().map_err(|e| e.to_string())?;
+            crate::panel::hide_window(&window).map_err(|e| e.to_string())?;
         } else {
             crate::tray::show_window(&app_handle);
         }

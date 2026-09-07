@@ -1,29 +1,10 @@
 pub mod commands;
 pub mod models;
+mod panel;
 pub mod storage;
 pub mod tray;
 
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{Manager, WindowEvent};
-
-fn current_time_millis() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_millis() as u64)
-        .unwrap_or(0)
-}
-
-pub static LAST_SHOWN_MILLIS: AtomicU64 = AtomicU64::new(0);
-
-pub fn mark_window_shown() {
-    LAST_SHOWN_MILLIS.store(current_time_millis(), Ordering::SeqCst);
-}
-
-pub fn is_window_recently_shown(threshold_ms: u64) -> bool {
-    let last = LAST_SHOWN_MILLIS.load(Ordering::SeqCst);
-    current_time_millis().saturating_sub(last) < threshold_ms
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -60,22 +41,9 @@ pub fn run() {
                 }
 
                 let w_clone = window.clone();
-                let app_handle_for_events = app.handle().clone();
                 window.on_window_event(move |event| {
-                    if let WindowEvent::Focused(false) = event {
-                        if is_window_recently_shown(150) {
-                            return;
-                        }
-                        let collapse = storage::load_settings()
-                            .map(|s| s.collapse_when_clicking_outside)
-                            .unwrap_or(true);
-                        if collapse {
-                            let app_h = app_handle_for_events.clone();
-                            let w = w_clone.clone();
-                            let _ = app_h.run_on_main_thread(move || {
-                                let _ = w.hide();
-                            });
-                        }
+                    if let WindowEvent::Focused(focused) = event {
+                        panel::on_focus_changed(&w_clone, *focused);
                     }
                 });
             }
@@ -103,6 +71,7 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(|app_handle, event| {
             if let tauri::RunEvent::Reopen { .. } = event {
+                log::info!(target: "floatick::panel", "reopen");
                 tray::show_window(app_handle);
             }
         });

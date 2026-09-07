@@ -1,4 +1,5 @@
 import type { Locale } from './site-copy';
+import { previewRelease, repositoryUrl } from '../config/site-links';
 
 export type ChangelogEntry = {
   version: string;
@@ -7,7 +8,9 @@ export type ChangelogEntry = {
   title: string;
   summary: string;
   highlights: string[];
-  releaseUrl: string;
+  status?: 'preview';
+  releaseUrl?: string;
+  sourceUrl?: string;
   compareUrl?: string;
 };
 
@@ -82,21 +85,21 @@ export const changelogCopy: Record<Locale, ChangelogCopy> = {
 export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
   en: [
     {
-      version: 'v0.4.0',
+      version: `v${previewRelease.version}`,
+      status: 'preview',
       date: 'September 4, 2026',
       dateTime: '2026-09-04',
-      title: 'Tauri v2 architecture, TipTap slash commands, and full-width card layout',
+      title: 'A new home in your menu bar',
       summary:
-        'A major update rebuilding Floatick with Tauri v2, Rust, and React. Features a native macOS menu bar experience, rich text TipTap Markdown editor with slash commands, full-width titles with floating action capsules, and refined tag management.',
+        'In development: a menu bar app with a new editor for todos and notes. The current download is still v0.3.4.',
       highlights: [
-        'Rebuilt with Tauri v2 and Rust: ultra-low idle memory footprint, native menu bar tray with live counter badge.',
-        'Full-width title card layout with secondary row floating action capsules (deadline, edit, copy markdown, delete).',
-        'Rich TipTap Markdown editor drawer with interactive / slash commands (/task, /h1, /h2, /code, etc.) and keyboard shortcuts.',
-        'Clean click-to-complete view mode separated from the full editor drawer.',
-        'Refined tag badges with minimalist dot indicators and shared cross-tab tag management.',
+        'Open from the menu bar and see how many tasks are left.',
+        'Switch between reading and editing, with checklists, headings, and Markdown copy.',
+        'Find tasks and notes with shared tags and combined filters.',
+        'See due dates and overdue tasks in the list. Reminder delivery is not available in this preview yet.',
       ],
-      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.4.0',
-      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.4...v0.4.0',
+      sourceUrl: previewRelease.sourceUrl,
+      compareUrl: `${repositoryUrl}/compare/v0.3.4...refactor/tauri`,
     },
     {
       version: 'v0.3.4',
@@ -209,21 +212,21 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
   ],
   zh: [
     {
-      version: 'v0.4.0',
+      version: `v${previewRelease.version}`,
+      status: 'preview',
       date: '2026 年 9 月 4 日',
       dateTime: '2026-09-04',
-      title: 'Tauri v2 架构重构、TipTap 斜杠命令与全宽标题卡片',
+      title: '待办和笔记，搬到菜单栏',
       summary:
-        'Floatick 全面升级至 Tauri v2、Rust 与 React 架构。带来原生 macOS 状态栏常驻、TipTap 富文本斜杠命令与 Markdown 编辑器、全宽标题与次行悬浮胶囊交互，以及更克制纯粹的标签设计。',
+        '正在开发中的新版：从菜单栏打开待办和笔记，搭配新的阅读与编辑界面。当前可下载的正式版仍为 v0.3.4。',
       highlights: [
-        '基于 Tauri v2 与 Rust 重构：极致轻量内存占用，原生系统菜单栏常驻并支持未完成待办实时角标。',
-        '全新待办卡片布局：标题整行全宽展示杜绝截断，操作栏以磨砂毛玻璃胶囊浮现于次行（截止时间、编辑、复制、删除）。',
-        'TipTap Markdown 编辑抽屉：支持 / 交互式斜杠命令快速插入任务清单、多级标题、代码块，配备精简悬浮微工具栏。',
-        '浏览勾选与编辑抽屉清晰分离：单击卡片专注勾选浏览，点击编辑图标直达沉浸式大抽屉。',
-        '标签视觉极简化：去除高亮背景与边框，采用克制彩色圆点展示，待办与笔记通用。',
+        '点击菜单栏图标展开，角标显示未完成待办数。',
+        '可切换阅读与编辑，支持任务清单、标题和 Markdown 复制。',
+        '待办和笔记共用彩色标签，支持组合筛选。',
+        '在列表中查看截止时间与逾期状态；预览版尚未提供到点弹出提醒。',
       ],
-      releaseUrl: 'https://github.com/lucaslus/floatick/releases/tag/v0.4.0',
-      compareUrl: 'https://github.com/lucaslus/floatick/compare/v0.3.4...v0.4.0',
+      sourceUrl: previewRelease.sourceUrl,
+      compareUrl: `${repositoryUrl}/compare/v0.3.4...refactor/tauri`,
     },
     {
       version: 'v0.3.4',

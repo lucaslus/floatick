@@ -6,6 +6,7 @@ import {
 import {
   latestDownloadUrl,
   repositoryUrl,
+  stableRelease,
 } from '../config/site-links';
 import type { Locale } from '../content/site-copy';
 import SiteLayout from '../layouts/SiteLayout.astro';
@@ -90,7 +91,7 @@ const languageHref = isEnglish ? '/zh/changelog/' : '/changelog/';
       aria-label={isEnglish ? 'Floatick releases' : 'Floatick 版本'}
     >
       {
-        entries.map((entry, index) => (
+        entries.map((entry) => (
           <article class="changelog-entry">
             <div class="changelog-marker" aria-hidden="true">
               <span></span>
@@ -98,8 +99,11 @@ const languageHref = isEnglish ? '/zh/changelog/' : '/changelog/';
 
             <div class="changelog-version">
               <strong>{entry.version}</strong>
-              {index === 0 && (
-                <span>{isEnglish ? 'Latest' : '最新'}</span>
+              {entry.status === 'preview' && (
+                <span>{isEnglish ? 'In development' : '开发中'}</span>
+              )}
+              {entry.version === `v${stableRelease.version}` && (
+                <span>{isEnglish ? 'Current release' : '当前正式版'}</span>
               )}
               <time datetime={entry.dateTime}>{entry.date}</time>
             </div>
@@ -111,10 +115,14 @@ const languageHref = isEnglish ? '/zh/changelog/' : '/changelog/';
                 {entry.highlights.map((highlight) => <li>{highlight}</li>)}
               </ul>
               <div class="changelog-actions">
-                <a href={entry.releaseUrl} target="_blank" rel="noreferrer">
+                {entry.releaseUrl && <a href={entry.releaseUrl} target="_blank" rel="noreferrer">
                   {copy.releaseLink}
                   <span aria-hidden="true">↗</span>
-                </a>
+                </a>}
+                {entry.sourceUrl && <a href={entry.sourceUrl} target="_blank" rel="noreferrer">
+                  {isEnglish ? 'Follow development' : '查看开发进展'}
+                  <span aria-hidden="true">↗</span>
+                </a>}
                 {entry.compareUrl && (
                   <a href={entry.compareUrl} target="_blank" rel="noreferrer">
                     {copy.compareLink}
@@ -132,7 +140,7 @@ const languageHref = isEnglish ? '/zh/changelog/' : '/changelog/';
   <footer class="site-footer changelog-footer">
     <div class="shell footer-content">
       <div class="footer-brand">
-        <img src="/float-icon.svg" alt="" width="42" height="42" />
+        <img src="/favicon.png" alt="" width="34" height="34" />
         <div>
           <strong>Floatick</strong>
           <p>{copy.footer}</p>

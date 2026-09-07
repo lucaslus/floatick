@@ -1,16 +1,6 @@
+import { previewRelease, stableRelease } from '../config/site-links';
+
 export type Locale = 'en' | 'zh';
-
-type Feature = {
-  number: string;
-  title: string;
-  body: string;
-};
-
-type WorkflowStep = {
-  label: string;
-  title: string;
-  body: string;
-};
 
 type SiteCopy = {
   meta: {
@@ -20,433 +10,143 @@ type SiteCopy = {
     canonicalPath: string;
     alternatePath: string;
   };
-  nav: {
-    features: string;
-    workflow: string;
-    privacy: string;
-    changelog: string;
-    download: string;
-    languageLabel: string;
-  };
+  nav: { features: string; privacy: string; changelog: string; download: string; languageLabel: string };
   hero: {
     eyebrow: string;
     titleBefore: string;
     titleAccent: string;
     body: string;
+    detail: string;
     download: string;
     github: string;
     compatibility: string;
+    releaseNote: string;
+    facts: string[];
   };
-  proof: Array<{
-    value: string;
-    label: string;
-  }>;
   features: {
     eyebrow: string;
     title: string;
-    body?: string;
-    items: Feature[];
+    items: Array<{ title: string; body: string; detail: string }>;
   };
-  workflow: {
-    eyebrow: string;
-    title: string;
-    body?: string;
-    steps: WorkflowStep[];
-  };
-  privacy: {
-    eyebrow: string;
-    title: string;
-    body: string;
-    points: string[];
-    pathLabel: string;
-  };
-  updates: {
-    eyebrow: string;
-    title: string;
-    body?: string;
-    latestLabel: string;
-    version: string;
-    date: string;
-    dateTime: string;
-    highlights: string[];
-    viewAll: string;
-  };
-  faq: {
-    eyebrow: string;
-    title: string;
-    body?: string;
-    items: Array<{
-      question: string;
-      answer: string;
-    }>;
-  };
-  finalCta: {
-    eyebrow: string;
-    title: string;
-    body: string;
-    download: string;
-    github: string;
-  };
-  footer: {
-    tagline: string;
-    source: string;
-    releases: string;
-    license: string;
-    language: string;
-  };
+  privacy: { eyebrow: string; title: string; body: string; points: string[]; note: string; source: string };
+  faq: { eyebrow: string; title: string; items: Array<{ question: string; answer: string }> };
+  finalCta: { title: string; body: string; download: string; releaseNote: string; changelog: string };
+  footer: { tagline: string; source: string; license: string; language: string };
 };
 
 export const siteCopy: Record<Locale, SiteCopy> = {
   en: {
     meta: {
       lang: 'en',
-      title: 'Floatick — Native macOS Menu Bar Todos & Notes',
-      description:
-        'A lightweight, open-source macOS menu bar app for tasks and quick notes. Built with Tauri v2 and Rust.',
+      title: 'Floatick — A little space for todos & notes',
+      description: 'Todos and notes, close at hand on your Mac. Free, open source, and saved on your device. Meet the upcoming Floatick menu bar app.',
       canonicalPath: '/',
       alternatePath: '/zh/',
     },
-    nav: {
-      features: 'Features',
-      workflow: 'Workflow',
-      privacy: 'Privacy',
-      changelog: 'Changelog',
-      download: 'Download',
-      languageLabel: 'Read in Chinese',
-    },
+    nav: { features: 'Features', privacy: 'Your data', changelog: 'Changelog', download: 'Download', languageLabel: '阅读中文版' },
     hero: {
-      eyebrow: 'macOS Menu Bar Todos & Notes',
-      titleBefore: 'Capture fast.',
-      titleAccent: 'Finish with focus.',
-      body:
-        'Lives quietly in your Menu Bar. Capture tasks and notes in seconds, without breaking your flow.',
+      eyebrow: 'A little space in your Mac menu bar',
+      titleBefore: 'Jot it down.',
+      titleAccent: 'Get it done.',
+      body: 'Your todos and notes, just a click away.',
+      detail: 'Catch a thought. Check off a task. Get back to your day.',
       download: 'Download for macOS',
-      github: 'View on GitHub',
-      compatibility: 'macOS 10.15+ · Apple silicon and Intel',
+      github: 'View source',
+      compatibility: 'macOS 10.15+ · Apple silicon & Intel',
+      releaseNote: `Download v${stableRelease.version} · Previewing v${previewRelease.version}`,
+      facts: ['Free & open source', 'No account needed', 'Saved on your Mac'],
     },
-    proof: [
-      { value: 'One Click', label: 'Instant access right from your Menu Bar' },
-      { value: 'Lightweight', label: 'Sub-30MB footprint, fast and quiet' },
-      { value: 'On Time', label: 'Clear deadlines and gentle reminders' },
-      { value: 'Local-First', label: '100% on your Mac, zero cloud sync' },
-    ],
     features: {
-      eyebrow: 'Features',
-      title: 'Everything you need, right at your fingertips.',
+      eyebrow: 'Room for your everyday',
+      title: 'A few things, done well.',
       items: [
-        {
-          number: '01',
-          title: 'macOS Menu Bar',
-          body:
-            'Lives in your status bar with a live pending badge. Click to open.',
-        },
-        {
-          number: '02',
-          title: 'Full-Width Cards',
-          body:
-            'Long titles never truncate. Floating capsules reveal actions on hover.',
-        },
-        {
-          number: '03',
-          title: 'Deadlines & Reminders',
-          body:
-            'Set due dates with one click. Clear status without noisy banners.',
-        },
-        {
-          number: '04',
-          title: 'TipTap Markdown',
-          body:
-            'Press / for interactive checklists, headings, code blocks, and quotes.',
-        },
-        {
-          number: '05',
-          title: 'Color Tags',
-          body:
-            'Shared color tags across tasks and notes for fast, flexible filtering.',
-        },
-        {
-          number: '06',
-          title: 'Rust & Tauri 2',
-          body:
-            'Sub-30MB idle footprint, instant launch, and optional start at login.',
-        },
-      ],
-    },
-    workflow: {
-      eyebrow: 'Workflow',
-      title: 'Capture, schedule, finish.',
-      steps: [
-        {
-          label: 'Capture',
-          title: 'Quick capture in seconds',
-          body:
-            'Click the icon or press ⌘N to jot down thoughts without breaking flow.',
-        },
-        {
-          label: 'Schedule',
-          title: 'Add deadlines and tags',
-          body:
-            'Set due dates or color tags to keep your daily priorities clear.',
-        },
-        {
-          label: 'Finish',
-          title: 'Check off and move on',
-          body:
-            'Check tasks off or copy the full context as clean Markdown.',
-        },
+        { title: 'Catch the little things.', body: 'A task for later. A thought worth keeping. Give it a home before it slips away.', detail: 'Todos & notes, side by side' },
+        { title: 'Make space for the details.', body: 'Turn a quick note into a checklist, a meeting plan, or a few lines of Markdown.', detail: 'Checklists · Headings · Markdown copy' },
+        { title: 'Keep today in view.', body: 'Add a due date, find things with shared tags, and check them off when you’re done.', detail: 'Due dates · Tags · Search' },
       ],
     },
     privacy: {
-      eyebrow: 'Privacy & Storage',
-      title: 'Local-first. 100% on your Mac.',
-      body:
-        'All your todos, notes, and settings are saved locally as plain files.',
-      points: [
-        'Plain text files: view, export, or back up anytime.',
-        'Zero tracking: no accounts, no cloud servers, no telemetry.',
-        '100% offline: connects only when checking for updates.',
-      ],
-      pathLabel: 'Storage Directory',
-    },
-    updates: {
-      eyebrow: 'Changelog',
-      title: "What's new",
-      latestLabel: 'Latest Release',
-      version: 'v0.4.0',
-      date: 'September 4, 2026',
-      dateTime: '2026-09-04',
-      highlights: [
-        'Full-width title layout with floating action capsules.',
-        'Instant click-to-complete separated from the editor drawer.',
-        'TipTap rich text editor with / slash commands and checklists.',
-      ],
-      viewAll: 'View Full Changelog',
+      eyebrow: 'Yours, from the first note',
+      title: 'On your Mac.\nIn your hands.',
+      body: 'Your todos and notes live in a local folder. No sign-up, no cloud workspace. Back up the files whenever you like.',
+      points: ['No account', 'No cloud sync', 'Readable files'],
+      note: 'One folder. Your own copy of everything.',
+      source: 'Explore the source on GitHub',
     },
     faq: {
-      eyebrow: 'FAQ',
-      title: 'Frequently asked questions',
+      eyebrow: 'Before you start',
+      title: 'A few useful answers.',
       items: [
-        {
-          question: 'What is Floatick designed for?',
-          answer:
-            'Quick todos and notes in your macOS Menu Bar without the weight of complex project tools.',
-        },
-        {
-          question: 'Where is my data stored?',
-          answer:
-            'Locally in ~/.floatick on your Mac. Plain text files, no accounts, and zero cloud sync.',
-        },
-        {
-          question: 'How do deadline reminders work?',
-          answer:
-            'Set due dates with one click. Tasks highlight in-app when upcoming or overdue, without noisy banners.',
-        },
-        {
-          question: 'Can I take notes with Floatick?',
-          answer:
-            'Yes. Notes has a dedicated tab with TipTap Markdown editing, slash commands, and code blocks.',
-        },
-        {
-          question: 'Which Macs are supported?',
-          answer:
-            'Native universal binary for both Apple silicon and Intel, running macOS 10.15 or later.',
-        },
-        {
-          question: 'Can I copy tasks as Markdown?',
-          answer:
-            'Yes. Hover over any task card and click copy to export the title and notes as clean Markdown.',
-        },
+        { question: 'Which version am I downloading?', answer: `The download is v${stableRelease.version}, the current release with a floating desktop icon. This page previews the menu bar app and new editor in v${previewRelease.version}, which is still in development.` },
+        { question: 'Will it work on my Mac?', answer: 'The current release supports macOS 10.15 and later, on both Apple silicon and Intel. The same download works for both.' },
+        { question: 'Can I sync or back up my notes?', answer: 'Floatick does not sync between devices. Your todos, notes, tags, and settings are saved in ~/.floatick. Copy that folder to keep a backup.' },
+        { question: 'How do due dates and reminders work?', answer: 'In v0.3.4, you can set a deadline and receive an in-app reminder. The v0.4 preview shows due dates and overdue status in the list; reminder delivery is not available in this preview yet.' },
       ],
     },
     finalCta: {
-      eyebrow: 'For macOS',
-      title: 'Capture fast. Finish with focus.',
-      body: 'Free, open source, and local-first for macOS.',
-      download: 'Download for macOS',
-      github: 'View on GitHub',
+      title: 'One less thing to keep in your head.',
+      body: 'A small home for the things on your mind.',
+      download: 'Download Floatick',
+      releaseNote: `Current release · v${stableRelease.version}`,
+      changelog: 'See what’s changing',
     },
-    footer: {
-      tagline: 'Local-first macOS Menu Bar todos and notes.',
-      source: 'Source',
-      releases: 'Changelog',
-      license: 'MIT License',
-      language: '简体中文',
-    },
+    footer: { tagline: 'A little space for todos & notes.', source: 'GitHub', license: 'MIT License', language: '简体中文' },
   },
   zh: {
     meta: {
       lang: 'zh-CN',
-      title: 'Floatick — 常驻 macOS 菜单栏的待办与便签',
-      description:
-        'Floatick 是一款专为 macOS 设计的极简菜单栏待办与便签应用。点击即开，支持截止时间提醒、TipTap Markdown 编辑与本地隐私存储。',
+      title: 'Floatick — 随手记，专心做。',
+      description: '给待办和笔记一个顺手的位置。Floatick 免费开源，无需注册，数据保存在本机。看看即将到来的 Mac 菜单栏新版。',
       canonicalPath: '/zh/',
       alternatePath: '/',
     },
-    nav: {
-      features: '功能特性',
-      workflow: '使用流程',
-      privacy: '隐私与存储',
-      changelog: '更新日志',
-      download: '下载',
-      languageLabel: 'Read in English',
-    },
+    nav: { features: '功能', privacy: '数据与隐私', changelog: '更新日志', download: '下载', languageLabel: 'Read in English' },
     hero: {
-      eyebrow: 'macOS 菜单栏待办与便签',
+      eyebrow: '待办和笔记，就在 Mac 菜单栏',
       titleBefore: '随手记，',
       titleAccent: '专心做。',
-      body:
-        '常驻 macOS 菜单栏。点开即记待办与便签，轻巧随手，不扰专注。',
+      body: '点开记下，做完勾掉。',
+      detail: '让琐事有处安放，把注意力留给眼前。',
       download: '下载 macOS 版',
-      github: 'GitHub 源码',
-      compatibility: 'macOS 10.15+ · 原生支持 Apple 芯片与 Intel',
+      github: '查看源码',
+      compatibility: 'macOS 10.15+ · Apple 芯片与 Intel',
+      releaseNote: `下载 v${stableRelease.version} · 页面展示 v${previewRelease.version} 预览`,
+      facts: ['免费开源', '无需注册', '数据只存本机'],
     },
-    proof: [
-      { value: '点开即记', label: '常驻手边，不扰工作' },
-      { value: '轻巧极速', label: '极低内存，秒开秒关' },
-      { value: '到点提醒', label: '临近与逾期清晰标识' },
-      { value: '本地存储', label: '零账号，数据只在本机' },
-    ],
     features: {
-      eyebrow: '核心特性',
-      title: '恰到好处的轻巧。',
+      eyebrow: '刚好够用',
+      title: '日常小事，顺手就好。',
       items: [
-        {
-          number: '01',
-          title: '常驻菜单栏',
-          body:
-            '常驻右上角状态栏，角标显示未完成数，点击即开。',
-        },
-        {
-          number: '02',
-          title: '全宽卡片与悬浮胶囊',
-          body:
-            '长标题全宽展示无遮挡，悬浮呼出截止时间、编辑与复制。',
-        },
-        {
-          number: '03',
-          title: '截止时间与提醒',
-          body:
-            '按需设定截止时间，临近与逾期清晰高亮，不弹吵闹通知。',
-        },
-        {
-          number: '04',
-          title: 'TipTap Markdown',
-          body:
-            '输入 / 唤出任务清单、多级标题、代码块与引用。',
-        },
-        {
-          number: '05',
-          title: '彩色标签分类',
-          body:
-            '待办与笔记共享彩色标签，支持快速多维度筛选。',
-        },
-        {
-          number: '06',
-          title: '极简省电架构',
-          body:
-            '基于 Tauri 2 与 Rust 构建，内存占用极低，支持开机自启。',
-        },
-      ],
-    },
-    workflow: {
-      eyebrow: '使用流程',
-      title: '记下，排期，完成。',
-      steps: [
-        {
-          label: '捕捉',
-          title: '点击菜单栏随时记下',
-          body:
-            '点击图标或按 ⌘N，随时记下闪过的想法或任务。',
-        },
-        {
-          label: '排期',
-          title: '按需添加时间与标签',
-          body:
-            '设定截止时间或分配彩色标签，轻重缓急一目了然。',
-        },
-        {
-          label: '了结',
-          title: '做完随手勾销',
-          body:
-            '做完即勾，亦可一键完整复制为 Markdown 分享。',
-        },
+        { title: '想到，就记下来。', body: '临时待办、闪过的灵感，点开就记。不用先想好该放进哪个项目。', detail: '待办与笔记，一处收好' },
+        { title: '细节，也放得下。', body: '列一份清单，写几行会议笔记。需要分享时，一键复制成 Markdown。', detail: '清单 · 标题 · Markdown 复制' },
+        { title: '手头的事，一眼清楚。', body: '按需加上截止时间，用标签整理和查找。做完一件，就勾掉一件。', detail: '截止时间 · 标签 · 搜索' },
       ],
     },
     privacy: {
-      eyebrow: '隐私与存储',
-      title: '数据只存本机，完全属于你。',
-      body:
-        '所有待办、笔记与设置均保存在本地明文文件，不上传任何云端。',
-      points: [
-        '明文文件：随时自由查看、导出与备份',
-        '零账号零追踪：无云端服务器，不收集任何数据',
-        '100% 离线：仅在手动检查更新时发起网络请求',
-      ],
-      pathLabel: '本地存储目录',
-    },
-    updates: {
-      eyebrow: '更新日志',
-      title: '持续打磨',
-      latestLabel: '最新版本',
-      version: 'v0.4.0',
-      date: '2026 年 9 月 4 日',
-      dateTime: '2026-09-04',
-      highlights: [
-        '全宽标题排版，次行悬浮操作胶囊',
-        '快速勾选与 TipTap 独立编辑抽屉',
-        'TipTap 斜杠命令、清单与代码块',
-      ],
-      viewAll: '查看完整更新日志',
+      eyebrow: '从第一条笔记开始，就属于你',
+      title: '存在本机，\n自己掌握。',
+      body: '待办和笔记保存在 Mac 的本地文件夹里。无需账号，不同步到云端。想备份时，复制一份就好。',
+      points: ['不用账号', '不传云端', '文件可读'],
+      note: '一个文件夹，装下你记过的事。',
+      source: '在 GitHub 查看源代码',
     },
     faq: {
-      eyebrow: '常见问题',
-      title: '常见问题',
+      eyebrow: '开始之前',
+      title: '你可能想知道。',
       items: [
-        {
-          question: 'Floatick 适合怎样的场景？',
-          answer:
-            '适合想要在 macOS 菜单栏随时速记待办与碎片便签、不希望被庞杂工具打扰专注的用户。',
-        },
-        {
-          question: '我的数据保存在哪里？',
-          answer:
-            '保存在本机 ~/.floatick 目录下。明文存储，无需注册，不经过任何云端。',
-        },
-        {
-          question: '截止时间提醒是如何工作的？',
-          answer:
-            '为待办设定截止时间后，临近与逾期状态会在应用内清晰标记，没有吵闹的系统横幅。',
-        },
-        {
-          question: '可以用 Floatick 记录便签笔记吗？',
-          answer:
-            '可以。笔记拥有独立标签页与 TipTap Markdown 编辑抽屉，支持 / 命令与代码块。',
-        },
-        {
-          question: '支持哪些 Mac 机型？',
-          answer:
-            '原生适配 Apple 芯片（M 系列）与 Intel 架构，支持 macOS 10.15 及以上系统。',
-        },
-        {
-          question: '可以把待办导出或分享吗？',
-          answer:
-            '悬浮在卡片上点击复制，即可将标题与正文完整复制为 Markdown 格式。',
-        },
+        { question: '现在下载的是哪个版本？', answer: `当前下载为 v${stableRelease.version}，使用桌面浮动图标。页面展示的菜单栏界面与新版编辑器属于 v${previewRelease.version} 预览，仍在开发中，尚未发布。` },
+        { question: '我的 Mac 能用吗？', answer: '当前正式版支持 macOS 10.15 及以上系统。Apple 芯片和 Intel Mac 使用同一个安装包。' },
+        { question: '可以同步或备份数据吗？', answer: '目前不支持设备间同步。待办、笔记、标签和设置都保存在 ~/.floatick 文件夹中，复制整个文件夹即可备份。' },
+        { question: '截止时间到了会怎么提醒？', answer: 'v0.3.4 支持设定截止时间和应用内提醒。v0.4 预览目前会在列表标明截止时间与逾期状态，尚未提供到点弹出提醒。' },
       ],
     },
     finalCta: {
-      eyebrow: '专为 macOS 打造',
-      title: '随手记，专心做。',
-      body: '免费开源 · 数据只存本机 · 原生支持 Apple 芯片与 Intel',
-      download: '下载 macOS 版',
-      github: '在 GitHub 查看',
+      title: '少一件挂在心上的事。',
+      body: '给待办和笔记，一个顺手的位置。',
+      download: '下载 Floatick',
+      releaseNote: `当前正式版 · v${stableRelease.version}`,
+      changelog: '看看最近的变化',
     },
-    footer: {
-      tagline: 'macOS 菜单栏轻量待办与便签',
-      source: '源代码',
-      releases: '更新日志',
-      license: 'MIT 许可证',
-      language: 'English',
-    },
+    footer: { tagline: '给待办和笔记，一个顺手的位置。', source: 'GitHub', license: 'MIT 许可证', language: 'English' },
   },
 };

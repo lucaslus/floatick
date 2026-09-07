@@ -45,15 +45,26 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click { button, button_state, .. } = &event {
+                log::info!(target: "floatick::panel", "tray: {button:?} {button_state:?}");
+            }
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
+                button_state,
                 rect,
                 ..
             } = event
             {
                 let app_handle = tray.app_handle();
-                toggle_window_at_rect(app_handle, rect);
+                match button_state {
+                    MouseButtonState::Down => {
+                        update_cached_tray_rect(rect);
+                        if let Some(window) = app_handle.get_webview_window("main") {
+                            crate::panel::tray_pressed(window.is_visible().unwrap_or(false));
+                        }
+                    }
+                    MouseButtonState::Up => toggle_window_at_rect(app_handle, rect),
+                }
             }
         })
         .build(app)?;
@@ -193,20 +204,26 @@ pub fn position_window_at_rect(window: &tauri::WebviewWindow, rect: Rect) {
 pub fn toggle_window_at_rect(app_handle: &AppHandle, rect: Rect) {
     if let Some(window) = app_handle.get_webview_window("main") {
         let is_visible = window.is_visible().unwrap_or(false);
-        if is_visible {
-            let _ = window.hide();
-        } else {
-            crate::mark_window_shown();
-            position_window_at_rect(&window, rect);
-            let _ = window.show();
-            let _ = window.set_focus();
+        let action = crate::panel::tray_released(is_visible);
+        log::info!(target: "floatick::panel", "tray action: {action:?}, visible={is_visible}");
+        match action {
+            crate::panel::TrayAction::Hide => {
+                let _ = crate::panel::hide_window(&window);
+            }
+            crate::panel::TrayAction::Show => {
+                crate::panel::cancel_pending_hide();
+                position_window_at_rect(&window, rect);
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
         }
     }
 }
 
 pub fn show_window(app_handle: &AppHandle) {
+    log::info!(target: "floatick::panel", "show requested");
     if let Some(window) = app_handle.get_webview_window("main") {
-        crate::mark_window_shown();
+        crate::panel::cancel_pending_hide();
 
         let mut positioned = false;
         if let Some(tray) = app_handle.tray_by_id("main-tray") {

@@ -13,6 +13,25 @@ npm run dev
 Astro prints the local preview URL after startup. English is served at `/` and
 Simplified Chinese at `/zh/`.
 
+## Product preview and downloads
+
+The homepage previews the upcoming menu bar app. The current public download is
+v0.3.4. `src/config/site-links.ts` keeps the public version, pinned download URL,
+and development preview together. Update that file when publishing a release,
+then update the preview notices and reminder details in `site-copy.ts` and
+`changelog.ts`. Do not label a development build as the latest published release.
+
+The six `public/images/product-{todos,notes,editor}-{en,zh}.png` images are 2×
+captures of the real React interface at 440 × 700 CSS pixels, populated with
+fictional everyday tasks. Capture in the browser mock mode, never from a user's
+local workspace. The showcase supports clicks, arrow keys, Home/End, and a
+JavaScript-free fallback.
+
+The menu bar uses Floatick's actual template tray icon and native SF Symbols
+exported with AppKit. Regenerate the four system symbols on macOS with
+`xcrun swift scripts/export-menubar-symbols.swift public/images/menubar`.
+Its sample date and time match the product captures; it is a static preview.
+
 ## Production build
 
 ```bash
