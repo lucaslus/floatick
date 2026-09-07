@@ -60,14 +60,24 @@ git switch -c feature/short-description
 ### 2. 开发和本地验证
 
 - 修改代码前先确认根因和影响范围。
-- 核心逻辑补单元测试；交互变更补 Widget 测试。
-- 优先运行与改动直接相关的测试。
-- 完整 UI 自动化使用 `tool/test/run_ui_tests.sh`，覆盖真实 macOS Flutter 引擎和
-  AppKit 原生边界；详细范围见 [TESTING.md](TESTING.md)。
-- 本地需要观察 UI 时运行：
+- 前端逻辑采用 React 19 + TypeScript + Zustand 状态管理与 TipTap 编辑器。
+- 本地启动开发环境运行：
 
 ```bash
-flutter run -d macos
+pnpm install
+pnpm tauri:dev
+```
+
+- 静态类型与前端构建验证：
+
+```bash
+pnpm build
+```
+
+- Rust 后端检查与单元测试：
+
+```bash
+cd src-tauri && cargo test
 ```
 
 ### 3. 提交并创建 PR
@@ -80,12 +90,11 @@ git push -u origin feature/short-description
 
 PR 必须合入 `main`。PR CI 会执行：
 
-1. Dart 格式检查；
-2. `flutter analyze`；
-3. `flutter test`；
-4. macOS UI 自动化与 AppKit 原生边界测试；
-5. macOS Release 构建与首次启动烟测；
-6. `arm64` 和 `x86_64` 双架构检查。
+1. 前端 TypeScript 编译与代码格式检查；
+2. Rust 编译与后端单元测试；
+3. macOS Menu Bar 托盘与窗口定位边界验证；
+4. macOS Release 构建 (`pnpm tauri:build`)；
+5. Universal 架构检查 (`arm64` 与 `x86_64`)。
 
 CI 通过后才能合并。普通开发不直接推送 `main`。
 
@@ -103,11 +112,7 @@ git pull --ff-only
 git switch -c "release/$VERSION"
 ```
 
-`pubspec.yaml` 必须包含公开版本和递增的构建号：
-
-```yaml
-version: X.Y.Z+N
-```
+确保 `package.json`、`src-tauri/tauri.conf.json` 以及 `src-tauri/Cargo.toml` 中版本号已同步更新。
 
 ### 2. 生成 Draft Release
 
@@ -129,11 +134,13 @@ git push -u origin "release/$VERSION"
 从 Draft 下载 DMG，至少检查：
 
 - 安装、首次启动和 Gatekeeper 提示；
-- 悬浮图标拖动、展开、收起和右键退出；
-- Todo 创建、编辑、完成、搜索、归档和恢复；
+- macOS 菜单栏托盘图标点击展开、收起、角标数字动态更新与失焦自动隐藏；
+- TipTap 富文本编辑、斜杠命令（`/task`、`/h1`-`/h3`、`/code` 等）与 Markdown 快捷输入；
+- Todo 创建、进行中聚焦、完成、搜索、归档和恢复；
+- Note 创建、富文本写作、按日期分组与置顶；
 - 中英文、深浅色主题与设置持久化；
 - `~/.floatick` 数据在重启后保持不变；
-- 更新检查、CPU、内存和动画表现。
+- 极低 CPU 和内存占用（空闲约 40-60 MB）。
 
 如果失败，直接在同一个 `release/x.y.z` 分支修复并推送。工作流会替换 Draft
 中的候选文件。旧候选不能打正式标签。
@@ -162,7 +169,7 @@ git push origin "v$VERSION"
 
 正式工作流会验证：
 
-- 标签、`pubspec.yaml` 和应用版本一致；
+- 标签与应用配置中的版本号一致；
 - 候选提交已进入 `main`；
 - 正式标签与候选标签指向同一提交；
 - DMG、SHA-256、Manifest、版本和双架构一致。

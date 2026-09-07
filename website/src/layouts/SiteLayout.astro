@@ -43,8 +43,8 @@ const softwareId = new URL('/#software', Astro.site).href;
 const webpageId = `${canonicalUrl.href}#webpage`;
 const socialImageAlt =
   lang === 'en'
-    ? 'Floatick floating todos and quick notes for macOS with Doing status, deadlines, reminders, and shared tags'
-    : 'Floatick 的 macOS 桌面待办与随手记，包含进行中任务、截止时间、提醒和标签';
+    ? 'Floatick — a little space for todos and notes on your Mac'
+    : 'Floatick — 随手记，专心做。给待办和笔记一个顺手的位置。';
 
 const websiteSchema = {
   '@type': 'WebSite',
@@ -84,7 +84,9 @@ const softwareSchema = {
   '@id': softwareId,
   name: 'Floatick',
   alternateName: 'Floatick Todo & Notes',
-  description,
+  description: lang === 'en'
+    ? 'Free, open-source todos and notes for macOS, saved locally on your device.'
+    : '免费开源的 macOS 待办与笔记应用，数据保存在本机。',
   applicationCategory: 'ProductivityApplication',
   applicationSubCategory: 'Todo List and Note-taking Application',
   operatingSystem: 'macOS 10.15 or later',
@@ -102,12 +104,12 @@ const softwareSchema = {
     height: 800,
   },
   featureList: [
-    'Floating desktop todo list',
-    'Todo, Doing, and Done task states',
+    'Floating todo list for macOS',
+    'Markdown notes',
     'Deadlines and compact in-app reminders',
     'Local-first task storage',
     'Lightweight local notes',
-    'Notes grouped by date with automatic saving',
+    'Notes grouped by date',
     'Shared tags for todos and notes',
     'Markdown task notes',
     'Color-coded tags and filtering',

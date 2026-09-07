@@ -1,116 +1,104 @@
 # Architecture
 
-Floatick uses Flutter for product UI and state, and a small AppKit shell for
-macOS-only window behavior.
+Floatick is a native macOS Menu Bar productivity application built on Tauri v2, Rust, React 19, and Tailwind CSS.
 
-## Dependency direction
-
-```text
-presentation -> domain
-presentation -> data (injected through ViewModels)
-data         -> domain
-app          -> features + core
-macOS shell  <-> core/platform through MethodChannel
-```
-
-Feature code must not import another feature's data layer. App assembly belongs
-in `lib/app`; screen-level presentation may compose injected ViewModels from
-multiple features without reaching into their data implementations. Reusable
-platform and visual primitives belong in `lib/core`.
-
-## Directory layout
+## High-Level Architecture
 
 ```text
-lib/
-  app/
-    floatick_app.dart
-    theme/
-  l10n/
-    app_en.arb
-    app_zh.arb
-  core/
-    platform/
-    storage/
-    ui/
-  features/
-    notes/
-      data/
-      domain/
-      presentation/
-    settings/
-      data/
-      domain/
-      presentation/
-    todos/
-      data/
-      domain/
-      presentation/
-        widgets/
-    updates/
-      data/
-      domain/
-      presentation/
-test/
-  app/
-  features/
-macos/
-  Runner/
-tool/
-  release/
+┌────────────────────────────────────────────────────────┐
+│                   React 19 Frontend                    │
+│                                                        │
+│  Components & UI            State & Domain             │
+│  ├── ActionBar              ├── useTodoStore           │
+│  ├── TodoList / TodoDrawer  ├── useNoteStore           │
+│  ├── NoteList / NoteDrawer  ├── useTagStore            │
+│  ├── FloatickTiptapEditor   └── useSettingsStore       │
+│  └── Settings / Tag Modals                             │
+└───────────────────────────┬────────────────────────────┘
+                            │ Tauri IPC (Commands & Events)
+┌───────────────────────────▼────────────────────────────┐
+│                    Rust Tauri Backend                  │
+│                                                        │
+│  Window & Tray Management   Storage Engine             │
+│  ├── AppKit NSStatusBar     ├── ~/.floatick/           │
+│  │   (Live badge counter)   │   ├── todos.json         │
+│  ├── Popover Positioning    │   ├── notes.json         │
+│  │   (Anchored under tray)  │   ├── tags.json          │
+│  └── Blur event listener    │   └── settings.json      │
+│      (Auto-hide on click)   └── Atomic tempfile rename │
+└───────────────────────────┬────────────────────────────┘
 ```
 
-- `domain`: immutable app models and domain concepts.
-- `data`: local persistence and serialization boundaries.
-- `presentation`: Views and `ChangeNotifier` ViewModels.
-- `core/platform`: shared typed wrappers around native window channels.
-- `core/storage`: shared storage failure types used at repository boundaries.
-- `l10n`: English source copy, Simplified Chinese translations, and generated
-  Flutter localization accessors.
-- `macos/Runner`: transparent floating window behavior and the Sparkle update
-  service; todo and note data does not cross either platform channel.
+## Layers and Responsibilities
 
-## State and persistence
+### 1. Presentation Layer (React 19 & Tailwind CSS)
+- **State Management**: Lightweight Zustand stores (`useTodoStore`, `useNoteStore`, `useTagStore`, `useSettingsStore`) handle in-memory reactive state, filtering (active, completed, archived, tag-based), and fast tag queries.
+- **Rich Document Editing**: Built-in **TipTap Markdown Editor** (`FloatickTiptapEditor`) provides interactive checkbox task lists (`TaskList`), code blocks with syntax highlighting, blockquotes, headings, and slash command popup (`/task`, `/h1`-`/h3`, `/code`, `/quote`, `/divider`).
+- **Keyboard-First Workflow**: Global keyboard shortcuts (`⌘N`, `⌘F`, `Esc`, `Tab`, `⌘,`, `Enter`) provide fluid interaction without lifting hands from the keyboard.
+- **Internationalization**: Localized via `i18next` (`zh-CN` and `en-US`), hot-swappable in Settings.
 
-`TodoViewModel`, `NoteViewModel`, `SettingsViewModel`, and `UpdateViewModel` own
-presentation state. Repositories own file I/O, JSON compatibility, or typed platform-channel
-boundaries. Repositories are constructor-injected so state behavior can be
-tested without touching the user's home directory or launching Sparkle.
+### 2. IPC & Bridge Layer (`src/services/tauri.ts`)
+- Bridges the web view and the Rust core using strongly-typed Tauri v2 commands:
+  - `load_todos` / `save_todos`: Fetch and atomically persist todos.
+  - `load_notes` / `save_notes`: Fetch and atomically persist notes.
+  - `load_tags` / `save_tags`: Fetch and atomically persist user tags.
+  - `load_settings` / `save_settings`: Read and persist user preferences.
+  - `hide_window`: Programmatically close or collapse the window.
+  - `update_tray_badge`: Update the live pending task count in the macOS Menu Bar.
 
-Todo data, note data, shared tags, and Floatick-owned interface settings only use `~/.floatick`.
-Repositories create it on first load and never read or write another hidden
-application directory. Sparkle owns its automatic-check preference in the
-standard macOS application `UserDefaults`; Floatick does not duplicate that
-preference in `settings.json`.
+### 3. Native & System Layer (Rust & AppKit)
+- **Menu Bar Tray Item (`src-tauri/src/tray.rs`)**:
+  - Registered as a macOS `NSStatusBar` item with a template double-checkmark icon.
+  - Features dynamic badge text reflecting the count of uncompleted tasks.
+- **Window Management (`src-tauri/src/window.rs`)**:
+  - Frameless, transparent, 440×700 popover window.
+  - Automatically calculates screen bounds and anchors directly beneath the tray icon.
+  - Listens to window blur (`on_window_event(WindowEvent::Focused(false))`) to automatically hide when clicking outside if `close_on_blur` is enabled.
+- **Atomic Storage Engine (`src-tauri/src/commands/storage.rs`)**:
+  - Operates strictly in `~/.floatick/`.
+  - Implements atomic write semantics (write to `.tmp` file, sync, then rename) to eliminate any risk of file corruption during system shutdowns or crashes.
 
-Manual update checks probe the configured appcast URL before presenting
-Sparkle. An unpublished first-release feed is mapped across the platform
-channel to a typed, informational state in Settings; other connectivity
-failures remain recoverable errors. Sparkle still owns appcast parsing,
-signature validation, download, and installation once the feed is available.
+## Directory Layout
 
-Writes are serialized by `TodoViewModel` and `NoteViewModel` to prevent
-overlapping mutations from losing updates. A write failure leaves the last
-persisted in-memory state unchanged and exposes a recoverable UI error.
+```text
+src/
+  components/
+    common/         # TipTap editor, slash menu, ActionBar, TagBadge, etc.
+    notes/          # NoteList, NoteCard, NoteEditorDrawer
+    settings/       # SettingsModal
+    tags/           # TagManagerModal, TagFilterBar
+    todos/          # TodoList, TodoItem, TodoEditorDrawer, DeadlinePicker
+  hooks/            # Keyboard shortcuts, blur handlers, window controls
+  i18n/             # Locales (zh.json, en.json)
+  services/         # Tauri IPC invocation wrappers
+  stores/           # Zustand stores (useTodoStore, useNoteStore, etc.)
+  types/            # Domain models (Todo, Note, Tag, Settings)
+src-tauri/
+  src/
+    commands/       # Rust IPC handlers (storage, settings, updates)
+    tray.rs         # macOS Menu Bar tray extra & live badge
+    window.rs       # Positioning, toggle, blur and window behaviors
+    lib.rs          # Tauri app builder and plugin registration
+    main.rs         # Desktop entry point
+  tauri.conf.json   # Tauri v2 window and security configuration
+  Cargo.toml        # Rust dependencies
+website/            # Official Astro bilingual marketing website
+docs/               # Technical documentation and guides
+legacy/             # Archived Flutter implementation
+```
 
-## Testing
+## Persistence and Data Flow
 
-- Repository tests cover local JSON parsing, compatibility, and failure paths.
-- ViewModel tests cover mutations, serialization order, filtering, and sorting.
-- Widget tests cover the main interaction path and theme/settings behavior.
-- Pull requests compile a release-mode universal macOS app in addition to
-  running Flutter analysis and tests.
-- `release/x.y.z` builds a private Draft Release; `vX.Y.Z` promotes the same
-  accepted DMG only when its commit is reachable from `main`.
-- AppKit window behavior and Sparkle installation remain native integration
-  boundaries and should be smoke-tested on both Apple silicon and Intel macOS
-  before a stable release.
+1. On application launch, React triggers `load_todos`, `load_notes`, `load_tags`, and `load_settings`.
+2. Rust loads and parses JSON files from `~/.floatick/`. If files do not exist, sensible defaults are returned and initialized.
+3. Mutations in React update the Zustand store immediately (optimistic UI update).
+4. Store subscribers trigger asynchronous debounced saves through Tauri IPC.
+5. Rust writes data to temporary files and atomically renames them to `todos.json`, `notes.json`, etc.
+6. When todo completion status or count changes, `update_tray_badge` updates the macOS Menu Bar tray text.
 
-## Architecture guardrails
+## Architecture Guardrails
 
-- Keep platform-specific window code out of Flutter Views.
-- Keep file I/O out of widgets and ViewModels.
-- Add a package only when the standard library or existing platform bridge
-  cannot meet the requirement cleanly.
-- Split presentation widgets when they gain independent state, reuse, or test
-  value; do not create one-file-per-widget ceremony.
-- Preserve the local JSON contract or ship an explicit migration.
+- **Local-First & Privacy**: Floatick operates strictly locally without remote servers, user tracking, or telemetry. All user data resides in `~/.floatick/`.
+- **Zero Heavy Background Processes**: Idle memory consumption should remain under ~40-60 MB thanks to Tauri v2 and Rust.
+- **Fail-Safe Persistence**: File writes must always use atomic rename patterns.
+- **Platform Integrity**: Window behavior must feel native to macOS (tray anchor, blur-to-dismiss, instant toggle).

@@ -1,22 +1,21 @@
 <div align="center">
-  <img
-    src="./docs/assets/floatick-product-hero-v6.png"
-    width="100%"
-    alt="Floatick floating workspace for macOS with Todo, Doing, deadlines, reminders, and quick notes"
-  />
-  <h1>Floatick — Floating Todos and Notes for macOS</h1>
-  <p><strong>An open-source, local-first macOS app for lightweight tasks and notes.</strong></p>
-  <p>
-    Capture tasks and thoughts one click away—without an account or cloud service.
-  </p>
+  <h1>
+    <img src="./docs/assets/app-icon.png" width="36" height="36" align="absmiddle" alt="Floatick Icon" />
+    Floatick
+  </h1>
+  <p><strong>Lightweight Menu Bar Todos & Notes for macOS</strong></p>
+  <p>Capture fast. Finish with focus. Local-first · Fast & Minimal · Open Source</p>
   <p>
     <a href="https://github.com/lucaslus/floatick/actions/workflows/ci.yml">
-      <img src="https://github.com/lucaslus/floatick/actions/workflows/ci.yml/badge.svg" alt="CI status" />
+      <img src="https://github.com/lucaslus/floatick/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
     </a>
-    <img src="https://img.shields.io/badge/macOS-10.15%2B-111111?logo=apple" alt="macOS 10.15 or later" />
-    <img src="https://img.shields.io/badge/Flutter-3.44.7-02569B?logo=flutter" alt="Flutter 3.44.7" />
+    <img src="https://img.shields.io/badge/macOS-10.15%2B-111111?logo=apple" alt="macOS 10.15+" />
+    <img src="https://img.shields.io/badge/Tauri-v2-24C8D8?logo=tauri" alt="Tauri v2" />
+    <img src="https://img.shields.io/badge/Rust-1.80%2B-DEA584?logo=rust" alt="Rust 1.80+" />
+    <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19" />
+    <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript" alt="TypeScript 5.x" />
     <a href="./LICENSE">
-      <img src="https://img.shields.io/badge/license-MIT-2CCCBD" alt="MIT license" />
+      <img src="https://img.shields.io/badge/license-MIT-00C7B7" alt="MIT License" />
     </a>
   </p>
   <p>
@@ -24,175 +23,111 @@
   </p>
 </div>
 
-Floatick is an offline-friendly desktop todo and quick notes app that rests above your
-workspace as a small, draggable icon. Click it and the icon expands into a
-focused panel; collapse it and the icon returns to the same anchor. The panel chooses
-its expansion direction from the available screen space, so it stays useful
-near any display edge. Tasks move through a deliberately small flow—Todo,
-Doing, and Done—with optional deadlines and quiet in-app reminders.
+<p align="center">
+  <img src="./docs/assets/floatick-showcase.png" width="100%" alt="Floatick Menu Bar Todos, TipTap Markdown Editor, and Quick Notes" />
+</p>
 
-## A focused macOS space for tasks and notes
+Floatick is a lightweight, local-first productivity app crafted natively for macOS. It rests quietly in your Menu Bar with a live counter badge for pending tasks. One click slides open a focused workspace directly beneath the icon. No heavy setups, no cloud sign-ups—just fast capture and effortless follow-through.
 
-- **Always within reach** — drag the floating icon anywhere, then click to open.
-- **Fast task flow** — create, edit, complete, search, archive, restore, and
-  organize tasks in automatic daily sections.
-- **Visible focus** — mark the task you are actively working on as Doing, give
-  it a calm visual emphasis, and filter the list to active work.
-- **Deadlines without noise** — set a due time while creating or editing a todo,
-  or directly from the list; Floatick surfaces a compact in-app reminder and
-  keeps overdue tasks visible without relying on system notifications.
-- **Lightweight quick notes** — capture ideas, logs, and snippets grouped by
-  date, with search, pinning, archiving, shared tags, autosave, and Markdown preview.
-- **Shared organization** — reuse color-coded tags across todos and notes,
-  combine filters, and copy a complete todo as Markdown.
-- **Local by default** — no account, cloud service, or telemetry. Your todo and
-  note data remains in `~/.floatick`.
-- **Made for macOS** — transparent AppKit window behavior, keyboard shortcuts,
-  context-menu Quit, and support for Reduce Motion.
-- **Comfortable in any workspace** — system, light, and dark themes with English
-  and Simplified Chinese.
-- **Built-in updates** — automatic and manual update checks powered by Sparkle.
+## Key Features
 
-## Download Floatick for macOS
+- **Menu Bar Native**: Sits quietly in your system status bar with a live pending badge. Click to open directly beneath the tray icon without cluttering your Dock.
+- **Full-Width Cards & Floating Capsules**: Task titles span the full row width without premature truncation. Hovering smoothly reveals frosted action capsules (deadline, edit, copy markdown, delete).
+- **Separated Browsing & Editing**: Check off tasks instantly in the list; open the full TipTap editor drawer on demand via double-click or `⌘N`.
+- **TipTap Markdown & Slash Commands**: Press `/` for interactive checklists, headings, code blocks, and quotes with instant formatting.
+- **Deadlines without Noise**: Set due dates directly on task rows. Overdue items stay clearly highlighted without intrusive notification popups.
+- **Quick Notes & Shared Tags**: Capture snippets and thoughts grouped by date. Reusable color tags work across both todos and notes.
+- **Local-First Privacy**: No accounts, no cloud sync, no tracking. All data is saved as plain, readable JSON in `~/.floatick`.
+- **Fast, Lightweight & Native**: Built with Tauri 2 and Rust with a sub-30MB idle footprint, smooth 120Hz animations, and optional launch at login.
 
-Download the latest DMG from
-[GitHub Releases](https://github.com/lucaslus/floatick/releases), open it,
-and drag Floatick into `Applications`. Release packages are universal binaries
-for both Apple silicon and Intel Macs.
+## Download & Installation
 
-### A quick first-launch note
+Download the latest DMG installer from [GitHub Releases](https://github.com/lucaslus/floatick/releases) and drag Floatick to your `Applications` folder. The installer is a Universal Binary supporting both Apple silicon (M-series) and Intel Macs.
 
-Floatick is still an early preview and current downloads are not yet signed and
-notarized with an Apple Developer ID. macOS may ask for one extra confirmation
-the first time you open it:
+> **First-Launch Note for macOS**:
+> If macOS displays an "unidentified developer" warning, open **System Settings → Privacy & Security**, scroll down to **Security**, and click **Open Anyway** (only required on first launch).
 
-1. Try to open Floatick once.
-2. Open **System Settings → Privacy & Security**.
-3. Find Floatick in the **Security** section and choose **Open Anyway**.
-4. Confirm **Open**.
+## Shortcuts & Controls
 
-This confirmation is normally needed only once. For more detail, see
-[Apple's guide to opening an app from an unidentified developer](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac).
-Only download Floatick from this repository's Releases page.
+| Action | Shortcut / Gesture | Description |
+| --- | --- | --- |
+| **Toggle Window** | Click Menu Bar Icon | Toggle Floatick panel under the status tray |
+| **New Item** | `⌘N` | Open editor drawer (Todo or Note) |
+| **Edit Item** | Double-click / Hover ✏️ | Open TipTap editor drawer for existing item |
+| **Save & Close** | `⌘ ⏎` (Cmd + Enter) | Save current item and close drawer |
+| **Close / Dismiss** | `Esc` | Closes active drawer first, then collapses panel |
+| **Search Workspace** | `⌘F` | Focus search bar |
+| **Switch Tabs** | `Tab` / `⌘1`, `⌘2` | Toggle between Todos and Notes views |
+| **Preferences** | `⌘,` | Open Settings drawer (Theme, autostart, pin) |
+| **Slash Commands** | Type `/` in editor | Insert task lists, headings, code blocks, quotes |
+| **Set Deadline** | Click ⏰ on hover | Open date & time picker directly on row |
+| **Copy Markdown** | Click ⎘ on hover | Copy title and content as clean Markdown |
+| **Quit Floatick** | Right-click tray / Settings | Quit the application |
 
-## Everyday use
+## Local Data & Privacy
 
-| Action | How |
+Floatick automatically creates human-readable JSON files in your home directory on first launch:
+
+| File Path | Purpose |
 | --- | --- |
-| Reposition Floatick | Drag the floating icon |
-| Open Floatick | Click the floating icon |
-| Collapse the panel | Click the collapse button or press `Esc` |
-| Create a todo | Press `⌘N`, or use the input at the top |
-| Switch between todos and notes | Use the tabs at the top of the panel |
-| Create a note | Open Notes and choose New |
-| Search the current workspace | Press `⌘F` |
-| Edit a todo | Hover over the item and choose Edit |
-| Start or stop Doing | Hover over a todo and use its play control |
-| Show only active work | Use the Doing filter beside search |
-| Set or edit a deadline | Use the alarm control on a todo row or in the todo editor |
-| Complete a todo | Select its checkbox |
-| Archive or restore | Use the action at the end of the item |
-| Quit Floatick | Right-click the floating icon and choose Quit |
+| `~/.floatick/todos.json` | Todos, completion status, deadlines, reminders, and archives |
+| `~/.floatick/notes.json` | Notes content, color tags, pinning, and archives |
+| `~/.floatick/tags.json` | Reusable color tags shared between todos and notes |
+| `~/.floatick/settings.json` | Theme (system/light/dark), language, autostart, and stay-on-top |
 
-## Local data and privacy
-
-Floatick creates its working directory on first launch:
-
-| Path | Purpose |
-| --- | --- |
-| `~/.floatick/todos.json` | Todos, Doing/completion state, deadlines, reminders, and archive state |
-| `~/.floatick/notes.json` | Notes, tags, pinning, and archive state |
-| `~/.floatick/tags.json` | Reusable tags shared by todos and notes |
-| `~/.floatick/settings.json` | Theme and language preferences |
-
-Sparkle stores the automatic-update preference in standard macOS application
-preferences. Floatick does not require an account and does not upload your todo
-or note data. Network access is used only to check for and download application updates.
+Your data never leaves your computer. Floatick operates completely offline and collects zero telemetry.
 
 ## Development
 
 ### Requirements
 
 - macOS 10.15 or later
-- Flutter `3.44.7`
-- A complete Xcode installation
+- [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
+- [Rust](https://www.rust-lang.org/) (1.80+) and Cargo
 
-### Run locally
-
-```bash
-flutter pub get
-flutter run -d macos
-```
-
-If Flutter cannot find Xcode, finish Xcode's first-launch setup:
+### Local Setup
 
 ```bash
-sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
-sudo xcodebuild -runFirstLaunch
+# 1. Install dependencies
+pnpm install
+
+# 2. Start Tauri development server (with hot reload)
+pnpm tauri:dev
 ```
 
-### Verify a change
+### Production Build
 
 ```bash
-dart format --output=none --set-exit-if-changed lib test integration_test
-flutter analyze
-flutter test
-tool/test/run_ui_tests.sh
-flutter build macos --release
+# Build Universal Binary DMG and .app bundle
+pnpm tauri:build
 ```
 
-The release app is written to
-`build/macos/Build/Products/Release/Floatick.app`.
-See the [testing guide](./docs/TESTING.md) for the automated user journeys and
-the macOS system boundaries that remain in Draft acceptance.
+The output files will be created in `src-tauri/target/release/bundle/macos/` and `.../dmg/`.
 
-## Project structure
+## Project Structure
 
 ```text
-lib/
-  app/          App composition and themes
-  core/         Shared platform, storage, and UI primitives
-  features/     Todo, notes, settings, and update features
-  l10n/         English and Simplified Chinese resources
-macos/Runner/   AppKit window shell and Sparkle integration
-test/           Repository, ViewModel, and widget tests
-integration_test/ Real-engine macOS user journeys
-tool/           Icon and release tooling
+src/                          # Frontend (React 19 + TypeScript + Vite + Tailwind CSS)
+  components/
+    common/                   # TipTap editor, search bar, common UI components
+    layout/                   # Header, ContentSwitcher, window frame
+    notes/                    # Note list, note rows, note editor drawer
+    settings/                 # Preferences drawer (theme, language, autostart)
+    tags/                     # Tag management & filtering
+    todos/                    # Todo list, item rows, deadline picker, editor drawer
+  stores/                     # Zustand state management
+  i18n/                       # Localization resources (English and Chinese)
+  lib/                        # Tauri IPC API bindings
+src-tauri/                    # Native Backend (Rust + Tauri 2.x)
+  src/
+    tray.rs                   # macOS Menu Bar tray & magnetic window anchoring
+    storage.rs                # Atomic JSON file persistence in ~/.floatick
+    commands.rs               # IPC commands exposed to frontend
+    lib.rs                    # Window lifecycle & auto-dismiss on blur
+website/                      # Marketing website (Astro)
+docs/                         # Design specifications and architecture guides
 ```
-
-Flutter owns product UI and state. A small AppKit shell owns macOS-specific
-window behavior and Sparkle. Product data never crosses the platform channel.
-See [Architecture](./docs/ARCHITECTURE.md) for the dependency boundaries.
-
-## Development and release model
-
-```mermaid
-flowchart LR
-    A["feature/* or fix/*"] --> B["Pull request"]
-    B --> C["main"]
-    C --> D["release/x.y.z"]
-    D --> E["Private Draft candidate"]
-    E --> F["Manual acceptance"]
-    F --> G["vX.Y.Z + production approval"]
-    G --> H["Public Release + Sparkle appcast"]
-```
-
-Daily work reaches `main` through pull requests. A `release/x.y.z` branch builds
-a private Draft candidate for manual testing. A stable `vX.Y.Z` tag promotes
-the exact accepted DMG after production approval; the release workflow does not
-rebuild it.
-
-Read the [development and release workflow](./docs/RELEASING.md) before
-preparing a release.
-
-## Contributing
-
-[Issues](https://github.com/lucaslus/floatick/issues) and focused pull
-requests are welcome. Please keep changes scoped, add tests for meaningful
-behavior, and preserve the local JSON data contract.
 
 ## License
 
-Floatick is available under the [MIT License](./LICENSE).
-
-© 2026 lucaslushuo
+Floatick is released under the [MIT License](./LICENSE).

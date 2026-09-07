@@ -14,18 +14,17 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: 3.44.7
   PRODUCT_NAME: Floatick
 
 jobs:
   candidate:
     name: Build draft release
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 45
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -40,21 +39,23 @@ jobs:
           fi
 
           branch_version="${BASH_REMATCH[1]}"
-          full_version=$(awk '/^version:/{print $2}' pubspec.yaml)
-          app_version=${full_version%%+*}
-          app_build_number=${full_version#*+}
+          pkg_version=$(jq -r .version package.json)
+          tauri_version=$(jq -r .version src-tauri/tauri.conf.json)
 
-          if [[ "$full_version" == "$app_version" ||
-                ! "$app_build_number" =~ ^[1-9][0-9]*$ ]]; then
-            echo "pubspec version must include a positive build number." >&2
+          cargo_version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' src-tauri/Cargo.toml | head -n 1)
+          app_build_number=$(jq -r .bundle.macOS.bundleVersion src-tauri/tauri.conf.json)
+          if [[ "$pkg_version" != "$branch_version" || "$tauri_version" != "$branch_version" || "$cargo_version" != "$branch_version" ]]; then
+            echo "Branch release/$branch_version does not match version in package.json ($pkg_version) or tauri.conf.json ($tauri_version)." >&2
             exit 1
           fi
-          if [[ "$app_version" != "$branch_version" ]]; then
-            echo "Branch release/$branch_version does not match pubspec version $app_version." >&2
+          if [[ ! "$app_build_number" =~ ^[1-9][0-9]*$ ]]; then
+            echo "Set a positive bundle.macOS.bundleVersion build number." >&2
             exit 1
           fi
-          if git ls-remote --exit-code --tags origin "refs/tags/v$app_version" \
-            >/dev/null 2>&1; then
+
+          app_version="$branch_version"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/v$app_version" >/dev/null 2>&1; then
             echo "Stable tag v$app_version already exists." >&2
             exit 1
           fi
@@ -63,69 +64,64 @@ jobs:
           echo "app_build_number=$app_build_number" >> "$GITHUB_OUTPUT"
           echo "candidate_tag=candidate/v$app_version" >> "$GITHUB_OUTPUT"
 
-      - name: Install Flutter
-        shell: bash
-        run: |
-          git clone \
-            --branch "$FLUTTER_VERSION" \
-            --depth 1 \
-            https://github.com/flutter/flutter.git \
-            "$RUNNER_TEMP/flutter"
-          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache cargo registry & target
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
 
       - name: Install dependencies
-        run: flutter pub get
+        run: pnpm install --frozen-lockfile
 
-      - name: Verify source
+      - name: Verify frontend and backend tests
         run: |
-          dart format --output=none --set-exit-if-changed lib test
-          flutter analyze
-          flutter test
+          pnpm build
+          cargo test --manifest-path src-tauri/Cargo.toml --locked
 
-      - name: Build release app
+      - name: Build macOS release bundles
+        run: pnpm tauri build --target universal-apple-darwin --bundles app,dmg
+
+      - name: Verify app version, architectures, and startup
         env:
           APP_VERSION: ${{ steps.version.outputs.app_version }}
           APP_BUILD_NUMBER: ${{ steps.version.outputs.app_build_number }}
-        run: |
-          flutter build macos \
-            --release \
-            --build-name "$APP_VERSION" \
-            --build-number "$APP_BUILD_NUMBER"
-
-      - name: Prepare unsigned candidate app
-        run: |
-          tool/release/prepare_unsigned_app.sh \
-            "build/macos/Build/Products/Release/$PRODUCT_NAME.app"
-
-      - name: Verify update feed
         shell: bash
         run: |
-          repository_name=${GITHUB_REPOSITORY#*/}
-          expected_feed_url="https://$GITHUB_REPOSITORY_OWNER.github.io/$repository_name/appcast.xml"
-          tool/release/verify_update_feed.sh \
-            "build/macos/Build/Products/Release/$PRODUCT_NAME.app" \
-            "$expected_feed_url"
-
-      - name: Verify app architectures
-        shell: bash
-        run: |
-          app_path="build/macos/Build/Products/Release/$PRODUCT_NAME.app"
-          executable_name=$(/usr/libexec/PlistBuddy \
-            -c 'Print :CFBundleExecutable' \
-            "$app_path/Contents/Info.plist")
-          architectures=$(lipo -archs "$app_path/Contents/MacOS/$executable_name")
-
-          if [[ "$architectures" != *arm64* || "$architectures" != *x86_64* ]]; then
-            echo "Expected a universal app, found: $architectures" >&2
+          app_path="src-tauri/target/universal-apple-darwin/release/bundle/macos/$PRODUCT_NAME.app"
+          info_plist="$app_path/Contents/Info.plist"
+          installed_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$info_plist")
+          installed_build=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$info_plist")
+          executable_name=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$info_plist")
+          executable="$app_path/Contents/MacOS/$executable_name"
+          [[ "$installed_version" == "$APP_VERSION" && "$installed_build" == "$APP_BUILD_NUMBER" ]]
+          lipo -verify_arch arm64 x86_64 "$executable"
+          "$executable" > "$RUNNER_TEMP/floatick-startup.log" 2>&1 &
+          app_pid=$!
+          trap 'kill "$app_pid" 2>/dev/null || true' EXIT
+          sleep 5
+          if ! kill -0 "$app_pid" 2>/dev/null; then
+            cat "$RUNNER_TEMP/floatick-startup.log"
+            echo "Floatick exited during the startup smoke test." >&2
             exit 1
           fi
+          kill "$app_pid"
+          wait "$app_pid" || true
+          trap - EXIT
 
-      - name: Smoke-test candidate app
-        run: |
-          tool/release/smoke_test_app.sh \
-            "build/macos/Build/Products/Release/$PRODUCT_NAME.app"
-
-      - name: Create candidate package
+      - name: Package candidate artifacts
         id: package
         env:
           APP_VERSION: ${{ steps.version.outputs.app_version }}
@@ -133,21 +129,26 @@ jobs:
         shell: bash
         run: |
           artifact_directory="$RUNNER_TEMP/artifacts"
+          mkdir -p "$artifact_directory"
+
+          dmg_source=$(find src-tauri/target/universal-apple-darwin/release/bundle/dmg -name "*.dmg" | head -n 1)
+          if [[ -z "$dmg_source" || ! -f "$dmg_source" ]]; then
+            echo "No DMG generated by Tauri build." >&2
+            exit 1
+          fi
+
           dmg_name="$PRODUCT_NAME-$APP_VERSION-macos-universal.dmg"
           dmg_path="$artifact_directory/$dmg_name"
-          manifest_name="$PRODUCT_NAME-$APP_VERSION-release-manifest.json"
-          manifest_path="$artifact_directory/$manifest_name"
-
-          tool/release/create_dmg.sh \
-            "build/macos/Build/Products/Release/$PRODUCT_NAME.app" \
-            "$dmg_path" \
-            "$PRODUCT_NAME"
+          cp "$dmg_source" "$dmg_path"
 
           (
             cd "$artifact_directory"
             shasum -a 256 "$dmg_name" > "$dmg_name.sha256"
           )
           dmg_sha256=$(awk '{print $1}' "$dmg_path.sha256")
+
+          manifest_name="$PRODUCT_NAME-$APP_VERSION-release-manifest.json"
+          manifest_path="$artifact_directory/$manifest_name"
           jq -n \
             --arg product "$PRODUCT_NAME" \
             --arg version "$APP_VERSION" \
@@ -199,8 +200,7 @@ jobs:
             gh release edit "$CANDIDATE_TAG" \
               --draft \
               --target "$GITHUB_SHA" \
-              --title "$PRODUCT_NAME v$APP_VERSION — Candidate" \
-              --notes-file .github/release-notes-header.md
+              --title "$PRODUCT_NAME v$APP_VERSION — Candidate"
             gh release upload "$CANDIDATE_TAG" \
               "$DMG_PATH#$DMG_NAME" \
               "$DMG_PATH.sha256#$DMG_NAME.sha256" \
@@ -214,8 +214,7 @@ jobs:
               --verify-tag \
               --draft \
               --target "$GITHUB_SHA" \
-              --title "$PRODUCT_NAME v$APP_VERSION — Candidate" \
-              --notes-file .github/release-notes-header.md
+              --title "$PRODUCT_NAME v$APP_VERSION — Candidate"
           fi
 
           echo "Draft release updated for commit $GITHUB_SHA."
