@@ -76,9 +76,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Enable GPU rendering context on root */
-    transform: translateZ(0);
-    backface-visibility: hidden;
+    /* Keep native editing/caret painting out of forced compositing layers. */
   }
 
   textarea::placeholder,
@@ -94,9 +92,6 @@
   background-color: var(--color-bg-panel);
   border: 1px solid var(--color-border-panel);
   color: var(--color-text-primary);
-  /* Dedicated Compositor Layer for 120Hz rendering */
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 
 /* Zero-delay atomic theme switch: suppresses all CSS transitions during theme update to eliminate staggered lag */
@@ -195,8 +190,19 @@
 }
 
 /* Tiptap Editor & Task List styling */
+.tiptap-scroll-container {
+  /* WKWebView can omit the caret in empty paragraphs inside a transformed
+     scrolling layer. Keep native scrolling without forcing GPU compositing. */
+  transform: none;
+}
+
 .tiptap {
   outline: none;
+  /* Override the desktop shell's selection lock, including in macOS WebKit. */
+  -webkit-user-select: text;
+  user-select: text;
+  caret-color: var(--color-text-primary);
+  cursor: text;
   font-family: var(--font-sans);
   color: var(--color-text-primary);
   font-size: 13.5px;
@@ -214,31 +220,32 @@
 .tiptap ul[data-type="taskList"] li[data-type="taskItem"] {
   display: flex;
   align-items: flex-start;
+  gap: 0.55rem;
   margin-bottom: 0.35rem;
-  line-height: 1.5;
+  line-height: 1.65;
 }
 
 .tiptap ul[data-type="taskList"] li[data-type="taskItem"] > label {
   flex: 0 0 auto;
-  margin-right: 0.55rem;
+  -webkit-user-select: none;
   user-select: none;
   cursor: pointer;
   display: flex;
   align-items: center;
-  margin-top: 0.2rem;
+  height: 1.65em;
 }
 
 .tiptap ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"] {
   cursor: pointer;
-  width: 15px;
-  height: 15px;
-  border-radius: 4px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border-radius: 5px;
   border: 1.5px solid var(--color-text-subtle);
   appearance: none;
   -webkit-appearance: none;
-  outline: none;
-  transition: all 120ms ease;
-  background-color: transparent;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  background-color: var(--color-hover-overlay);
   display: grid;
   place-content: center;
   position: relative;
@@ -246,6 +253,12 @@
 
 .tiptap ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"]:hover {
   border-color: var(--color-teal-primary);
+  box-shadow: 0 0 0 3px var(--color-teal-tint);
+}
+
+.tiptap ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--color-teal-primary);
+  outline-offset: 3px;
 }
 
 .tiptap ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"]:checked {
@@ -262,15 +275,24 @@
   transform: rotate(45deg) translate(-0.5px, -0.5px);
 }
 
-.tiptap ul[data-type="taskList"] li[data-type="taskItem"][data-checked="true"] > div {
+.tiptap ul[data-type="taskList"] li[data-type="taskItem"][data-checked="true"] > div > p {
   text-decoration: line-through;
-  opacity: 0.55;
-  transition: opacity 150ms ease;
+  color: var(--color-text-subtle);
 }
 
 .tiptap ul[data-type="taskList"] li[data-type="taskItem"] > div {
   flex: 1 1 auto;
   min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.tiptap ul[data-type="taskList"] li[data-type="taskItem"] > div > p {
+  margin: 0;
+  min-height: 1.65em;
+}
+
+.tiptap ul[data-type="taskList"] li[data-type="taskItem"] > div > p + p {
+  margin-top: 0.35rem;
 }
 
 /* Standard Lists */
@@ -357,4 +379,3 @@
   border-top: 1px solid var(--color-border-panel);
   margin: 1rem 0;
 }
-

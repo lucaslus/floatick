@@ -272,6 +272,7 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
     >
       <button
         type="button"
+        aria-label={label}
         disabled={disabled}
         onMouseDown={(e) => {
           e.preventDefault(); // Retain editor focus and selection
@@ -585,6 +586,7 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const menuListRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const lastEmittedMarkdownRef = useRef<string | null>(null);
 
   const [, setSelectionTick] = useState(0);
 
@@ -645,6 +647,8 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
       TaskList,
       TaskItem.configure({
         nested: true,
+        // Node views do not inherit the data-type added by renderHTML.
+        HTMLAttributes: { "data-type": "taskItem" },
       }),
       Markdown.configure({
         html: true,
@@ -748,6 +752,7 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
       }
 
       const md = (editor.storage as any).markdown?.getMarkdown?.() ?? "";
+      lastEmittedMarkdownRef.current = md;
       onChange?.(md);
     },
     onSelectionUpdate: () => {
@@ -773,7 +778,12 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
   }, [showSlashMenu, slashMenuIndex]);
 
   useEffect(() => {
-    if (editor && !editor.isDestroyed && initialContent && editor.isEmpty) {
+    // Hydrate late initial data without reparsing our own updates. Empty headings
+    // and task items are still editable structure even when editor.isEmpty is true.
+    if (
+      editor && !editor.isDestroyed && initialContent && editor.isEmpty &&
+      initialContent !== lastEmittedMarkdownRef.current
+    ) {
       editor.commands.setContent(initialContent);
     }
   }, [editor, initialContent]);
@@ -808,7 +818,11 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
         editor.commands.setContent(content || "");
       },
       focus: () => {
-        editor?.commands.focus();
+        if (!editor || editor.isDestroyed) return;
+        // WebKit can flush DOM changes synchronously on focus. Focus the view
+        // before creating a transaction so it uses the current document state.
+        editor.view.focus();
+        editor.commands.scrollIntoView();
       },
     };
   }, [editor, editorRef]);
@@ -816,7 +830,7 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
   return (
     <div ref={containerRef} className={`relative flex-1 flex flex-col min-h-0 ${className}`}>
       {showToolbar && <EditorToolbar editor={editor} />}
-      <EditorContent editor={editor} className="flex-1 overflow-y-auto smooth-scroll pr-1" />
+      <EditorContent editor={editor} className="tiptap-scroll-container flex-1 overflow-y-auto smooth-scroll pr-1" />
 
       {/* Floating Slash Command Menu */}
       {showSlashMenu && filteredCommands.length > 0 && (
@@ -895,4 +909,3 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
     </div>
   );
 };
-
