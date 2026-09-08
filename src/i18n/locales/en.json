@@ -89,7 +89,6 @@
   "clickToAddContent": "No content. Click to add details…",
   "doubleClickToEdit": "Double-click to edit",
   "viewModeHint": "Press E to edit · Esc to close",
-  "edit": "Edit",
   "close": "Close",
   "createTodoAction": "New Todo",
   "saveChangesAction": "Save",
@@ -140,5 +139,19 @@
   "link": "Link",
   "charactersCount": "{{count}} chars",
   "dateFormatMonthYear": "MMMM yyyy",
-  "dateFormatMonthDay": "MMM d"
+  "dateFormatMonthDay": "MMM d",
+  "updatesSectionTitle": "Software Updates",
+  "currentVersionLabel": "Current version",
+  "checkForUpdates": "Check for Updates",
+  "updateInProgress": "Update in progress",
+  "autoCheckUpdates": "Check automatically",
+  "autoCheckUpdatesDescription": "Check daily; ask before installing",
+  "updateSettingsFailed": "Could not load update settings. Please try again shortly.",
+  "updateCheckFailed": "Could not start checking. Try again or download from the release page.",
+  "updatePreferenceFailed": "Could not save your update preference. Please try again.",
+  "updatesUnavailable": "In-app updates are unavailable in this session. Use the installed Floatick app.",
+  "nativeUpdateWindowHint": "Use the update window to view the result, download, or install a new version.",
+  "lastUpdateCheck": "Last checked: {{date}}",
+  "viewReleaseNotes": "Release notes and downloads",
+  "openReleaseFailed": "Could not open the release page. Please check your default browser settings."
 }

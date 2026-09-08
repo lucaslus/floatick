@@ -2,3 +2,7 @@
 # will have compiled files and executables
 /target/
 /gen/schemas
+
+# Verified Sparkle dependency, installed by scripts/setup-sparkle.sh
+/Sparkle.framework/
+/.sparkle-archive-sha256

@@ -3,12 +3,16 @@ pub mod models;
 mod panel;
 pub mod storage;
 pub mod tray;
+mod updates;
 
 use tauri::{Manager, WindowEvent};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(target_os = "macos")]
+    let builder = builder.plugin(tauri_plugin_sparkle_updater::init());
+    builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -66,6 +70,9 @@ pub fn run() {
             commands::set_autostart_enabled,
             commands::update_tray_count,
             commands::quit_app,
+            updates::get_update_settings,
+            updates::check_for_updates,
+            updates::set_automatically_checks_for_updates,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "setup:sparkle": "bash scripts/setup-sparkle.sh",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",

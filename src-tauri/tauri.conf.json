@@ -6,8 +6,8 @@
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
-    "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build"
+    "beforeDevCommand": "pnpm setup:sparkle && pnpm dev",
+    "beforeBuildCommand": "pnpm setup:sparkle && pnpm build"
   },
   "app": {
     "macOSPrivateApi": true,
@@ -42,6 +42,8 @@
     ],
     "macOS": {
       "bundleVersion": "13",
+      "frameworks": ["./Sparkle.framework"],
+      "signingIdentity": "-",
       "minimumSystemVersion": "10.15"
     }
   }

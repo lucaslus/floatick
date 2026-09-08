@@ -178,6 +178,7 @@ jobs:
             echo "Expected a universal app, found: $architectures" >&2
             exit 1
           fi
+          python3 scripts/verify-update-bundle.py "$app_path"
           hdiutil detach "$mount_point"
           trap - EXIT
 
@@ -234,6 +235,9 @@ jobs:
       GH_REPO: ${{ github.repository }}
 
     steps:
+      - name: Check out tagged release tooling
+        uses: actions/checkout@v7
+
       - name: Download verified release assets
         uses: actions/download-artifact@v8
         with:
@@ -243,6 +247,7 @@ jobs:
       - name: Generate signed Sparkle appcast
         env:
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+          APP_VERSION: ${{ needs.verify.outputs.app_version }}
         shell: bash
         run: |
           sparkle_archive="$RUNNER_TEMP/Sparkle-$SPARKLE_VERSION.tar.xz"
@@ -262,6 +267,12 @@ jobs:
           mkdir -p "$sparkle_directory"
           tar -xJf "$sparkle_archive" -C "$sparkle_directory"
 
+          python3 scripts/test-update-feed.py "$sparkle_directory/bin"
+
+          # A promotion retry also downloads the website alias. Publish only
+          # the immutable versioned archive in the update feed.
+          rm -f "$RUNNER_TEMP/artifacts/$PRODUCT_NAME-macos-universal.dmg"
+
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" \
             | "$sparkle_directory/bin/generate_appcast" \
                 --ed-key-file - \
@@ -274,6 +285,13 @@ jobs:
                 "$RUNNER_TEMP/artifacts"
 
           test -s "$RUNNER_TEMP/artifacts/appcast.xml"
+          # SURequireSignedFeed protects the feed as well as the archive.
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" \
+            | "$sparkle_directory/bin/sign_update" --ed-key-file - \
+                "$RUNNER_TEMP/artifacts/appcast.xml"
+          python3 scripts/verify-update-feed.py \
+            "$RUNNER_TEMP/artifacts/appcast.xml" \
+            "$sparkle_directory/bin/sign_update" "$download_prefix" "$APP_VERSION"
           mkdir -p "$RUNNER_TEMP/pages"
           cp "$RUNNER_TEMP/artifacts/appcast.xml" \
             "$RUNNER_TEMP/pages/appcast.xml"

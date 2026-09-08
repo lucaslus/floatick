@@ -19,6 +19,7 @@ build/
 coverage/
 dist/
 node_modules/
+__pycache__/
 src-tauri/target/
 *.dmg
 *.xcarchive

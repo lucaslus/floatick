@@ -1,4 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { version } from "../../package.json";
 import type { TodoItem, TagWorkspace, NoteItem, AppSettings } from "@/types";
 
 const isMock = typeof window !== "undefined" && (
@@ -134,7 +136,43 @@ const MOCK_SETTINGS: AppSettings = {
   collapseWhenClickingOutside: true,
 };
 
+export interface UpdateSettings {
+  currentVersion: string;
+  available: boolean;
+  canCheck: boolean;
+  automaticallyChecks: boolean;
+  lastCheckedAt: number | null;
+}
+
+export const appVersion = version;
+
 export const api = {
+  getUpdateSettings: async (): Promise<UpdateSettings> => {
+    if (isMock) return {
+      currentVersion: version,
+      available: false,
+      canCheck: false,
+      automaticallyChecks: false,
+      lastCheckedAt: null,
+    };
+    return invoke<UpdateSettings>("get_update_settings");
+  },
+  checkForUpdates: async (): Promise<void> => {
+    if (isMock) throw new Error("updater_unavailable");
+    await invoke("check_for_updates");
+  },
+  setAutomaticallyChecksForUpdates: async (enabled: boolean): Promise<void> => {
+    if (isMock) throw new Error("updater_unavailable");
+    await invoke("set_automatically_checks_for_updates", { enabled });
+  },
+  openLatestRelease: async (): Promise<void> => {
+    const url = "https://github.com/lucaslus/floatick/releases/latest";
+    if (isMock) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    await openUrl(url);
+  },
   // Todos
   getTodos: async (): Promise<TodoItem[]> => {
     if (isMock) return MOCK_TODOS;
