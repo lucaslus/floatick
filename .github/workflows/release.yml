@@ -203,8 +203,16 @@ jobs:
             if [[ -f ".github/release-notes/$APP_VERSION.md" ]]; then
               cat ".github/release-notes/$APP_VERSION.md"
               printf '\n\n'
+              # Release tags identify the tested candidate before the PR merge.
+              # GitHub's auto notes can therefore repeat the previous release PR.
+              previous_tag=$(git describe --tags --match 'v[0-9]*' --abbrev=0 "${RELEASE_COMMIT}^" 2>/dev/null || true)
+              if [[ -n "$previous_tag" ]]; then
+                printf '**Full Changelog**: https://github.com/%s/compare/%s...%s\n' \
+                  "$GITHUB_REPOSITORY" "$previous_tag" "$GITHUB_REF_NAME"
+              fi
+            else
+              cat "$generated_notes"
             fi
-            cat "$generated_notes"
           } > "$final_notes"
 
           dmg_name="$PRODUCT_NAME-$APP_VERSION-macos-universal.dmg"
