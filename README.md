@@ -47,6 +47,12 @@ Download the latest DMG installer from [GitHub Releases](https://github.com/luca
 > **First-Launch Note for macOS**:
 > If macOS displays an "unidentified developer" warning, open **System Settings → Privacy & Security**, scroll down to **Security**, and click **Open Anyway** (only required on first launch).
 
+## App Updates
+
+Open **Settings → Software Updates** (`⌘,`) to check for a new version, read release notes, or enable daily automatic checks. Sparkle displays download progress and verifies Ed25519 signatures before installing and relaunching, with your confirmation. Automatic checks do not automatically install updates.
+
+Versions 0.4.0 and 0.4.1 do not contain the updater; install v0.4.2 manually once. Updates require an internet connection; your todos and notes remain local. Update preferences are stored in macOS user defaults.
+
 ## Shortcuts & Controls
 
 | Action | Shortcut / Gesture | Description |
@@ -75,7 +81,7 @@ Floatick automatically creates human-readable JSON files in your home directory 
 | `~/.floatick/tags.json` | Reusable color tags shared between todos and notes |
 | `~/.floatick/settings.json` | Theme (system/light/dark), language, autostart, and stay-on-top |
 
-Your data never leaves your computer. Floatick operates completely offline and collects zero telemetry.
+Your todos and notes never leave your computer and work entirely offline. Optional update checks contact the release feed; Floatick collects zero telemetry.
 
 ## Development
 
@@ -94,6 +100,8 @@ pnpm install
 # 2. Start Tauri development server (with hot reload)
 pnpm tauri:dev
 ```
+
+The Tauri commands automatically download the pinned, checksum-verified Sparkle framework. Before running Cargo directly, run `pnpm setup:sparkle` once. The updater is available in a packaged `.app`; browser previews and unbundled `tauri dev` show an unavailable state. Build and launch the `.app` to test native update windows.
 
 ### Production Build
 

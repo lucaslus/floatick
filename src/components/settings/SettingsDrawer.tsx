@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { api } from "@/lib/api";
+import { UpdateSettingsSection } from "./UpdateSettingsSection";
 import type { ThemePreference, LanguagePreference } from "@/types";
 
 interface SettingsDrawerProps {
@@ -210,6 +211,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           </div>
         </div>
 
+        <UpdateSettingsSection />
+
         {/* About & Data */}
         <div>
           <span className="text-[12px] font-medium text-[var(--color-text-subtle)] px-1 block mb-1.5">
@@ -236,15 +239,6 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               </button>
             </div>
 
-            {/* Version */}
-            <div className="px-3.5 py-2.5 flex items-center justify-between min-h-[44px]">
-              <span className="text-[13px] text-[var(--color-text-primary)]">
-                {t("versionLabel")}
-              </span>
-              <span className="text-[12px] font-mono text-[var(--color-text-subtle)]">
-                v0.4.0
-              </span>
-            </div>
           </div>
         </div>
 

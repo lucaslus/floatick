@@ -86,6 +86,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Prepare verified Sparkle framework
+        run: bash scripts/setup-sparkle.sh
+
       - name: Verify frontend and backend tests
         run: |
           pnpm build
@@ -108,6 +111,7 @@ jobs:
           executable="$app_path/Contents/MacOS/$executable_name"
           [[ "$installed_version" == "$APP_VERSION" && "$installed_build" == "$APP_BUILD_NUMBER" ]]
           lipo "$executable" -verify_arch arm64 x86_64
+          python3 scripts/verify-update-bundle.py "$app_path"
           "$executable" > "$RUNNER_TEMP/floatick-startup.log" 2>&1 &
           app_pid=$!
           trap 'kill "$app_pid" 2>/dev/null || true' EXIT

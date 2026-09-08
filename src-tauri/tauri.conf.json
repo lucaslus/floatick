@@ -1,13 +1,13 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Floatick",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "identifier": "io.github.lucaslushuo.floatick",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
-    "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build"
+    "beforeDevCommand": "pnpm setup:sparkle && pnpm dev",
+    "beforeBuildCommand": "pnpm setup:sparkle && pnpm build"
   },
   "app": {
     "macOSPrivateApi": true,
@@ -41,7 +41,9 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "bundleVersion": "13",
+      "bundleVersion": "14",
+      "frameworks": ["./Sparkle.framework"],
+      "signingIdentity": "-",
       "minimumSystemVersion": "10.15"
     }
   }
