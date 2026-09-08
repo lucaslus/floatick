@@ -51,7 +51,7 @@ Download the latest DMG installer from [GitHub Releases](https://github.com/luca
 
 Open **Settings → Software Updates** (`⌘,`) to check for a new version, read release notes, or enable daily automatic checks. Sparkle displays download progress and verifies Ed25519 signatures before installing and relaunching, with your confirmation. Automatic checks do not automatically install updates.
 
-Versions 0.4.0 and 0.4.1 do not contain the updater; install the first updater-enabled release manually once. Updates require an internet connection; your todos and notes remain local. Update preferences are stored in macOS user defaults.
+Versions 0.4.0 and 0.4.1 do not contain the updater; install v0.4.2 manually once. Updates require an internet connection; your todos and notes remain local. Update preferences are stored in macOS user defaults.
 
 ## Shortcuts & Controls
 

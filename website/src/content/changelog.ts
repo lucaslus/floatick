@@ -85,6 +85,21 @@ export const changelogCopy: Record<Locale, ChangelogCopy> = {
 export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
   en: [
     {
+      version: 'v0.4.2',
+      date: "September 8, 2026",
+      dateTime: '2026-09-08',
+      title: "In-app updates return",
+      summary: "Check, download, and install signed updates directly from Floatick.",
+      highlights: [
+        "Find the current version and manual update check in Settings → Software Updates.",
+        "Enable daily checks, then confirm installation and relaunch in the native update window.",
+        "Verify both the update feed and installer signatures before updating.",
+        "Users of the public v0.4.0 or v0.4.1 releases must install v0.4.2 manually once.",
+      ],
+      releaseUrl: `${repositoryUrl}/releases/tag/v0.4.2`,
+      compareUrl: `${repositoryUrl}/compare/v0.4.1...v0.4.2`,
+    },
+    {
       version: 'v0.4.0',
       date: 'September 7, 2026',
       dateTime: '2026-09-07',
@@ -211,6 +226,21 @@ export const changelogEntries: Record<Locale, ChangelogEntry[]> = {
     },
   ],
   zh: [
+    {
+      version: 'v0.4.2',
+      date: "2026 年 9 月 8 日",
+      dateTime: '2026-09-08',
+      title: "恢复应用内更新",
+      summary: "在 Floatick 中检查、下载并安装经过签名校验的新版本。",
+      highlights: [
+        "在设置 → 软件更新中查看当前版本并手动检查更新。",
+        "支持每日自动检查，通过原生窗口确认安装并重启。",
+        "更新源和安装包均经过签名校验。",
+        "使用公开发布的 v0.4.0 或 v0.4.1 的用户，需要先手动安装一次 v0.4.2。",
+      ],
+      releaseUrl: `${repositoryUrl}/releases/tag/v0.4.2`,
+      compareUrl: `${repositoryUrl}/compare/v0.4.1...v0.4.2`,
+    },
     {
       version: 'v0.4.0',
       date: '2026 年 9 月 7 日',
