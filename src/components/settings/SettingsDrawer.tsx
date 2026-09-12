@@ -46,6 +46,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 }) => {
   const { t } = useTranslation();
   const settings = useSettingsStore((s) => s.settings);
+  const hasOmarchyTheme = useSettingsStore((s) => s.hasOmarchyTheme);
   const updateTheme = useSettingsStore((s) => s.updateTheme);
   const updateLanguage = useSettingsStore((s) => s.updateLanguage);
   const updateAlwaysOnTop = useSettingsStore((s) => s.updateAlwaysOnTop);
@@ -114,7 +115,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               </span>
               <div className="flex items-center p-0.5 bg-[var(--color-hover-overlay)] rounded-lg shrink-0">
                 {[
-                  { id: "system" as ThemePreference, label: t("themeSystemTooltip"), icon: Desktop },
+                  { id: "system" as ThemePreference, label: hasOmarchyTheme ? "Omarchy" : t("themeSystemTooltip"), icon: Desktop },
                   { id: "light" as ThemePreference, label: t("themeLightTooltip"), icon: Sun },
                   { id: "dark" as ThemePreference, label: t("themeDarkTooltip"), icon: Moon },
                 ].map(({ id, label, icon: Icon }) => {

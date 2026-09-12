@@ -9,6 +9,8 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
+  --color-on-accent: #ffffff;
+
   /* Light Theme Tokens (Floatick lightSurface #F9FBFA, ink #11181C, teal #0F8F83) */
   --color-bg-panel: #F9FBFA;
   --color-border-panel: rgba(0, 0, 0, 0.08);
@@ -92,6 +94,17 @@
   background-color: var(--color-bg-panel);
   border: 1px solid var(--color-border-panel);
   color: var(--color-text-primary);
+}
+
+/* Omarchy / Hyprland owns the outer border, rounding and shadow. */
+:root[data-window-frame="system"] .floatick-shell {
+  padding: 0;
+}
+
+:root[data-window-frame="system"] .floatick-panel {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* Zero-delay atomic theme switch: suppresses all CSS transitions during theme update to eliminate staggered lag */
@@ -189,6 +202,16 @@
   scrollbar-width: none;
 }
 
+/* Editable controls must not inherit the shell's selection lock. Explicit
+   caret contrast also avoids GTK/WebKit theme defaults on dark surfaces. */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+  caret-color: var(--color-text-primary);
+}
+
 /* Tiptap Editor & Task List styling */
 .tiptap-scroll-container {
   /* WKWebView can omit the caret in empty paragraphs inside a transformed
@@ -270,7 +293,7 @@
   content: "";
   width: 4px;
   height: 8px;
-  border: solid white;
+  border: solid var(--color-on-accent);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg) translate(-0.5px, -0.5px);
 }
@@ -378,4 +401,11 @@
   border: none;
   border-top: 1px solid var(--color-border-panel);
   margin: 1rem 0;
+}
+
+:root[data-omarchy-theme] { color-scheme: light; }
+:root[data-omarchy-theme].dark { color-scheme: dark; }
+:root[data-omarchy-theme] ::selection {
+  background: var(--color-selection);
+  color: var(--color-text-primary);
 }

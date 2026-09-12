@@ -213,7 +213,16 @@ export const api = {
     await invoke("save_settings", { settings });
   },
 
+  getOmarchyTheme: async (): Promise<import("./omarchyTheme").OmarchyTheme | null> => {
+    if (isMock) return null;
+    return await invoke("get_omarchy_theme");
+  },
+
   // Window actions
+  usesSystemWindowFrame: async (): Promise<boolean> => {
+    if (isMock) return false;
+    return await invoke<boolean>("uses_system_window_frame");
+  },
   hideWindow: async (): Promise<void> => {
     if (isMock) return;
     await invoke("hide_window");
