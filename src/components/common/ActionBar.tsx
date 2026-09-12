@@ -62,7 +62,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       >
         <Tag size={20} weight={selectedTagCount > 0 ? "fill" : "regular"} />
         {selectedTagCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[var(--color-teal-primary)] text-white text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[var(--color-teal-primary)] text-[var(--color-on-accent)] text-[10px] font-bold flex items-center justify-center">
             {selectedTagCount}
           </span>
         )}

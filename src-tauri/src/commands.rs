@@ -105,3 +105,8 @@ pub fn set_autostart_enabled(app_handle: AppHandle, enabled: bool) -> Result<(),
 pub fn quit_app(app_handle: AppHandle) {
     app_handle.exit(0);
 }
+
+#[tauri::command]
+pub fn uses_system_window_frame() -> bool {
+    crate::panel::uses_system_window_frame()
+}

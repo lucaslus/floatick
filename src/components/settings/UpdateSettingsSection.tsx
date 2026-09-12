@@ -1,3 +1,4 @@
+import { isMac } from "../../lib/platform";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowSquareOut, ArrowsClockwise } from "@phosphor-icons/react";
@@ -97,7 +98,7 @@ export function UpdateSettingsSection() {
       </div>
       <div className="px-1 mt-2 text-[11.5px] leading-relaxed text-[var(--color-text-subtle)]" aria-live="polite">
         {error ? <p role="alert" className="text-red-500">{t(error)}</p> : settings && !settings.available ? (
-          <p>{t("updatesUnavailable")}</p>
+          <p>{t(isMac ? "updatesUnavailable" : "updatesPackageManager")}</p>
         ) : busy ? (
           <p>{t("nativeUpdateWindowHint")}</p>
         ) : settings?.lastCheckedAt ? (

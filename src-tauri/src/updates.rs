@@ -15,6 +15,7 @@ pub struct UpdateSettings {
 
 #[tauri::command]
 pub async fn get_update_settings(app: AppHandle) -> Result<UpdateSettings, String> {
+    #[allow(unused_mut)] // Only Sparkle mutates this on macOS.
     let mut settings = UpdateSettings {
         current_version: app.package_info().version.to_string(),
         available: false,
@@ -37,9 +38,9 @@ pub async fn get_update_settings(app: AppHandle) -> Result<UpdateSettings, Strin
 }
 
 #[tauri::command]
-pub async fn check_for_updates(app: AppHandle) -> Result<(), String> {
+pub async fn check_for_updates(_app: AppHandle) -> Result<(), String> {
     #[cfg(target_os = "macos")]
-    if let Some(updater) = app.sparkle_updater() {
+    if let Some(updater) = _app.sparkle_updater() {
         if !updater.can_check_for_updates().map_err(|e| e.to_string())? {
             return Err("update_in_progress".into());
         }
@@ -52,11 +53,13 @@ pub async fn check_for_updates(app: AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn set_automatically_checks_for_updates(
-    app: AppHandle,
+    _app: AppHandle,
     enabled: bool,
 ) -> Result<(), String> {
+    #[cfg(not(target_os = "macos"))]
+    let _ = enabled;
     #[cfg(target_os = "macos")]
-    if let Some(updater) = app.sparkle_updater() {
+    if let Some(updater) = _app.sparkle_updater() {
         return updater
             .set_automatically_checks_for_updates(enabled)
             .map_err(|e| e.to_string());

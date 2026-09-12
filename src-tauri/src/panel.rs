@@ -2,6 +2,12 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::WebviewWindow;
 
+// Hyprland supplies the outer frame, including Omarchy's square theme border.
+pub(crate) fn uses_system_window_frame() -> bool {
+    cfg!(target_os = "linux")
+        && std::env::var_os("HYPRLAND_INSTANCE_SIGNATURE").is_some()
+}
+
 const BLUR_SETTLE_DELAY: Duration = Duration::from_millis(150);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

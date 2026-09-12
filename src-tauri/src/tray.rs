@@ -4,6 +4,10 @@ use tauri::{
     AppHandle, LogicalPosition, Manager, Position, Rect,
 };
 
+// Linux tray-icon uses this ID in a shared runtime icon directory.
+// Keep it application-specific to avoid collisions with other Tauri apps.
+const TRAY_ID: &str = "io.github.lucaslushuo.floatick.tray";
+
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let show_item = MenuItem::with_id(app, "show", "显示 Floatick", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "退出 Floatick", true, None::<&str>)?;
@@ -11,7 +15,10 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
     let menu = Menu::with_items(app, &[&show_item, &sep, &quit_item])?;
 
+    #[cfg(target_os = "macos")]
     let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon@2x.png"))?;
+    #[cfg(not(target_os = "macos"))]
+    let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/32x32.png"))?;
 
     let initial_count = crate::storage::load_todos()
         .map(|todos| {
@@ -28,12 +35,12 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         "".to_string()
     };
 
-    let _tray = TrayIconBuilder::with_id("main-tray")
+    let _tray = TrayIconBuilder::with_id(TRAY_ID)
         .icon(tray_icon)
-        .icon_as_template(true)
+        .icon_as_template(cfg!(target_os = "macos"))
         .title(title_str)
         .menu(&menu)
-        .show_menu_on_left_click(false)
+        .show_menu_on_left_click(cfg!(target_os = "linux"))
         .tooltip("Floatick")
         .on_menu_event(|app_handle, event| match event.id.as_ref() {
             "show" => {
@@ -187,12 +194,12 @@ pub fn position_window_at_rect(window: &tauri::WebviewWindow, rect: Rect) {
 
         let min_x = mon_pos.x + 8.0;
         let max_x = mon_pos.x + mon_size.width - window_width - 8.0;
-        window_x = window_x.clamp(min_x, max_x);
+        window_x = window_x.clamp(min_x, max_x.max(min_x));
 
         if tray_size.height > 0.0 {
             let min_y = mon_pos.y + 8.0;
             let max_y = mon_pos.y + mon_size.height - window_height - 8.0;
-            window_y = window_y.clamp(min_y, max_y);
+            window_y = window_y.clamp(min_y, max_y.max(min_y));
         } else {
             window_y = mon_pos.y + 36.0;
         }
@@ -225,8 +232,18 @@ pub fn show_window(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window("main") {
         crate::panel::cancel_pending_hide();
 
+        #[cfg(target_os = "linux")]
+        if std::env::var_os("HYPRLAND_INSTANCE_SIGNATURE").is_some() {
+            // Let the compositor's Floatick rule position the panel. XWayland
+            // coordinates differ from monitor logical coordinates at fractional
+            // scales; applying GTK positions here can move it to another screen.
+            let _ = window.show();
+            let _ = window.set_focus();
+            return;
+        }
+
         let mut positioned = false;
-        if let Some(tray) = app_handle.tray_by_id("main-tray") {
+        if let Some(tray) = app_handle.tray_by_id(TRAY_ID) {
             if let Ok(Some(rect)) = tray.rect() {
                 let size = rect.size.to_logical::<f64>(1.0);
                 if size.width > 0.0 && size.height > 0.0 {
@@ -261,7 +278,7 @@ pub fn show_window(app_handle: &AppHandle) {
 }
 
 pub fn update_tray_todo_count(app: &AppHandle, count: usize) {
-    if let Some(tray) = app.tray_by_id("main-tray") {
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
         let title_str = if count > 0 {
             format!(" {}", count)
         } else {
