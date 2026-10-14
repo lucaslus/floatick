@@ -1,3 +1,4 @@
+import { isPrimaryShortcut } from "./lib/platform";
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { ContentSwitcher } from "@/components/layout/ContentSwitcher";
@@ -79,6 +80,8 @@ export const App: React.FC = () => {
   // Global Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Let the IME consume candidate navigation/confirmation before app shortcuts.
+      if (e.isComposing || e.keyCode === 229) return;
       // Esc closes drawers first, then hides window
       if (e.key === "Escape") {
         if (isSettingsOpen) {
@@ -101,30 +104,30 @@ export const App: React.FC = () => {
       }
 
       // Cmd+1 -> Todos, Cmd+2 -> Notes
-      if ((e.metaKey || e.ctrlKey) && e.key === "1") {
+      if (isPrimaryShortcut(e) && e.key === "1") {
         e.preventDefault();
         setActiveTab("todos");
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === "2") {
+      if (isPrimaryShortcut(e) && e.key === "2") {
         e.preventDefault();
         setActiveTab("notes");
       }
 
       // Cmd+, -> Settings
-      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
+      if (isPrimaryShortcut(e) && e.key === ",") {
         e.preventDefault();
         setIsSettingsOpen(true);
       }
 
       // Cmd+F -> Focus Search input
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
+      if (isPrimaryShortcut(e) && e.key.toLowerCase() === "f") {
         e.preventDefault();
         const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement | null;
         searchInput?.focus();
       }
 
       // Cmd+N -> New Item
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
+      if (isPrimaryShortcut(e) && e.key.toLowerCase() === "n") {
         e.preventDefault();
         if (isSettingsOpen || isTagDrawerOpen || isTodoEditorOpen || isNoteEditorOpen) return;
         window.dispatchEvent(new CustomEvent("floatick:new-item"));
@@ -141,7 +144,7 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className={`w-full h-full ${
+      className={`floatick-shell w-full h-full ${
         isScreenshotMode ? "p-0" : "p-2"
       } flex flex-col items-center justify-center select-none bg-transparent font-sans`}
     >

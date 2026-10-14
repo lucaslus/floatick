@@ -149,6 +149,7 @@
   "updateSettingsFailed": "暂时无法读取更新设置，请稍后重试。",
   "updateCheckFailed": "无法开始检查更新，请稍后重试，或前往发布页下载。",
   "updatePreferenceFailed": "更新偏好保存失败，请重试。",
+  "updatesPackageManager": "Linux 版请通过包管理器更新，或重新构建并安装软件包。",
   "updatesUnavailable": "当前运行方式不支持应用内更新，请使用已安装的 Floatick。",
   "nativeUpdateWindowHint": "请在更新窗口中查看结果、下载或安装新版本。",
   "lastUpdateCheck": "上次检查：{{date}}",

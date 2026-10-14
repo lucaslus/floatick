@@ -1,3 +1,4 @@
+import { isPrimaryShortcut, shortcutLabel } from "../../lib/platform";
 import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -103,8 +104,8 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
         }
       }
 
-      // In edit mode: Cmd+Enter to save
-      if (mode === "edit" && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      // Save with the platform primary modifier (Ctrl on Omarchy).
+      if (mode === "edit" && isPrimaryShortcut(e) && e.key === "Enter") {
         e.preventDefault();
         handleSave();
       }
@@ -313,7 +314,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
               <button
                 type="button"
                 onClick={() => setMode("edit")}
-                className="px-3.5 py-1 text-[12px] font-medium bg-[var(--color-teal-primary)] hover:bg-[var(--color-teal-primary)]/90 text-white rounded-md transition-colors cursor-pointer tactile-btn shadow-xs flex items-center space-x-1.5"
+                className="px-3.5 py-1 text-[12px] font-medium bg-[var(--color-teal-primary)] hover:bg-[var(--color-teal-primary)]/90 text-[var(--color-on-accent)] rounded-md transition-colors cursor-pointer tactile-btn shadow-xs flex items-center space-x-1.5"
               >
                 <PencilSimple size={14} weight="bold" />
                 <span>{t("edit")}</span>
@@ -337,7 +338,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
               }}
               onKeyDown={(e) => {
                 if (e.nativeEvent.isComposing || e.keyCode === 229) return;
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                if (isPrimaryShortcut(e) && e.key === "Enter") {
                   e.preventDefault();
                   e.stopPropagation();
                   handleSave();
@@ -510,7 +511,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
           {/* Edit Mode Footer Bar */}
           <div className="h-11 px-5 border-t border-[var(--color-border-panel)] flex items-center justify-between shrink-0 bg-[var(--color-bg-panel)]">
             <span className="text-[11.5px] text-[var(--color-text-subtle)]">
-              {t("shortcutHint")}
+              {shortcutLabel(t("shortcutHint"))}
             </span>
 
             <div className="flex items-center space-x-2">
@@ -531,7 +532,7 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                 type="button"
                 onClick={handleSave}
                 disabled={!canSave}
-                className="px-3.5 py-1 text-[12px] font-medium bg-[var(--color-teal-primary)] hover:bg-[var(--color-teal-primary)]/90 text-white rounded-md transition-colors cursor-pointer tactile-btn disabled:opacity-40 disabled:pointer-events-none shadow-xs flex items-center space-x-1.5"
+                className="px-3.5 py-1 text-[12px] font-medium bg-[var(--color-teal-primary)] hover:bg-[var(--color-teal-primary)]/90 text-[var(--color-on-accent)] rounded-md transition-colors cursor-pointer tactile-btn disabled:opacity-40 disabled:pointer-events-none shadow-xs flex items-center space-x-1.5"
               >
                 <Check size={14} weight="bold" />
                 <span>{t("save")}</span>

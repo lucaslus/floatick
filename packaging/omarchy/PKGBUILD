@@ -1,0 +1,29 @@
+# Local package: run makepkg from this directory in a Floatick source checkout.
+pkgname=floatick-omarchy
+pkgver=0.4.2
+pkgrel=3
+pkgdesc='Floating todos and notes with Omarchy desktop integration'
+arch=('x86_64' 'aarch64')
+url='https://github.com/lucaslus/floatick'
+license=('MIT')
+depends=('webkit2gtk-4.1' 'libayatana-appindicator' 'xorg-xwayland')
+makedepends=('rust' 'nodejs' 'pnpm')
+optdepends=('fcitx5-gtk: Fcitx input method support in GTK')
+provides=('floatick')
+conflicts=('floatick')
+options=('!strip')
+
+build() {
+  cd "$startdir/../.."
+  pnpm install --frozen-lockfile
+  pnpm tauri build --no-bundle
+}
+
+package() {
+  cd "$startdir/../.."
+  install -Dm755 src-tauri/target/release/floatick "$pkgdir/usr/bin/floatick"
+  install -Dm644 packaging/omarchy/floatick.desktop "$pkgdir/usr/share/applications/floatick.desktop"
+  install -Dm644 src-tauri/icons/128x128.png "$pkgdir/usr/share/icons/hicolor/128x128/apps/floatick.png"
+  install -Dm644 packaging/omarchy/floatick.lua "$pkgdir/usr/share/floatick/floatick.lua"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

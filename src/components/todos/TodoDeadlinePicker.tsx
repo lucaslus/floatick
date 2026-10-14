@@ -155,7 +155,7 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
                 onClick={() => setSelectedDay(day)}
                 className={`h-7.5 w-7.5 mx-auto rounded-full flex items-center justify-center text-[11px] font-medium transition-all mui-ripple ${
                   isSelected
-                    ? "bg-[var(--color-teal-primary)] text-white font-bold shadow-sm"
+                    ? "bg-[var(--color-teal-primary)] text-[var(--color-on-accent)] font-bold shadow-sm"
                     : isCurrentToday
                     ? "border border-[var(--color-teal-primary)] text-[var(--color-teal-primary)] font-semibold"
                     : isCurrentMonth

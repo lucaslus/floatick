@@ -46,3 +46,8 @@ xcuserdata/
 *.keychain-db
 *.mobileprovision
 *.provisionprofile
+
+# Local Arch package outputs
+packaging/omarchy/pkg/
+packaging/omarchy/src/
+packaging/omarchy/*.pkg.tar.*

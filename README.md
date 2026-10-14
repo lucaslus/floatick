@@ -27,11 +27,28 @@
   <img src="./docs/assets/floatick-showcase.png" width="100%" alt="Floatick Menu Bar Todos, TipTap Markdown Editor, and Quick Notes" />
 </p>
 
-Floatick is a lightweight, local-first productivity app crafted natively for macOS. It rests quietly in your Menu Bar with a live counter badge for pending tasks. One click slides open a focused workspace directly beneath the icon. No heavy setups, no cloud sign-ups—just fast capture and effortless follow-through.
+Floatick is a lightweight, local-first productivity app for macOS, with Omarchy / Hyprland support. On macOS, it lives in the Menu Bar and opens a floating panel when you click its icon. Omarchy uses the tray interaction and window styling described below. The screenshot above shows the macOS interface.
+
+## Omarchy / Linux
+
+Build the Omarchy edition as an Arch package from source. Follow the [Omarchy setup guide](packaging/omarchy/README.md) to install it and load the bundled Hyprland window rules; the window behavior below assumes those rules are loaded. The supplied rules require **Hyprland 0.55+ with Lua configuration**.
+
+| Area | Omarchy behavior |
+| --- | --- |
+| **Open the panel** | **Right-click the system tray icon → choose “显示 Floatick” (Show Floatick)**. Unlike macOS, do not rely on a left click to toggle the panel. Launching Floatick again from the application launcher also opens the existing instance. |
+| **Panel placement** | Hyprland rules center the floating panel on the screen where it opens, independently of the tray icon. The panel floats in the current workspace; cross-workspace pinning is disabled because it can cover input-method candidate windows. |
+| **Window appearance** | The outer frame inherits Omarchy’s theme border colors, width, rounding, opacity, and shadow; corners are square by default. Floatick removes its macOS-style rounded shell, custom border, and transparent outer padding. Internal buttons and cards keep their usual styling. |
+| **Summon shortcut** | Configure `Super+Ctrl+Shift+F` in Hyprland (see the Omarchy guide). Check personal bindings first. Super+Shift+F opens the system file manager; Super+Enter opens the terminal. Floatick uses Ctrl+Enter to save, and does not use Super/Win for app shortcuts. |
+| **Theme** | The system-theme option is labeled **Omarchy** when its palette is available. It follows Omarchy colors and light/dark mode, updating automatically after theme changes. Explicit Light/Dark keeps Floatick colors. |
+| **Keyboard shortcuts** | Use `Ctrl` instead of `⌘`: `Ctrl+N` to create, `Ctrl+Enter` to save, `Ctrl+F` to search, `Ctrl+,` for settings, and `Ctrl+1/2` to switch between todos and notes. |
+| **Hide or quit** | `Esc` dismisses an editor or settings drawer first, then hides the panel. Closing the window through the window manager also hides it. To exit, choose “退出 Floatick” (Quit Floatick) in the tray menu or quit from the app’s settings. Automatic collapse on focus loss is configurable in settings. |
+| **Tray counts and updates** | Pending-count labels depend on status-bar support. Update Linux builds by rebuilding and installing the package; the macOS Sparkle updater is not used. |
+
+Floatick defaults to XWayland on Hyprland for desktop panel behavior. Fractional scaling may look less sharp than native Wayland applications. Todos, notes, and tags work the same way, with offline data stored in `~/.floatick`.
 
 ## Key Features
 
-- **Menu Bar Native**: Sits quietly in your system status bar with a live pending badge. Click to open directly beneath the tray icon without cluttering your Dock.
+- **Native macOS Menu Bar**: Sits quietly in your system status bar with a live pending badge. Click to open directly beneath the tray icon without cluttering your Dock.
 - **Full-Width Cards & Floating Capsules**: Task titles span the full row width without premature truncation. Hovering smoothly reveals frosted action capsules (deadline, edit, copy markdown, delete).
 - **Separated Browsing & Editing**: Check off tasks instantly in the list; open the full TipTap editor drawer on demand via double-click or `⌘N`.
 - **TipTap Markdown & Slash Commands**: Press `/` for interactive checklists, headings, code blocks, and quotes with instant formatting.
@@ -42,18 +59,22 @@ Floatick is a lightweight, local-first productivity app crafted natively for mac
 
 ## Download & Installation
 
-Download the latest DMG installer from [GitHub Releases](https://github.com/lucaslus/floatick/releases) and drag Floatick to your `Applications` folder. The installer is a Universal Binary supporting both Apple silicon (M-series) and Intel Macs.
+**macOS:** Download the latest DMG installer from [GitHub Releases](https://github.com/lucaslus/floatick/releases) and drag Floatick to your `Applications` folder. The installer is a Universal Binary supporting both Apple silicon (M-series) and Intel Macs.
 
 > **First-Launch Note for macOS**:
 > If macOS displays an "unidentified developer" warning, open **System Settings → Privacy & Security**, scroll down to **Security**, and click **Open Anyway** (only required on first launch).
 
 ## App Updates
 
+The Sparkle instructions below apply to macOS. On Omarchy, rebuild and install the package as described in the [setup guide](packaging/omarchy/README.md).
+
 Open **Settings → Software Updates** (`⌘,`) to check for a new version, read release notes, or enable daily automatic checks. Sparkle displays download progress and verifies Ed25519 signatures before installing and relaunching, with your confirmation. Automatic checks do not automatically install updates.
 
 Versions 0.4.0 and 0.4.1 do not contain the updater; install v0.4.2 manually once. Updates require an internet connection; your todos and notes remain local. Update preferences are stored in macOS user defaults.
 
 ## Shortcuts & Controls
+
+The table below describes macOS. On Omarchy, replace `⌘` with `Ctrl` and use the tray’s right-click menu to open the panel, as described above.
 
 | Action | Shortcut / Gesture | Description |
 | --- | --- | --- |
@@ -87,7 +108,7 @@ Your todos and notes never leave your computer and work entirely offline. Option
 
 ### Requirements
 
-- macOS 10.15 or later
+- macOS 10.15 or later, or Omarchy with the dependencies in the [setup guide](packaging/omarchy/README.md)
 - [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
 - [Rust](https://www.rust-lang.org/) (1.80+) and Cargo
 
@@ -101,7 +122,7 @@ pnpm install
 pnpm tauri:dev
 ```
 
-The Tauri commands automatically download the pinned, checksum-verified Sparkle framework. Before running Cargo directly, run `pnpm setup:sparkle` once. The updater is available in a packaged `.app`; browser previews and unbundled `tauri dev` show an unavailable state. Build and launch the `.app` to test native update windows.
+On macOS, the Tauri commands automatically download the pinned, checksum-verified Sparkle framework. Before running Cargo directly, run `pnpm setup:sparkle` once. The updater is available in a packaged `.app`; browser previews and unbundled `tauri dev` show an unavailable state. Build and launch the `.app` to test native update windows.
 
 ### Production Build
 

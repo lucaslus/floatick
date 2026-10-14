@@ -27,11 +27,28 @@
   <img src="./docs/assets/floatick-showcase.png" width="100%" alt="Floatick 菜单栏待办、TipTap 富文本写作与随手记便签" />
 </p>
 
-Floatick 是一款专为 macOS 设计的原生轻量效率工具。安静常驻于屏幕顶部的菜单栏中，未完成事项实时显示角标；点击图标即在手边展开浮动面板。无需复杂配置，点开即记，做完即勾，不扰专注。
+Floatick 是一款本地优先的轻量效率工具，支持 macOS，并提供 Omarchy / Hyprland 适配。在 macOS 上，应用常驻菜单栏，点击图标即可展开浮动面板；Omarchy 的托盘操作与窗口外观见下方说明。上方截图展示的是 macOS 界面。
+
+## Omarchy / Linux
+
+Omarchy 版可从源码构建 Arch 软件包。请按 [Omarchy 安装说明](packaging/omarchy/README.md) 安装，并加载随包提供的 Hyprland 浮窗规则；以下窗口行为以加载该规则为前提。目前提供的规则适用于 **Hyprland 0.55+ 的 Lua 配置**。
+
+| 项目 | Omarchy 下的操作与表现 |
+| --- | --- |
+| **打开面板** | **右键系统托盘图标 → 点击「显示 Floatick」**。不同于 macOS 的左键直接展开，不要依赖左键切换面板。也可从应用启动器再次启动 Floatick，唤出已有实例。 |
+| **浮窗位置** | 面板在打开时所在屏幕居中悬浮，由 Hyprland 规则定位，不跟随托盘图标；随包规则使其在当前工作区保持悬浮，不启用会遮挡输入法候选框的跨工作区固定（pin）。 |
+| **窗口外观** | 外层使用 Omarchy 系统边框，跟随桌面主题的边框颜色、宽度、圆角、透明度和阴影设置；默认是直角。移除 macOS 风格的圆角外壳、自绘边框及外围透明留白，内部按钮和卡片保留原有样式。 |
+| **快捷键呼出** | 在 Hyprland 中配置 `Super+Ctrl+Shift+F`（见 Omarchy 安装说明），先检查个人绑定是否冲突。系统的 `Super+Shift+F` 是文件管理器，`Super+Enter` 是终端；Floatick 使用 `Ctrl+Enter` 保存，应用快捷键不使用 Super/Win。 |
+| **主题跟随** | 检测到系统配色后，“系统”选项显示为 **Omarchy**，跟随背景、文字、强调色和明暗模式，切换系统主题后自动更新。手动选择浅色／深色仍使用 Floatick 原配色。 |
+| **快捷键** | 使用 `Ctrl` 替代 `⌘`：`Ctrl+N` 新建、`Ctrl+Enter` 保存、`Ctrl+F` 搜索、`Ctrl+,` 打开设置、`Ctrl+1/2` 切换待办与便签。 |
+| **收起与退出** | `Esc` 先关闭编辑器或设置等抽屉，再收起面板；系统关闭窗口操作也只收起面板。真正退出请在托盘菜单点击「退出 Floatick」，或使用应用设置中的退出操作。失焦自动收起可在设置中控制。 |
+| **托盘计数与更新** | 待办计数是否显示取决于状态栏支持。Linux 版通过重新构建并安装软件包更新，不使用 macOS 的 Sparkle 更新器。 |
+
+Hyprland 下默认使用 XWayland，以适配桌面浮窗行为；分数缩放时，清晰度可能与原生 Wayland 应用不同。待办、便签与标签功能保持一致，数据仍保存在 `~/.floatick`，无需联网即可使用。
 
 ## 特性亮点
 
-- **原生常驻菜单栏**：常驻右上角状态栏，角标实时显示待办数，点击即开，不占 Dock。
+- **macOS 原生常驻菜单栏**：常驻右上角状态栏，角标实时显示待办数，点击即开，不占 Dock。
 - **全宽卡片与悬浮胶囊**：长标题全宽展示无遮挡；鼠标悬浮呼出截止时间、编辑、复制与删除操作胶囊。
 - **浏览勾选与编辑抽屉独立**：列表专注纯粹浏览与单键勾销；双击或按 `⌘N` 唤出独立编辑抽屉。
 - **TipTap 富文本与斜杠指令**：输入 `/` 快速插入交互式任务清单、多级标题、代码块与引用。
@@ -42,18 +59,22 @@ Floatick 是一款专为 macOS 设计的原生轻量效率工具。安静常驻�
 
 ## 下载安装
 
-前往 [GitHub Releases](https://github.com/lucaslus/floatick/releases) 下载最新 DMG 安装包，打开后将 Floatick 拖入 `Applications` 即可。安装包为 Universal Binary，原生支持 Apple 芯片（M 系列）与 Intel 架构。
+**macOS：**前往 [GitHub Releases](https://github.com/lucaslus/floatick/releases) 下载最新 DMG 安装包，打开后将 Floatick 拖入 `Applications` 即可。安装包为 Universal Binary，原生支持 Apple 芯片（M 系列）与 Intel 架构。
 
 > **macOS 首次打开提示**：
 > 如打开时提示“来自未受信任的开发者”，请前往 **系统设置 → 隐私与安全**，在“安全性”中点击 **仍要打开** 即可（仅需首次确认一次）。
 
 ## 应用更新
 
+以下 Sparkle 更新说明适用于 macOS；Omarchy 请按 [安装说明](packaging/omarchy/README.md) 重新构建并安装软件包。
+
 打开 **设置 → 软件更新**（`⌘,`），可手动检查新版本、查看更新说明，或开启每天自动检查。Sparkle 原生窗口负责展示下载进度、验证 Ed25519 签名，并在你确认后安装、重启；自动检查不会自动安装。
 
 v0.4.0 和 v0.4.1 尚未内置更新组件，需要先手动安装一次 v0.4.2。检查更新需要联网，待办和便签数据仍保存在本机。更新偏好保存在 macOS 用户偏好中。
 
 ## 快捷键与常用交互
+
+下表以 macOS 为例；Omarchy 使用 `Ctrl` 替代 `⌘`，打开面板请使用上方所述的托盘右键菜单。
 
 | 操作 | 快捷键 / 交互 | 说明 |
 | --- | --- | --- |
@@ -87,7 +108,7 @@ Floatick 首次启动时会在用户目录自动创建数据文件：
 
 ### 环境要求
 
-- macOS 10.15 或更高版本
+- macOS 10.15 或更高版本；Omarchy 的系统依赖见 [安装说明](packaging/omarchy/README.md)
 - [Node.js](https://nodejs.org/) 18+ 与 [pnpm](https://pnpm.io/)
 - [Rust](https://www.rust-lang.org/) (1.80+) 与 Cargo 环境
 
@@ -101,7 +122,7 @@ pnpm install
 pnpm tauri:dev
 ```
 
-Tauri 命令会自动下载固定版本且经过 SHA-256 校验的 Sparkle 框架。直接运行 Cargo 前，请先执行一次 `pnpm setup:sparkle`。更新功能仅在打包后的 `.app` 中启用，浏览器预览及未打包的 `tauri dev` 会显示不可用提示；测试原生更新窗口请构建并启动 `.app`。
+在 macOS 上，Tauri 命令会自动下载固定版本且经过 SHA-256 校验的 Sparkle 框架。直接运行 Cargo 前，请先执行一次 `pnpm setup:sparkle`。更新功能仅在打包后的 `.app` 中启用，浏览器预览及未打包的 `tauri dev` 会显示不可用提示；测试原生更新窗口请构建并启动 `.app`。
 
 ### 生产打包
 

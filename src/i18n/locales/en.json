@@ -149,6 +149,7 @@
   "updateSettingsFailed": "Could not load update settings. Please try again shortly.",
   "updateCheckFailed": "Could not start checking. Try again or download from the release page.",
   "updatePreferenceFailed": "Could not save your update preference. Please try again.",
+  "updatesPackageManager": "On Linux, update Floatick through your package manager or rebuild the installed package.",
   "updatesUnavailable": "In-app updates are unavailable in this session. Use the installed Floatick app.",
   "nativeUpdateWindowHint": "Use the update window to view the result, download, or install a new version.",
   "lastUpdateCheck": "Last checked: {{date}}",

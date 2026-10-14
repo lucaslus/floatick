@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Floatick
+Comment=Local-first floating todos and notes
+Exec=floatick
+Icon=floatick
+Terminal=false
+Categories=Office;
+StartupWMClass=floatick

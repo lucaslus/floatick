@@ -2,10 +2,15 @@ import { create } from "zustand";
 import type { AppSettings, ThemePreference, LanguagePreference } from "@/types";
 import { api } from "@/lib/api";
 import i18n from "@/i18n";
+import { applyOmarchyPalette, type OmarchyTheme } from "@/lib/omarchyTheme";
+
+let omarchyTheme: OmarchyTheme | null = null;
+let refreshingTheme = false;
 
 interface SettingsState {
   settings: AppSettings;
   isLoaded: boolean;
+  hasOmarchyTheme: boolean;
   loadSettings: () => Promise<void>;
   updateTheme: (theme: ThemePreference) => Promise<void>;
   updateLanguage: (language: LanguagePreference) => Promise<void>;
@@ -22,13 +27,11 @@ const defaultSettings: AppSettings = {
 
 function applyTheme(theme: ThemePreference) {
   const root = document.documentElement;
-  const isDark =
-    theme === "dark" ||
-    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-  // Disable all CSS transitions during theme switch so all elements (header, search bar, buttons, list)
-  // switch 100% synchronously in a single atomic frame without any staggered delay or lag.
   root.classList.add("disable-transitions");
+  const omarchyDark = applyOmarchyPalette(theme === "system" ? omarchyTheme : null);
+  const isDark = omarchyDark ?? (
+    theme === "dark" ||
+    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches));
 
   if (isDark) {
     root.classList.add("dark");
@@ -78,10 +81,13 @@ function applyLanguage(lang: LanguagePreference) {
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: defaultSettings,
   isLoaded: false,
+  hasOmarchyTheme: false,
 
   loadSettings: async () => {
     try {
-      const data = await api.getSettings();
+      const [data, palette] = await Promise.all([api.getSettings(), api.getOmarchyTheme().catch(() => null)]);
+      omarchyTheme = palette;
+      set({ hasOmarchyTheme: palette !== null });
       const current = { ...defaultSettings, ...data };
       set({ settings: current, isLoaded: true });
       applyTheme(current.theme);
@@ -121,3 +127,27 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     await api.saveSettings(next);
   },
 }));
+
+// Re-read the active path (Omarchy replaces it on theme changes). No desktop
+// hooks or extra daemon are needed. Read only while following system colors.
+async function refreshOmarchyTheme() {
+  const state = useSettingsStore.getState();
+  if (refreshingTheme || !state.isLoaded || state.settings.theme !== "system") return;
+  refreshingTheme = true;
+  try {
+    const next = await api.getOmarchyTheme();
+    if (JSON.stringify(next) !== JSON.stringify(omarchyTheme)) {
+      omarchyTheme = next;
+      useSettingsStore.setState({ hasOmarchyTheme: next !== null });
+      applyTheme(useSettingsStore.getState().settings.theme);
+    }
+  } catch {
+    // Keep the last palette during transient IPC failures.
+  } finally {
+    refreshingTheme = false;
+  }
+}
+if (typeof window !== "undefined" && /Linux/.test(navigator.platform)) {
+  window.setInterval(() => { void refreshOmarchyTheme(); }, 2000);
+  window.addEventListener("focus", () => { void refreshOmarchyTheme(); });
+}

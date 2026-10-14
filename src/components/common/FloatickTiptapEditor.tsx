@@ -1,3 +1,4 @@
+import { isPrimaryShortcut, shortcutLabel } from "../../lib/platform";
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -329,7 +330,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         {/* Headings */}
         <ToolbarButton
           label="一级标题"
-          shortcut="H1"
+          shortcut={shortcutLabel("H1")}
           isActive={editor.isActive("heading", { level: 1 })}
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         >
@@ -337,7 +338,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         </ToolbarButton>
         <ToolbarButton
           label="二级标题"
-          shortcut="H2"
+          shortcut={shortcutLabel("H2")}
           isActive={editor.isActive("heading", { level: 2 })}
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         >
@@ -349,7 +350,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         {/* Inline styles */}
         <ToolbarButton
           label="加粗"
-          shortcut="⌘B"
+          shortcut={shortcutLabel("⌘B")}
           isActive={editor.isActive("bold")}
           onClick={() => editor.chain().focus().toggleBold().run()}
         >
@@ -357,7 +358,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         </ToolbarButton>
         <ToolbarButton
           label="斜体"
-          shortcut="⌘I"
+          shortcut={shortcutLabel("⌘I")}
           isActive={editor.isActive("italic")}
           onClick={() => editor.chain().focus().toggleItalic().run()}
         >
@@ -365,7 +366,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         </ToolbarButton>
         <ToolbarButton
           label="删除线"
-          shortcut="⌘⇧X"
+          shortcut={shortcutLabel("⌘⇧X")}
           isActive={editor.isActive("strike")}
           onClick={() => editor.chain().focus().toggleStrike().run()}
         >
@@ -373,7 +374,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         </ToolbarButton>
         <ToolbarButton
           label="行内代码"
-          shortcut="⌘E"
+          shortcut={shortcutLabel("⌘E")}
           isActive={editor.isActive("code")}
           onClick={() => editor.chain().focus().toggleCode().run()}
         >
@@ -385,7 +386,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         {/* Lists */}
         <ToolbarButton
           label="待办清单"
-          shortcut="/task"
+          shortcut={shortcutLabel("/task")}
           isActive={editor.isActive("taskList")}
           onClick={() => editor.chain().focus().toggleTaskList().run()}
         >
@@ -393,7 +394,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         </ToolbarButton>
         <ToolbarButton
           label="无序列表"
-          shortcut="/bullet"
+          shortcut={shortcutLabel("/bullet")}
           isActive={editor.isActive("bulletList")}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
         >
@@ -401,7 +402,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         </ToolbarButton>
         <ToolbarButton
           label="编号列表"
-          shortcut="/number"
+          shortcut={shortcutLabel("/number")}
           isActive={editor.isActive("orderedList")}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
         >
@@ -541,7 +542,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
       <div className="flex items-center space-x-0.5 shrink-0 pl-1">
         <ToolbarButton
           label="撤销"
-          shortcut="⌘Z"
+          shortcut={shortcutLabel("⌘Z")}
           disabled={!editor.can().undo()}
           onClick={() => editor.chain().focus().undo().run()}
         >
@@ -549,7 +550,7 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
         </ToolbarButton>
         <ToolbarButton
           label="重做"
-          shortcut="⌘⇧Z"
+          shortcut={shortcutLabel("⌘⇧Z")}
           disabled={!editor.can().redo()}
           onClick={() => editor.chain().focus().redo().run()}
         >
@@ -700,8 +701,8 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
           }
         }
 
-        // Cmd+Enter or Ctrl+Enter to trigger save
-        if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        // Save with the platform primary modifier (Ctrl on Omarchy).
+        if (isPrimaryShortcut(event) && event.key === "Enter") {
           event.preventDefault();
           onCmdEnter?.();
           return true;

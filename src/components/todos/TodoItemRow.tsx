@@ -98,7 +98,7 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
             }}
             className={`w-[16px] h-[16px] translate-y-[1px] rounded-[4px] flex items-center justify-center border-[1.3px] transition-all tactile-btn cursor-pointer ${
               isCompleted
-                ? "bg-[var(--color-teal-primary)] border-[var(--color-teal-primary)] text-white"
+                ? "bg-[var(--color-teal-primary)] border-[var(--color-teal-primary)] text-[var(--color-on-accent)]"
                 : "border-[var(--color-text-subtle)] hover:border-[var(--color-teal-primary)] bg-transparent"
             }`}
           >
